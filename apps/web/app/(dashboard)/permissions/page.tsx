@@ -135,9 +135,6 @@ export default async function PermissionsPage() {
                                 <img
                                   src={getDiscordAvatarUrl(user.discordId, user.avatar)}
                                   alt={user.displayName || user.username}
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
-                                  }}
                                 />
                               </div>
                               <div className="table-user-name">

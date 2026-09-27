@@ -101,9 +101,6 @@ export default async function ShopPage() {
                               <img
                                 src={getDiscordAvatarUrl(tx.user.discordId, tx.user.avatar)}
                                 alt={tx.user.displayName || tx.user.username}
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
-                                }}
                               />
                             </div>
                             <div>

@@ -125,9 +125,6 @@ export default async function LogsPage() {
                                   <img
                                     src={getDiscordAvatarUrl(log.user.discordId, log.user.avatar)}
                                     alt={log.user.displayName || log.user.username}
-                                    onError={(e) => {
-                                      (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
-                                    }}
                                   />
                                 </div>
                               <div className="table-user-name">

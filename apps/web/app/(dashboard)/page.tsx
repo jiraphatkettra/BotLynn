@@ -170,9 +170,6 @@ export default async function DashboardPage() {
                                 <img
                                   src={getDiscordAvatarUrl(att.user.discordId, att.user.avatar)}
                                   alt={att.user.displayName || att.user.username}
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
-                                  }}
                                 />
                               </div>
                               <div className="table-user-name">
@@ -327,9 +324,6 @@ export default async function DashboardPage() {
                               <img
                                 src={getDiscordAvatarUrl(tx.user.discordId, tx.user.avatar)}
                                 alt={tx.user.displayName || tx.user.username}
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
-                                }}
                               />
                             </div>
                             <div className="table-user-name">
