@@ -10,13 +10,15 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Allow login page, Next.js assets, and public API routes
+  // Allow login page, Next.js assets, public images/logos, and public API routes
   if (
     pathname.startsWith("/login") ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/bot") ||
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon")
+    pathname.startsWith("/favicon") ||
+    pathname.startsWith("/logo") ||
+    /\.(.*)$/.test(pathname)
   ) {
     return NextResponse.next();
   }
@@ -35,5 +37,12 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    /*
+     * Match all request paths except for:
+     * - _next/static, _next/image
+     * - favicon.ico, images and public media files
+     */
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+  ],
 };
