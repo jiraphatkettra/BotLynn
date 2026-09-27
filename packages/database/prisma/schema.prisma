@@ -1,0 +1,394 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ==========================================
+// USER & AUTH
+// ==========================================
+
+model User {
+  id          String   @id @default(cuid())
+  discordId   String   @unique
+  username    String
+  displayName String?
+  avatar      String?
+  email       String?
+  role        UserRole @default(ADMIN)
+  isActive    Boolean  @default(true)
+  balance     Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  attendances   Attendance[]
+  transactions  Transaction[]
+  auditLogs     AuditLog[]
+  permissions   Permission[]
+  voiceSessions VoiceSession[]
+  claimedTickets Ticket[] @relation("ClaimedTickets")
+  walletTransactions WalletTransaction[]
+  leaveRequests  LeaveRequest[] @relation("UserLeaves")
+  reviewedLeaves LeaveRequest[] @relation("ReviewedLeaves")
+
+  @@map("users")
+}
+
+enum UserRole {
+  OWNER
+  MANAGER
+  ADMIN
+  MODERATOR
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  @@map("sessions")
+}
+
+// ==========================================
+// ATTENDANCE SYSTEM
+// ==========================================
+
+model Attendance {
+  id       String           @id @default(cuid())
+  userId   String
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clockIn  DateTime
+  clockOut DateTime?
+  duration Int?             // duration in minutes
+  status   AttendanceStatus @default(ON_TIME)
+  note     String?
+  channel  String?          // Discord channel where clocked in
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([clockIn])
+  @@map("attendances")
+}
+
+enum AttendanceStatus {
+  ON_TIME
+  LATE
+  EARLY_LEAVE
+  ABSENT
+}
+
+// ==========================================
+// ROLE SHOP SYSTEM
+// ==========================================
+
+model ShopRole {
+  id            String  @id @default(cuid())
+  name          String
+  discordRoleId String  @unique
+  price         Float
+  description   String?
+  color         String? // hex color
+  icon          String? // emoji or icon
+  category      String  @default("general")
+  isActive      Boolean @default(true)
+  stock         Int?    // null = unlimited
+  maxPerUser    Int     @default(1)
+  sortOrder     Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions Transaction[]
+
+  @@map("shop_roles")
+}
+
+model Transaction {
+  id     String            @id @default(cuid())
+  userId String
+  user   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleId String
+  role   ShopRole          @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  price  Float
+  status TransactionStatus @default(COMPLETED)
+  note   String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([roleId])
+  @@index([createdAt])
+  @@map("transactions")
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  REFUNDED
+  CANCELLED
+}
+
+// ==========================================
+// AUDIT LOGS
+// ==========================================
+
+model AuditLog {
+  id       String      @id @default(cuid())
+  userId   String?
+  user     User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action   String
+  category LogCategory
+  details  String?
+  metadata Json?
+  ip       String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([category])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+enum LogCategory {
+  AUTH
+  ATTENDANCE
+  SHOP
+  ADMIN
+  SYSTEM
+  BOT
+  PERMISSION
+  VOICE
+  TICKET
+  BACKUP
+  WALLET
+  ANNOUNCEMENT
+  LEAVE
+}
+
+// ==========================================
+// BOT SESSION TRACKING
+// ==========================================
+
+model BotSession {
+  id        String    @id @default(cuid())
+  startedAt DateTime
+  stoppedAt DateTime?
+  duration  Int?      // in seconds
+  reason    String?
+  status    BotStatus @default(ONLINE)
+  guilds    Int       @default(0)
+  users     Int       @default(0)
+  ping      Int?      // ms
+
+  createdAt DateTime @default(now())
+
+  @@index([startedAt])
+  @@map("bot_sessions")
+}
+
+enum BotStatus {
+  ONLINE
+  OFFLINE
+  RESTARTING
+  ERROR
+}
+
+// ==========================================
+// PERMISSIONS
+// ==========================================
+
+model Permission {
+  id         String  @id @default(cuid())
+  userId     String
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission String  // e.g. "attendance.manage", "shop.manage", "admin.manage"
+  granted    Boolean @default(true)
+  grantedBy  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, permission])
+  @@index([userId])
+  @@map("permissions")
+}
+
+// ==========================================
+// SETTINGS
+// ==========================================
+
+model Setting {
+  id          String @id @default(cuid())
+  key         String @unique
+  value       String
+  category    String @default("general")
+  description String?
+
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
+// ==========================================
+// VOICE SESSION TRACKING
+// ==========================================
+
+model VoiceSession {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channelId   String
+  channelName String?
+  guildId     String
+  joinedAt    DateTime  @default(now())
+  leftAt      DateTime?
+  duration    Int?      // duration in seconds
+
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([channelId])
+  @@index([joinedAt])
+  @@map("voice_sessions")
+}
+
+// ==========================================
+// TICKET SUPPORT SYSTEM
+// ==========================================
+
+model Ticket {
+  id          String       @id @default(cuid())
+  ticketId    String       @unique // e.g. "ticket-001" or channelId
+  channelId   String       @unique
+  guildId     String
+  creatorId   String       // Discord ID of opener
+  creatorName String
+  claimedById String?
+  claimedBy   User?        @relation("ClaimedTickets", fields: [claimedById], references: [id], onDelete: SetNull)
+  subject     String?      @default("สอบถามทั่วไป")
+  status      TicketStatus @default(OPEN)
+  closedAt    DateTime?
+  closedBy    String?      // Discord ID or name of closer
+  transcript  String?      @db.Text // Full message history JSON or text
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([creatorId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("tickets")
+}
+
+enum TicketStatus {
+  OPEN
+  CLAIMED
+  CLOSED
+}
+
+// ==========================================
+// ROLE BACKUP & RESTORE SYSTEM
+// ==========================================
+
+model RoleBackup {
+  id           String   @id @default(cuid())
+  name         String   // e.g. "Auto Backup - 2026-09-27"
+  guildId      String
+  totalRoles   Int
+  totalMembers Int
+  rolesData    Json     // List of roles (name, color, permissions, position, hoist, etc.)
+  membersData  Json     // Map of memberId -> list of roleIds
+  createdBy    String?  // username or "SYSTEM"
+
+  createdAt    DateTime @default(now())
+
+  @@index([guildId])
+  @@index([createdAt])
+  @@map("role_backups")
+}
+
+// ==========================================
+// WALLET TRANSACTIONS
+// ==========================================
+
+model WalletTransaction {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Float
+  type      String   // "TOPUP", "PURCHASE", "ADMIN_ADJUST", "REFUND"
+  note      String?
+  createdBy String?  // e.g. "ADMIN:pplqqz_" or "SYSTEM"
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("wallet_transactions")
+}
+
+// ==========================================
+// LEAVE REQUEST SYSTEM
+// ==========================================
+
+model LeaveRequest {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation("UserLeaves", fields: [userId], references: [id], onDelete: Cascade)
+  startDate    DateTime
+  endDate      DateTime
+  days         Int         @default(1)
+  reason       String
+  leaveType    LeaveType   @default(SICK)
+  status       LeaveStatus @default(PENDING)
+  reviewedById String?
+  reviewedBy   User?       @relation("ReviewedLeaves", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewNote   String?
+
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([startDate])
+  @@map("leave_requests")
+}
+
+enum LeaveType {
+  SICK       // ลาป่วย
+  PERSONAL   // ลากิจ
+  VACATION   // ลาพักร้อน
+  OTHER      // อื่นๆ
+}
+
+enum LeaveStatus {
+  PENDING    // รออนุมัติ
+  APPROVED   // อนุมัติแล้ว
+  REJECTED   // ไม่อนุมัติ
+  CANCELLED  // ยกเลิก
+}
+

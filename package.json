@@ -1,0 +1,30 @@
+{
+  "name": "lynnbot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Discord Admin Management Bot + Web Dashboard",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/web",
+    "dev:bot": "npm run dev --workspace=apps/bot",
+    "dev:all": "concurrently \"npm run dev\" \"npm run dev:bot\"",
+    "build": "npm run build --workspace=apps/web",
+    "db:generate": "npm run generate --workspace=packages/database",
+    "db:push": "npm run push --workspace=packages/database",
+    "db:migrate": "npm run migrate --workspace=packages/database",
+    "db:studio": "npm run studio --workspace=packages/database"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "typescript": "^5.5.0"
+  },
+  "allowScripts": {
+    "@prisma/client@5.22.0": true,
+    "prisma@5.22.0": true,
+    "@prisma/engines@5.22.0": true,
+    "esbuild@0.28.2": true
+  }
+}
