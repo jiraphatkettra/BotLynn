@@ -133,4 +133,30 @@ export const authOptions: NextAuthOptions = {
 };
 
 const handler = NextAuth(authOptions);
-export { handler as GET, handler as POST };
+
+async function authHandler(req: any, ctx: any) {
+  try {
+    const host =
+      (typeof req.headers?.get === "function"
+        ? req.headers.get("x-forwarded-host") || req.headers.get("host")
+        : null) || process.env.VERCEL_URL;
+
+    const proto =
+      (typeof req.headers?.get === "function"
+        ? req.headers.get("x-forwarded-proto")
+        : null) || "https";
+
+    if (host && !host.includes("localhost")) {
+      const realDomain = host.startsWith("http") ? host : `${proto}://${host}`;
+      if (!process.env.NEXTAUTH_URL || process.env.NEXTAUTH_URL.includes("localhost")) {
+        process.env.NEXTAUTH_URL = realDomain;
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  return handler(req, ctx);
+}
+
+export { authHandler as GET, authHandler as POST };
