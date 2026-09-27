@@ -4,12 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate --schema=../../packages/database/prisma/schema.prisma && next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
     "@lynnbot/database": "*",
+    "@prisma/client": "^5.22.0",
     "next": "^14.2.35",
     "next-auth": "^4.24.15",
     "react": "^18.3.1",
@@ -19,6 +20,7 @@
     "@types/node": "^20.14.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "prisma": "^5.22.0",
     "typescript": "^5.5.0"
   }
 }
