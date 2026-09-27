@@ -95,6 +95,31 @@ export const authOptions: NextAuthOptions = {
       }
       return token;
     },
+    async redirect({ url, baseUrl }) {
+      // Determine the real production base URL if deployed on Vercel
+      let effectiveBaseUrl = baseUrl;
+      if (process.env.VERCEL_URL && (baseUrl.includes("localhost") || !baseUrl)) {
+        effectiveBaseUrl = `https://${process.env.VERCEL_URL}`;
+      }
+
+      // Allows relative callback URLs
+      if (url.startsWith("/")) {
+        return `${effectiveBaseUrl}${url}`;
+      }
+
+      // Allows callback URLs on the same origin or Vercel domain
+      try {
+        const parsedUrl = new URL(url);
+        if (
+          parsedUrl.origin === effectiveBaseUrl ||
+          parsedUrl.hostname.endsWith(".vercel.app")
+        ) {
+          return url;
+        }
+      } catch {}
+
+      return effectiveBaseUrl;
+    },
   },
   pages: {
     signIn: "/login",
