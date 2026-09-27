@@ -6,17 +6,17 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "tsx src/index.ts",
     "deploy": "tsx src/deploy-commands.ts"
   },
   "dependencies": {
     "@lynnbot/database": "*",
     "discord.js": "^14.15.3",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "tsx": "^4.16.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
-    "tsx": "^4.16.0",
     "typescript": "^5.5.0"
   }
 }

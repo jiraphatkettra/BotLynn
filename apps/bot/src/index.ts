@@ -7,6 +7,7 @@ import {
   type AutocompleteInteraction,
   type SlashCommandBuilder,
 } from "discord.js";
+import http from "node:http";
 import { config } from "dotenv";
 import { resolve } from "path";
 
@@ -133,6 +134,24 @@ if (!token) {
   console.error("❌ DISCORD_TOKEN not found in .env");
   process.exit(1);
 }
+
+// Minimal HTTP health check server (required for Render Free Tier Web Service & uptime monitors)
+const PORT = process.env.PORT || 3001;
+const healthServer = http.createServer((req, res) => {
+  res.writeHead(200, { "Content-Type": "application/json" });
+  res.end(
+    JSON.stringify({
+      status: "ok",
+      bot: client.user?.tag || "starting",
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+    })
+  );
+});
+
+healthServer.listen(PORT, () => {
+  console.log(`📡 Health check server listening on port ${PORT}`);
+});
 
 console.log("🤖 Starting LynnBot...");
 client.login(token);
