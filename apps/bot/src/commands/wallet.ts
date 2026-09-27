@@ -162,12 +162,13 @@ export const giveBalanceCommand: BotCommand = {
         where: { discordId: targetUser.id },
         update: {
           balance: { increment: amount },
+          avatar: targetUser.displayAvatarURL(),
         },
         create: {
           discordId: targetUser.id,
           username: targetUser.username,
           displayName: targetUser.displayName || targetUser.username,
-          avatar: targetUser.avatar,
+          avatar: targetUser.displayAvatarURL(),
           balance: Math.max(0, amount),
           role: "ADMIN",
         },

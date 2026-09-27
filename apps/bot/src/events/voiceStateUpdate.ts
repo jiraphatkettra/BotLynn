@@ -20,13 +20,13 @@ export async function handleVoiceStateUpdate(
         update: {
           username: member.user.username,
           displayName: member.displayName || member.user.username,
-          avatar: member.user.avatar,
+          avatar: member.user.displayAvatarURL(),
         },
         create: {
           discordId,
           username: member.user.username,
           displayName: member.displayName || member.user.username,
-          avatar: member.user.avatar,
+          avatar: member.user.displayAvatarURL(),
           role: "ADMIN",
         },
       });

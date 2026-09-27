@@ -1,6 +1,6 @@
 import Header from "@/components/Header";
 import { prisma } from "@lynnbot/database";
-import { getRoleInfo } from "@/lib/utils";
+import { getRoleInfo, getDiscordAvatarUrl } from "@/lib/utils";
 
 const PERMISSION_LIST = [
   { key: "attendance.view", label: "ดูตอกบัตร", category: "ตอกบัตร" },
@@ -23,6 +23,7 @@ async function getPermissionsData() {
       orderBy: { role: "asc" },
       select: {
         id: true,
+        discordId: true,
         username: true,
         displayName: true,
         avatar: true,
@@ -130,15 +131,15 @@ export default async function PermissionsPage() {
                         <tr key={user.id}>
                           <td>
                             <div className="table-user">
-                              {user.avatar ? (
-                                <div className="table-avatar">
-                                  <img src={user.avatar} alt={user.username} />
-                                </div>
-                              ) : (
-                                <div className="table-avatar-placeholder">
-                                  {user.username[0].toUpperCase()}
-                                </div>
-                              )}
+                              <div className="table-avatar">
+                                <img
+                                  src={getDiscordAvatarUrl(user.discordId, user.avatar)}
+                                  alt={user.displayName || user.username}
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
+                                  }}
+                                />
+                              </div>
                               <div className="table-user-name">
                                 {user.displayName || user.username}
                               </div>

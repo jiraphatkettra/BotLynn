@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@lynnbot/database";
+import { getDiscordAvatarUrl } from "@/lib/utils";
 
 // GET - List admins with permissions, attendance, and transactions
 export async function GET() {
@@ -21,7 +22,12 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({ data: admins });
+    const formattedAdmins = admins.map((admin) => ({
+      ...admin,
+      avatar: getDiscordAvatarUrl(admin.discordId, admin.avatar),
+    }));
+
+    return NextResponse.json({ data: formattedAdmins });
   } catch (error) {
     console.error("Error fetching admins:", error);
     return NextResponse.json(

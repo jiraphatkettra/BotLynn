@@ -11,13 +11,13 @@ export async function handleGuildMemberAdd(member: GuildMember) {
       update: {
         username: member.user.username,
         displayName: member.displayName || member.user.username,
-        avatar: member.user.avatar,
+        avatar: member.user.displayAvatarURL(),
       },
       create: {
         discordId: member.id,
         username: member.user.username,
         displayName: member.displayName || member.user.username,
-        avatar: member.user.avatar,
+        avatar: member.user.displayAvatarURL(),
         role: "ADMIN", // default role enum
       },
     });

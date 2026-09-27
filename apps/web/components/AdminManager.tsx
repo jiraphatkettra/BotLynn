@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { getRoleInfo } from "@/lib/utils";
+import { getRoleInfo, getDiscordAvatarUrl } from "@/lib/utils";
 
 interface PermissionItem {
   id: string;
@@ -267,27 +267,14 @@ export default function AdminManager({
                         flexShrink: 0,
                       }}
                     >
-                      {admin.avatar ? (
-                        <img
-                          src={admin.avatar}
-                          alt={admin.username}
-                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                        />
-                      ) : (
-                        <div
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontWeight: 600,
-                            color: "var(--text-primary)",
-                          }}
-                        >
-                          {admin.username[0].toUpperCase()}
-                        </div>
-                      )}
+                      <img
+                        src={getDiscordAvatarUrl(admin.discordId, admin.avatar)}
+                        alt={admin.displayName || admin.username}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
+                        }}
+                      />
                     </div>
 
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -492,27 +479,14 @@ export default function AdminManager({
                     boxShadow: "0 8px 24px rgba(0, 0, 0, 0.5)",
                   }}
                 >
-                  {profileTarget.avatar ? (
-                    <img
-                      src={profileTarget.avatar}
-                      alt={profileTarget.username}
-                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 28,
-                        fontWeight: 600,
-                      }}
-                    >
-                      {profileTarget.username[0].toUpperCase()}
-                    </div>
-                  )}
+                  <img
+                    src={getDiscordAvatarUrl(profileTarget.discordId, profileTarget.avatar)}
+                    alt={profileTarget.displayName || profileTarget.username}
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
+                    }}
+                  />
                 </div>
 
                 <h3 style={{ fontSize: 17, fontWeight: 600, color: "var(--text-primary)" }}>

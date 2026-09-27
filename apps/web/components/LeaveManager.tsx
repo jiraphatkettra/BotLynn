@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { formatDate } from "@/lib/utils";
+import { formatDate, getDiscordAvatarUrl } from "@/lib/utils";
 
 interface LeaveItem {
   id: string;
@@ -348,29 +348,14 @@ export default function LeaveManager() {
                     >
                       <td style={{ padding: "12px 20px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                          {l.user.avatar ? (
-                            <img
-                              src={l.user.avatar}
-                              alt={l.user.username}
-                              style={{ width: "30px", height: "30px", borderRadius: "50%" }}
-                            />
-                          ) : (
-                            <div
-                              style={{
-                                width: "30px",
-                                height: "30px",
-                                borderRadius: "50%",
-                                background: "rgba(255,255,255,0.1)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                fontSize: "12px",
-                                color: "#ffffff",
-                              }}
-                            >
-                              {l.user.username[0].toUpperCase()}
-                            </div>
-                          )}
+                          <img
+                            src={getDiscordAvatarUrl(l.user.discordId, l.user.avatar)}
+                            alt={l.user.displayName || l.user.username}
+                            style={{ width: "30px", height: "30px", borderRadius: "50%", objectFit: "cover" }}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
+                            }}
+                          />
                           <div>
                             <div style={{ fontSize: "13px", fontWeight: 500, color: "#ffffff" }}>
                               {l.user.displayName || l.user.username}

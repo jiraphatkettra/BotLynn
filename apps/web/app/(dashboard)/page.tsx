@@ -1,6 +1,6 @@
 import Header from "@/components/Header";
 import { prisma } from "@lynnbot/database";
-import { formatRelativeTime, formatCurrency } from "@/lib/utils";
+import { formatRelativeTime, formatCurrency, getDiscordAvatarUrl } from "@/lib/utils";
 
 async function getDashboardData() {
   const now = new Date();
@@ -167,16 +167,13 @@ export default async function DashboardPage() {
                           <td>
                             <div className="table-user">
                               <div className="table-avatar">
-                                {att.user.avatar ? (
-                                  <img
-                                    src={att.user.avatar}
-                                    alt={att.user.username}
-                                  />
-                                ) : (
-                                  <div className="table-avatar-placeholder">
-                                    {(att.user.displayName || att.user.username || "A")[0].toUpperCase()}
-                                  </div>
-                                )}
+                                <img
+                                  src={getDiscordAvatarUrl(att.user.discordId, att.user.avatar)}
+                                  alt={att.user.displayName || att.user.username}
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
+                                  }}
+                                />
                               </div>
                               <div className="table-user-name">
                                 {att.user.displayName || att.user.username}
@@ -327,16 +324,13 @@ export default async function DashboardPage() {
                         <td>
                           <div className="table-user">
                             <div className="table-avatar">
-                              {tx.user.avatar ? (
-                                <img
-                                  src={tx.user.avatar}
-                                  alt={tx.user.username}
-                                />
-                              ) : (
-                                <div className="table-avatar-placeholder">
-                                  {(tx.user.displayName || tx.user.username || "U")[0].toUpperCase()}
-                                </div>
-                              )}
+                              <img
+                                src={getDiscordAvatarUrl(tx.user.discordId, tx.user.avatar)}
+                                alt={tx.user.displayName || tx.user.username}
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
+                                }}
+                              />
                             </div>
                             <div className="table-user-name">
                               {tx.user.displayName || tx.user.username}

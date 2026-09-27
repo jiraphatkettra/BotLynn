@@ -1,7 +1,7 @@
 import Header from "@/components/Header";
 import ShopManager from "@/components/ShopManager";
 import { prisma } from "@lynnbot/database";
-import { formatCurrency, formatRelativeTime } from "@/lib/utils";
+import { formatCurrency, formatRelativeTime, getDiscordAvatarUrl } from "@/lib/utils";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -98,16 +98,13 @@ export default async function ShopPage() {
                         <td>
                           <div className="table-user">
                             <div className="table-avatar">
-                              {tx.user.avatar ? (
-                                <img
-                                  src={tx.user.avatar}
-                                  alt={tx.user.username}
-                                />
-                              ) : (
-                                <div className="table-avatar-placeholder">
-                                  {(tx.user.displayName || tx.user.username || "U")[0].toUpperCase()}
-                                </div>
-                              )}
+                              <img
+                                src={getDiscordAvatarUrl(tx.user.discordId, tx.user.avatar)}
+                                alt={tx.user.displayName || tx.user.username}
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
+                                }}
+                              />
                             </div>
                             <div>
                               <div className="table-user-name">

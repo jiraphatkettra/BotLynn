@@ -109,3 +109,33 @@ export function truncate(str: string, length: number): string {
   if (str.length <= length) return str;
   return str.slice(0, length) + "...";
 }
+
+// Resolve Discord Avatar URL (handles full URLs, hashes, and default avatar fallbacks)
+export function getDiscordAvatarUrl(
+  discordId?: string | null,
+  avatar?: string | null
+): string {
+  if (!avatar) {
+    if (discordId) {
+      try {
+        const defaultIndex = Number((BigInt(discordId) >> BigInt(22)) % BigInt(6));
+        return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
+      } catch {
+        return "https://cdn.discordapp.com/embed/avatars/0.png";
+      }
+    }
+    return "https://cdn.discordapp.com/embed/avatars/0.png";
+  }
+
+  if (avatar.startsWith("http://") || avatar.startsWith("https://")) {
+    return avatar;
+  }
+
+  if (discordId) {
+    const ext = avatar.startsWith("a_") ? "gif" : "png";
+    return `https://cdn.discordapp.com/avatars/${discordId}/${avatar}.${ext}?size=128`;
+  }
+
+  return "https://cdn.discordapp.com/embed/avatars/0.png";
+}
+

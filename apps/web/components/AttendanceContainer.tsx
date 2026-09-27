@@ -3,7 +3,7 @@
 import { useState } from "react";
 import VoiceStandbyWidget from "@/components/VoiceStandbyWidget";
 import LeaveManager from "@/components/LeaveManager";
-import { formatDate, formatTime, formatDuration } from "@/lib/utils";
+import { formatDate, formatTime, formatDuration, getDiscordAvatarUrl } from "@/lib/utils";
 
 interface AttendanceContainerProps {
   data: {
@@ -202,29 +202,14 @@ export default function AttendanceContainer({ data }: AttendanceContainerProps) 
                         <tr key={att.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
                           <td style={{ padding: "12px 20px" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                              {att.user.avatar ? (
-                                <img
-                                  src={att.user.avatar}
-                                  alt={att.user.username}
-                                  style={{ width: "32px", height: "32px", borderRadius: "50%" }}
-                                />
-                              ) : (
-                                <div
-                                  style={{
-                                    width: "32px",
-                                    height: "32px",
-                                    borderRadius: "50%",
-                                    background: "rgba(255,255,255,0.1)",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    fontSize: "12px",
-                                    color: "#ffffff",
-                                  }}
-                                >
-                                  {att.user.username[0].toUpperCase()}
-                                </div>
-                              )}
+                              <img
+                                src={getDiscordAvatarUrl(att.user.discordId, att.user.avatar)}
+                                alt={att.user.displayName || att.user.username}
+                                style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }}
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
+                                }}
+                              />
                               <div>
                                 <div style={{ fontSize: "13px", fontWeight: 500, color: "#ffffff" }}>
                                   {att.user.displayName || att.user.username}

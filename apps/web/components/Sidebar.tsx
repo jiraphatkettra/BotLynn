@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { getDiscordAvatarUrl } from "@/lib/utils";
 
 const navItems = [
   {
@@ -211,13 +212,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       <div className="sidebar-footer">
         <div className="sidebar-user">
           <div className="sidebar-avatar">
-            {user?.avatar ? (
-              <img src={user.avatar} alt={user.displayName || user.name} />
-            ) : (
-              <div className="table-avatar-placeholder">
-                {(user?.displayName || user?.name || "A")[0]}
-              </div>
-            )}
+            <img
+              src={getDiscordAvatarUrl(user?.discordId || user?.id, user?.avatar)}
+              alt={user?.displayName || user?.name || "Admin"}
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
+              }}
+            />
           </div>
           <div className="sidebar-user-info">
             <div className="sidebar-user-name">

@@ -1,6 +1,6 @@
 import Header from "@/components/Header";
 import { prisma } from "@lynnbot/database";
-import { formatDateTime, formatRelativeTime } from "@/lib/utils";
+import { formatDateTime, formatRelativeTime, getDiscordAvatarUrl } from "@/lib/utils";
 
 async function getLogsData() {
   const [logs, totalLogs, categoryCounts] = await Promise.all([
@@ -121,18 +121,15 @@ export default async function LogsPage() {
                         <td>
                           {log.user ? (
                             <div className="table-user">
-                              {log.user.avatar ? (
                                 <div className="table-avatar">
                                   <img
-                                    src={log.user.avatar}
-                                    alt={log.user.username}
+                                    src={getDiscordAvatarUrl(log.user.discordId, log.user.avatar)}
+                                    alt={log.user.displayName || log.user.username}
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
+                                    }}
                                   />
                                 </div>
-                              ) : (
-                                <div className="table-avatar-placeholder">
-                                  {log.user.username[0].toUpperCase()}
-                                </div>
-                              )}
                               <div className="table-user-name">
                                 {log.user.displayName || log.user.username}
                               </div>
