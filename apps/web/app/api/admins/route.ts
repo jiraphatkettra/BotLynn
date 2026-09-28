@@ -124,3 +124,69 @@ export async function PATCH(request: NextRequest) {
     );
   }
 }
+
+// DELETE - Remove admin from system (Owner only)
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    const currentUserRole = (session?.user as any)?.role;
+    const currentUserId = (session?.user as any)?.id;
+
+    if (currentUserRole !== "OWNER") {
+      return NextResponse.json(
+        { error: "เฉพาะระดับ Owner เท่านั้นที่สามารถลบแอดมินออกจากระบบได้" },
+        { status: 403 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "กรุณาระบุรหัสผู้ใช้ (Admin ID)" },
+        { status: 400 }
+      );
+    }
+
+    const targetUser = await prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!targetUser) {
+      return NextResponse.json(
+        { error: "ไม่พบข้อมูลแอดมินในระบบ" },
+        { status: 404 }
+      );
+    }
+
+    if (targetUser.id === currentUserId) {
+      return NextResponse.json(
+        { error: "คุณไม่สามารถลบบัญชีของตนเองได้" },
+        { status: 400 }
+      );
+    }
+
+    // Delete user and cascade relations
+    await prisma.user.delete({
+      where: { id },
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        userId: currentUserId,
+        action: "ลบแอดมินออกจากระบบ",
+        category: "ADMIN",
+        details: `ลบแอดมิน ${targetUser.displayName || targetUser.username} (@${targetUser.username}, Role: ${targetUser.role}) ออกจากระบบ`,
+      },
+    });
+
+    return NextResponse.json({ success: true, id });
+  } catch (error: any) {
+    console.error("Error deleting admin:", error);
+    return NextResponse.json(
+      { error: error?.message || "Failed to delete admin" },
+      { status: 500 }
+    );
+  }
+}

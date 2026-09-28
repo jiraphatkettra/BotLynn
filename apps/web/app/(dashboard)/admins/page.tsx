@@ -32,6 +32,7 @@ export default async function AdminsPage() {
   ]);
 
   const isOwner = (session?.user as any)?.role === "OWNER";
+  const currentUserId = (session?.user as any)?.id;
 
   return (
     <>
@@ -41,7 +42,7 @@ export default async function AdminsPage() {
       />
 
       <div className="page-content">
-        <AdminManager initialAdmins={data.admins} isOwner={isOwner} />
+        <AdminManager initialAdmins={data.admins} isOwner={isOwner} currentUserId={currentUserId} />
       </div>
     </>
   );
