@@ -34,6 +34,12 @@ import {
   handleAdminPendingLeaves,
   handleAdminBackupServer,
 } from "../services/panelInteractionService.js";
+import {
+  handleSlipApproveClick,
+  handleSlipRejectClick,
+  handleSlipApproveModalSubmit,
+  handleSlipRejectModalSubmit,
+} from "../services/slipService.js";
 
 export async function handleInteraction(
   interaction: Interaction,
@@ -141,6 +147,18 @@ export async function handleInteraction(
       return;
     }
 
+    // Slip Review Buttons
+    if (btn.customId.startsWith("slip_approve_")) {
+      const slipId = btn.customId.replace("slip_approve_", "");
+      await handleSlipApproveClick(btn, slipId);
+      return;
+    }
+    if (btn.customId.startsWith("slip_reject_")) {
+      const slipId = btn.customId.replace("slip_reject_", "");
+      await handleSlipRejectClick(btn, slipId);
+      return;
+    }
+
     return;
   }
 
@@ -167,6 +185,16 @@ export async function handleInteraction(
     }
     if (modal.customId === "modal_topup_truemoney") {
       await handleTrueMoneyModalSubmit(modal);
+      return;
+    }
+    if (modal.customId.startsWith("modal_slip_approve_")) {
+      const slipId = modal.customId.replace("modal_slip_approve_", "");
+      await handleSlipApproveModalSubmit(modal, slipId);
+      return;
+    }
+    if (modal.customId.startsWith("modal_slip_reject_")) {
+      const slipId = modal.customId.replace("modal_slip_reject_", "");
+      await handleSlipRejectModalSubmit(modal, slipId);
       return;
     }
     return;

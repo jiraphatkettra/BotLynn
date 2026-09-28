@@ -46,6 +46,7 @@ export default function TicketManager() {
     null
   );
   const [closingId, setClosingId] = useState<string | null>(null);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   const fetchTickets = async () => {
     try {
@@ -518,18 +519,209 @@ export default function TicketManager() {
                 padding: "20px 24px",
                 overflowY: "auto",
                 flex: 1,
-                fontFamily: "monospace",
-                fontSize: "13px",
-                lineHeight: "1.6",
                 background: "rgba(0,0,0,0.5)",
                 color: "#e5e5e7",
-                whiteSpace: "pre-wrap",
                 borderRadius: "0 0 16px 16px",
               }}
             >
-              {selectedTranscript.transcript || "ไม่มีข้อความในประวัติ"}
+              {(() => {
+                if (!selectedTranscript.transcript) {
+                  return <div style={{ color: "#86868b", padding: "16px 0" }}>ไม่มีข้อความในประวัติ</div>;
+                }
+
+                let parsedData: any = null;
+                try {
+                  const p = JSON.parse(selectedTranscript.transcript);
+                  if (p && p.version === 2 && Array.isArray(p.messages)) {
+                    parsedData = p;
+                  }
+                } catch (e) {
+                  // Legacy plain text
+                }
+
+                if (parsedData) {
+                  return (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "8px" }}>
+                        <span className="badge badge-purple" style={{ fontSize: "12px" }}>
+                          💬 {parsedData.totalMessages} ข้อความ
+                        </span>
+                        {parsedData.slipsCount > 0 && (
+                          <span className="badge badge-warning" style={{ fontSize: "12px" }}>
+                            🧾 มีสลิปแนบ {parsedData.slipsCount} ภาพ
+                          </span>
+                        )}
+                      </div>
+
+                      {parsedData.messages.map((m: any, idx: number) => (
+                        <div
+                          key={m.id || idx}
+                          style={{
+                            display: "flex",
+                            gap: "12px",
+                            alignItems: "flex-start",
+                            padding: "8px 12px",
+                            borderRadius: "10px",
+                            background: m.bot ? "rgba(41, 151, 255, 0.05)" : "transparent",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "36px",
+                              height: "36px",
+                              borderRadius: "50%",
+                              overflow: "hidden",
+                              background: "rgba(255,255,255,0.1)",
+                              flexShrink: 0,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: "13px",
+                              fontWeight: 600,
+                              color: "#fff",
+                            }}
+                          >
+                            {m.avatar ? (
+                              <img
+                                src={m.avatar}
+                                alt={m.author}
+                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                              />
+                            ) : (
+                              m.author.slice(0, 1).toUpperCase()
+                            )}
+                          </div>
+
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "4px" }}>
+                              <span
+                                style={{
+                                  fontWeight: 600,
+                                  fontSize: "13px",
+                                  color: m.bot ? "#2997ff" : "var(--text-primary)",
+                                }}
+                              >
+                                {m.author}
+                              </span>
+                              {m.bot && (
+                                <span className="badge badge-blue" style={{ fontSize: "10px", padding: "1px 6px" }}>
+                                  BOT
+                                </span>
+                              )}
+                              <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                                {new Date(m.timestamp).toLocaleTimeString("th-TH", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                            </div>
+
+                            {m.content && (
+                              <div
+                                style={{
+                                  fontSize: "13px",
+                                  color: "var(--text-secondary)",
+                                  lineHeight: "1.5",
+                                  whiteSpace: "pre-wrap",
+                                  wordBreak: "break-word",
+                                }}
+                              >
+                                {m.content}
+                              </div>
+                            )}
+
+                            {m.attachments && m.attachments.length > 0 && (
+                              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "8px" }}>
+                                {m.attachments.map((att: any, aIdx: number) =>
+                                  att.isImage ? (
+                                    <div
+                                      key={att.id || aIdx}
+                                      style={{
+                                        borderRadius: "10px",
+                                        overflow: "hidden",
+                                        border: "1px solid rgba(255,255,255,0.15)",
+                                        background: "rgba(0,0,0,0.5)",
+                                        cursor: "pointer",
+                                        maxWidth: "240px",
+                                        maxHeight: "240px",
+                                      }}
+                                      onClick={() => setLightboxImage(att.url)}
+                                      title="คลิกเพื่อดูภาพขยาย"
+                                    >
+                                      <img
+                                        src={att.url}
+                                        alt={att.name}
+                                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                                      />
+                                    </div>
+                                  ) : (
+                                    <a
+                                      key={att.id || aIdx}
+                                      href={att.url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="btn btn-secondary btn-sm"
+                                      style={{ fontSize: "11px", textDecoration: "none" }}
+                                    >
+                                      📎 {att.name}
+                                    </a>
+                                  )
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+
+                return (
+                  <div
+                    style={{
+                      fontFamily: "monospace",
+                      fontSize: "13px",
+                      lineHeight: "1.6",
+                      whiteSpace: "pre-wrap",
+                      color: "#e5e5e7",
+                    }}
+                  >
+                    {selectedTranscript.transcript}
+                  </div>
+                );
+              })()}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Image Lightbox Modal */}
+      {lightboxImage && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.9)",
+            backdropFilter: "blur(12px)",
+            zIndex: 100000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "24px",
+          }}
+          onClick={() => setLightboxImage(null)}
+        >
+          <img
+            src={lightboxImage}
+            alt="Preview"
+            style={{
+              maxWidth: "92vw",
+              maxHeight: "92vh",
+              objectFit: "contain",
+              borderRadius: "12px",
+              boxShadow: "0 16px 48px rgba(0,0,0,0.8)",
+            }}
+          />
         </div>
       )}
     </div>

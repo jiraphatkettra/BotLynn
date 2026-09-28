@@ -39,6 +39,7 @@ import { handleReady } from "./events/ready.js";
 import { handleInteraction } from "./events/interactionCreate.js";
 import { handleVoiceStateUpdate } from "./events/voiceStateUpdate.js";
 import { handleGuildMemberAdd } from "./events/guildMemberAdd.js";
+import { handleMessageCreate } from "./events/messageCreate.js";
 import { checkAutoClockOut } from "./services/attendanceService.js";
 
 export interface BotCommand {
@@ -100,6 +101,9 @@ client.on(Events.VoiceStateUpdate, (oldState, newState) =>
 );
 client.on(Events.GuildMemberAdd, (member) =>
   handleGuildMemberAdd(member)
+);
+client.on(Events.MessageCreate, (message) =>
+  handleMessageCreate(message)
 );
 
 // Graceful shutdown

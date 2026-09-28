@@ -446,6 +446,77 @@ export default function SettingsManager({
         </div>
       </div>
 
+      {/* 6. Ticket & Slip Verification Channels */}
+      <div className="card mb-24">
+        <div className="card-header">
+          <h3 className="card-title">
+            <span className="card-title-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+                <circle cx="9" cy="9" r="2"/>
+                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+              </svg>
+            </span>
+            ระบบทิกเก็ต & ตรวจสอบสลิป (Ticket & Slip Verification)
+          </h3>
+        </div>
+        <div className="card-body">
+          <div className="settings-section">
+            <div className="settings-row">
+              <div>
+                <div className="settings-row-label">ห้อง Discord สำหรับส่งสลิปให้แอดมินตรวจ (Admin Slip Channel)</div>
+                <div className="settings-row-desc">
+                  เมื่อสมาชิกส่งสลิปโอนเงิน บอทจะส่งสลิปพร้อมปุ่มกดอนุมัติ/ปฏิเสธมายังห้องนี้ทันที
+                </div>
+              </div>
+              <div style={{ minWidth: 280, maxWidth: 360, width: "100%" }}>
+                <CustomSelect
+                  disabled={!isSuperAdmin || loadingChannels}
+                  value={settings.slip_notify_channel || ""}
+                  onChange={(val) => handleChange("slip_notify_channel", val)}
+                  placeholder="— ไม่กำหนดห้องแจ้งสลิป —"
+                  options={[
+                    { value: "", label: "— ไม่กำหนดห้องแจ้งสลิป —" },
+                    ...channels.map((ch) => ({
+                      value: ch.id,
+                      label: `#${ch.name}`,
+                      sub: `ID: ${ch.id}`,
+                    })),
+                  ]}
+                  style={{ width: "100%" }}
+                />
+              </div>
+            </div>
+
+            <div className="settings-row">
+              <div>
+                <div className="settings-row-label">ห้อง Discord สำหรับจัดเก็บประวัติทิกเก็ต (Ticket Archive)</div>
+                <div className="settings-row-desc">
+                  เมื่อแอดมินปิดทิกเก็ต บอทจะสำเนาข้อความ (.txt) และรูปภาพทั้งหมดเข้าไปเก็บถาวรในห้องนี้
+                </div>
+              </div>
+              <div style={{ minWidth: 280, maxWidth: 360, width: "100%" }}>
+                <CustomSelect
+                  disabled={!isSuperAdmin || loadingChannels}
+                  value={settings.ticket_log_channel || ""}
+                  onChange={(val) => handleChange("ticket_log_channel", val)}
+                  placeholder="— ไม่บันทึกลงดิสคอร์ด —"
+                  options={[
+                    { value: "", label: "— ไม่บันทึกลงดิสคอร์ด —" },
+                    ...channels.map((ch) => ({
+                      value: ch.id,
+                      label: `#${ch.name}`,
+                      sub: `ID: ${ch.id}`,
+                    })),
+                  ]}
+                  style={{ width: "100%" }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Save Button Bar */}
       {isSuperAdmin && (
         <div className="flex items-center justify-between" style={{ padding: "8px 0" }}>

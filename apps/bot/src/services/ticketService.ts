@@ -1,13 +1,16 @@
 import {
   type ButtonInteraction,
+  type TextChannel,
   ChannelType,
   PermissionFlagsBits,
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  AttachmentBuilder,
 } from "discord.js";
 import { prisma } from "@lynnbot/database";
+import { recordIncomingSlip } from "./slipService.js";
 
 export async function handleTicketCreate(interaction: ButtonInteraction) {
   if (!interaction.guild) return;
@@ -206,22 +209,128 @@ export async function handleTicketClose(interaction: ButtonInteraction) {
       return;
     }
 
-    // Fetch messages for transcript
+    // Fetch messages for rich transcript & slip archiving
     let transcriptData = "";
+    const richMessages: any[] = [];
+    const slipAttachments: AttachmentBuilder[] = [];
+
     try {
       const channel = interaction.channel as any;
       const messages = await channel.messages.fetch({ limit: 100 });
-      const sorted = Array.from(messages.values()).reverse();
+      const sorted = Array.from(messages.values()).reverse() as any[];
 
-      transcriptData = sorted
-        .map(
-          (m: any) =>
-            `[${new Date(m.createdTimestamp).toLocaleString("th-TH")}] ${
-              m.author.username
-            }: ${m.content || (m.attachments.size ? "[ไฟล์แนบ]" : "")}`
-        )
-        .join("\n");
+      const plainLines: string[] = [];
+
+      for (const m of sorted) {
+        const msgAttachments: any[] = [];
+        for (const att of m.attachments.values()) {
+          const isImg =
+            att.contentType?.startsWith("image/") ||
+            /\.(png|jpe?g|webp|gif)$/i.test(att.name);
+
+          msgAttachments.push({
+            id: att.id,
+            name: att.name,
+            url: att.url,
+            contentType: att.contentType,
+            isImage: isImg,
+          });
+
+          if (isImg && !m.author.bot) {
+            slipAttachments.push(
+              new AttachmentBuilder(att.url, {
+                name: `slip_${ticket.ticketId}_${att.name}`,
+              })
+            );
+
+            // Record into Slip database if not already recorded
+            try {
+              await recordIncomingSlip({
+                guild: interaction.guild,
+                channelId: interaction.channelId,
+                author: m.author,
+                attachment: att,
+                ticketId: ticket.ticketId,
+              });
+            } catch (err) {
+              console.error("Auto slip record error on close:", err);
+            }
+          }
+        }
+
+        const dateStr = new Date(m.createdTimestamp).toLocaleString("th-TH");
+        let line = `[${dateStr}] ${m.author.username}: ${m.content || ""}`;
+        if (msgAttachments.length) {
+          line += ` [ไฟล์แนบ: ${msgAttachments.map((a) => a.name).join(", ")}]`;
+        }
+        plainLines.push(line);
+
+        richMessages.push({
+          id: m.id,
+          author: m.author.displayName || m.author.username,
+          authorId: m.author.id,
+          avatar: m.author.displayAvatarURL ? m.author.displayAvatarURL() : null,
+          bot: m.author.bot,
+          content: m.content || "",
+          timestamp: m.createdTimestamp,
+          attachments: msgAttachments,
+        });
+      }
+
+      const plainText = plainLines.join("\n");
+      const transcriptPayload = {
+        version: 2,
+        ticketId: ticket.ticketId,
+        creatorName: ticket.creatorName,
+        creatorId: ticket.creatorId,
+        closedBy: interaction.user.username,
+        closedAt: new Date().toISOString(),
+        totalMessages: richMessages.length,
+        slipsCount: slipAttachments.length,
+        messages: richMessages,
+        plainText,
+      };
+
+      transcriptData = JSON.stringify(transcriptPayload);
+
+      // Forward to Discord log channel if configured
+      try {
+        const logSetting = await prisma.setting.findUnique({
+          where: { key: "ticket_log_channel" },
+        });
+        if (logSetting?.value) {
+          const logChannel = interaction.guild.channels.cache.get(logSetting.value) as TextChannel | undefined;
+          if (logChannel) {
+            const txtBuffer = Buffer.from(plainText, "utf-8");
+            const txtFile = new AttachmentBuilder(txtBuffer, {
+              name: `transcript-${ticket.ticketId}.txt`,
+            });
+
+            const logEmbed = new EmbedBuilder()
+              .setColor(0x0071e3)
+              .setTitle(`📋  TICKET ARCHIVE • ประวัติทิกเก็ต #${ticket.ticketId.toUpperCase()}`)
+              .setDescription(
+                `**ข้อมูลทิกเก็ตที่ปิดแล้ว:**\n` +
+                `• **รหัสทิกเก็ต:** \`${ticket.ticketId}\`\n` +
+                `• **ผู้เปิด:** <@${ticket.creatorId}> (${ticket.creatorName})\n` +
+                `• **ผู้ปิด:** <@${interaction.user.id}>\n` +
+                `• **จำนวนข้อความ:** \`${richMessages.length}\` ข้อความ\n` +
+                `• **สลิป / รูปภาพแนบ:** \`${slipAttachments.length}\` ไฟล์\n` +
+                `• **เวลาปิด:** <t:${Math.floor(Date.now() / 1000)}:f>\n\n` +
+                `> 📁 แนบไฟล์ประวัติบทสนทนา (.txt) และสำเนารูปภาพสลิปทั้งหมดด้านล่าง`
+              )
+              .setFooter({ text: "LynnBot Operations System • Ticket Archive" })
+              .setTimestamp();
+
+            const filesToSend = [txtFile, ...slipAttachments.slice(0, 9)];
+            await logChannel.send({ embeds: [logEmbed], files: filesToSend });
+          }
+        }
+      } catch (logErr) {
+        console.error("Error forwarding transcript to Discord log channel:", logErr);
+      }
     } catch (e) {
+      console.error("Transcript generate error:", e);
       transcriptData = "ไม่สามารถดึงข้อความย้อนหลังได้";
     }
 

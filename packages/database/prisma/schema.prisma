@@ -34,6 +34,8 @@ model User {
   walletTransactions WalletTransaction[]
   leaveRequests  LeaveRequest[] @relation("UserLeaves")
   reviewedLeaves LeaveRequest[] @relation("ReviewedLeaves")
+  slips          Slip[]
+  reviewedSlips  Slip[]         @relation("ReviewedSlips")
 
   @@map("users")
 }
@@ -188,6 +190,7 @@ enum LogCategory {
   WALLET
   ANNOUNCEMENT
   LEAVE
+  SLIP
 }
 
 // ==========================================
@@ -390,5 +393,43 @@ enum LeaveStatus {
   APPROVED   // อนุมัติแล้ว
   REJECTED   // ไม่อนุมัติ
   CANCELLED  // ยกเลิก
+}
+
+// ==========================================
+// PAYMENT SLIP ARCHIVE & VERIFICATION
+// ==========================================
+
+model Slip {
+  id             String      @id @default(cuid())
+  userId         String?
+  user           User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  discordId      String      // Submitter's discord id
+  discordName    String      // Submitter's username/display name
+  channelId      String?     // Channel where slip was submitted
+  ticketId       String?     // Linked ticketId (e.g. ticket-0001)
+  imageUrl       String      @db.Text // Discord CDN or R2 URL
+  r2Key          String?     // Cloudflare R2 object key (if uploaded)
+  originalName   String?
+  amount         Float?      // Claimed or approved amount (THB)
+  status         SlipStatus  @default(PENDING)
+  note           String?     // Admin note or rejection reason
+  reviewedById   String?
+  reviewedBy     User?       @relation("ReviewedSlips", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedByName String?
+  reviewedAt     DateTime?
+
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([discordId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("slips")
+}
+
+enum SlipStatus {
+  PENDING   // รอตรวจสอบ
+  APPROVED  // อนุมัติแล้ว
+  REJECTED  // ปฏิเสธ
 }
 
