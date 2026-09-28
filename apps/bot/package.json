@@ -13,10 +13,13 @@
     "@lynnbot/database": "*",
     "discord.js": "^14.15.3",
     "dotenv": "^16.4.5",
+    "promptpay-qr": "^0.5.0",
+    "qrcode": "^1.5.4",
     "tsx": "^4.16.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
+    "@types/qrcode": "^1.5.6",
     "typescript": "^5.5.0"
   }
 }

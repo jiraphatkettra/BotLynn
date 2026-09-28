@@ -5,9 +5,11 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  AttachmentBuilder,
 } from "discord.js";
 import { prisma } from "@lynnbot/database";
 import type { BotCommand } from "../index.js";
+import { generatePromptPayQR } from "../services/promptpayService.js";
 
 export const balanceCommand: BotCommand = {
   data: new SlashCommandBuilder()
@@ -100,22 +102,21 @@ export const topupCommand: BotCommand = {
       const setting = await prisma.setting.findUnique({
         where: { key: "promptpay_number" },
       });
-      const promptpayNumber = setting?.value || "0812345678";
+      const promptpayNumber = setting?.value?.trim() || "0954268212";
 
-      const qrUrl = amount
-        ? `https://promptpay.io/${promptpayNumber}/${amount}.png`
-        : `https://promptpay.io/${promptpayNumber}.png`;
+      const { buffer } = await generatePromptPayQR(promptpayNumber, amount);
+      const attachment = new AttachmentBuilder(buffer, { name: "promptpay_qr.png" });
 
       const embed = new EmbedBuilder()
         .setColor(0x000000)
         .setTitle("💳 เติมเงินเข้ากระเป๋า (PromptPay Topup)")
         .setDescription(
           `สแกน QR Code ด้านล่างผ่านแอปพลิเคชันธนาคารทุกแห่งเพื่อเติมเงิน\n\n` +
-            (amount ? `💰 **ยอดที่ต้องชำระ:** \`${amount.toLocaleString("th-TH")} ฿\`\n` : "") +
+            (amount ? `💰 **ยอดที่ต้องชำระ:** \`${amount.toLocaleString("th-TH", { minimumFractionDigits: 2 })} ฿\`\n` : "") +
             `📱 **หมายเลขพร้อมเพย์:** \`${promptpayNumber}\`\n\n` +
             `เมื่อโอนเงินเสร็จเรียบร้อย กรุณากดปุ่ม **"📩 แจ้งส่งสลิป"** ด้านล่าง เพื่อให้แอดมินตรวจสอบและเพิ่มยอดเงินเข้ากระเป๋าให้ทันที`
         )
-        .setImage(qrUrl)
+        .setImage("attachment://promptpay_qr.png")
         .setFooter({ text: "LynnBot Security Payment • ตรวจสอบสลิป 24 ชม." })
         .setTimestamp();
 
@@ -127,7 +128,7 @@ export const topupCommand: BotCommand = {
           .setEmoji("📩")
       );
 
-      await interaction.editReply({ embeds: [embed], components: [row] });
+      await interaction.editReply({ embeds: [embed], files: [attachment], components: [row] });
     } catch (err: any) {
       console.error("Error in /topup:", err);
       await interaction.editReply({ content: `❌ เกิดข้อผิดพลาด: ${err.message}` });

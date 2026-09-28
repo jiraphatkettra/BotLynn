@@ -13,11 +13,13 @@ import {
   PermissionFlagsBits,
   type GuildMember,
   type TextChannel,
+  AttachmentBuilder,
 } from "discord.js";
 import { prisma } from "@lynnbot/database";
 import { THEME_COLORS } from "../utils/theme.js";
 import { createGuildRoleBackup } from "./backupService.js";
 import { extractVoucherCode, redeemTrueMoneyVoucher } from "./truemoneyService.js";
+import { generatePromptPayQR } from "./promptpayService.js";
 
 /**
  * Ensures user exists in database and returns the record
@@ -982,38 +984,43 @@ export async function handlePromptPayModalSubmit(interaction: ModalSubmitInterac
   const amount = rawAmount ? parseFloat(rawAmount) : null;
 
   const setting = await prisma.setting.findUnique({ where: { key: "promptpay_number" } });
-  const promptpayNumber = setting?.value || "0954268212";
+  const promptpayNumber = setting?.value?.trim() || "0954268212";
 
-  const qrUrl =
-    amount && !isNaN(amount) && amount > 0
-      ? `https://promptpay.io/${promptpayNumber}/${amount}.png`
-      : `https://promptpay.io/${promptpayNumber}.png`;
+  try {
+    const { buffer } = await generatePromptPayQR(promptpayNumber, amount);
+    const attachment = new AttachmentBuilder(buffer, { name: "promptpay_qr.png" });
 
-  const embed = new EmbedBuilder()
-    .setColor(THEME_COLORS.accent)
-    .setTitle("💳  PROMPTPAY QR CODE • สแกนเพื่อชำระเงิน")
-    .setDescription(
-      `สแกน QR Code ด้านล่างผ่านแอปพลิเคชันธนาคารทุกแห่งเพื่อเติมเงิน\n\n` +
-      (amount && !isNaN(amount) && amount > 0
-        ? `• **ยอดที่ต้องชำระ:** **฿${amount.toLocaleString("th-TH")}**\n`
-        : "") +
-      `• **หมายเลขพร้อมเพย์:** \`${promptpayNumber}\`\n\n` +
-      `> เมื่อโอนเงินเสร็จเรียบร้อย กรุณากดปุ่ม **"แจ้งส่งสลิปโอนเงิน"** ด้านล่างเพื่อให้แอดมินตรวจสอบและปรับยอดเงินเข้ากระเป๋าให้ทันที\n\n` +
-      `-# LynnBot Security Payment • ตรวจสอบสลิป 24 ชม.`
-    )
-    .setImage(qrUrl)
-    .setFooter({ text: "LynnBot Operations System • PromptPay Payment" })
-    .setTimestamp();
+    const embed = new EmbedBuilder()
+      .setColor(THEME_COLORS.accent)
+      .setTitle("💳  PROMPTPAY QR CODE • สแกนเพื่อชำระเงิน")
+      .setDescription(
+        `สแกน QR Code ด้านล่างผ่านแอปพลิเคชันธนาคารทุกแห่งเพื่อเติมเงิน\n\n` +
+        (amount && !isNaN(amount) && amount > 0
+          ? `• **ยอดที่ต้องชำระ:** **฿${amount.toLocaleString("th-TH", { minimumFractionDigits: 2 })}**\n`
+          : "") +
+        `• **หมายเลขพร้อมเพย์:** \`${promptpayNumber}\`\n\n` +
+        `> เมื่อโอนเงินเสร็จเรียบร้อย กรุณากดปุ่ม **"แจ้งส่งสลิปโอนเงิน"** ด้านล่างเพื่อให้แอดมินตรวจสอบและปรับยอดเงินเข้ากระเป๋าให้ทันที\n\n` +
+        `-# LynnBot Security Payment • ตรวจสอบสลิป 24 ชม.`
+      )
+      .setImage("attachment://promptpay_qr.png")
+      .setFooter({ text: "LynnBot Operations System • PromptPay Payment" })
+      .setTimestamp();
 
-  const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-    new ButtonBuilder()
-      .setCustomId("ticket_create")
-      .setLabel("แจ้งส่งสลิปโอนเงิน • Open Ticket")
-      .setEmoji("📩")
-      .setStyle(ButtonStyle.Success)
-  );
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
+        .setCustomId("ticket_create")
+        .setLabel("แจ้งส่งสลิปโอนเงิน • Open Ticket")
+        .setEmoji("📩")
+        .setStyle(ButtonStyle.Success)
+    );
 
-  await interaction.editReply({ embeds: [embed], components: [row] });
+    await interaction.editReply({ embeds: [embed], files: [attachment], components: [row] });
+  } catch (err: any) {
+    console.error("Generate PromptPay QR Error:", err);
+    await interaction.editReply({
+      content: `❌ ไม่สามารถสร้าง QR Code ได้: ${err.message}`,
+    });
+  }
 }
 
 export async function showTrueMoneyModal(interaction: ButtonInteraction) {
