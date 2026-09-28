@@ -32,6 +32,7 @@ import {
   giveBalanceCommand,
 } from "./commands/wallet.js";
 import { leaveCommand } from "./commands/leave.js";
+import { panelCommand } from "./commands/panel.js";
 
 // Import events
 import { handleReady } from "./events/ready.js";
@@ -74,6 +75,7 @@ const commandList: BotCommand[] = [
   topupCommand,
   giveBalanceCommand,
   leaveCommand,
+  panelCommand,
 ];
 
 for (const command of commandList) {

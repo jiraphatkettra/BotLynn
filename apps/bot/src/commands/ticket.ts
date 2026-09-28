@@ -48,30 +48,22 @@ export const ticketSetupCommand: BotCommand = {
       "หากคุณพบปัญหา ต้องการสอบถามข้อมูล ติดต่อทีมงาน หรือแจ้งปัญหาการซื้อยศ\nสามารถกดปุ่มด้านล่างเพื่อเปิดห้องสนทนาส่วนตัว (Ticket) กับทีมแอดมินได้ทันที";
 
     const embed = new EmbedBuilder()
-      .setColor(0x000000)
-      .setTitle(`📩  ${title}`)
-      .setDescription(description)
-      .addFields(
-        {
-          name: "⏰ เวลาทำการ",
-          value: "ทีมงานพร้อมดูแลและตอบกลับอย่างรวดเร็ว",
-          inline: true,
-        },
-        {
-          name: "🔒 ความเป็นส่วนตัว",
-          value: "มีเฉพาะคุณและทีมแอดมินเท่านั้นที่มองเห็น",
-          inline: true,
-        }
+      .setColor(0x16161c)
+      .setTitle(`📩  ${title.toUpperCase()} • TICKET SUPPORT`)
+      .setDescription(
+        `${description}\n\n` +
+        `> เจ้าหน้าที่: มีเฉพาะคุณและทีมแอดมินเท่านั้นที่สามารถมองเห็นห้องสนทนานี้\n\n` +
+        `-# ทีมงานพร้อมดูแลและตอบกลับอย่างรวดเร็วที่สุด`
       )
       .setFooter({
-        text: "LynnBot Ticket Support • ระบบบริการจัดการ",
+        text: "LynnBot Operations System • Ticket Helpdesk",
       })
       .setTimestamp();
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder()
         .setCustomId("ticket_create")
-        .setLabel("เปิดทิกเก็ตติดต่อทีมงาน")
+        .setLabel("เปิดทิกเก็ตติดต่อทีมงาน • Open Ticket")
         .setStyle(ButtonStyle.Primary)
         .setEmoji("📩")
     );

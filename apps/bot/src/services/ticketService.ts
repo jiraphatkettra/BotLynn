@@ -79,37 +79,29 @@ export async function handleTicketCreate(interaction: ButtonInteraction) {
 
     // Send greeting in the channel
     const embed = new EmbedBuilder()
-      .setColor(0x000000)
-      .setTitle(`🎫 ${ticketId} • ทิกเก็ตติดต่อทีมงาน`)
+      .setColor(0x16161c)
+      .setTitle(`🎫  TICKET #${ticketId.toUpperCase()} • ศูนย์บริการช่วยเหลือ`)
       .setDescription(
-        `สวัสดีคุณ <@${interaction.user.id}>!\n\nกรุณาพิมพ์รายละเอียดปัญหา หรือเรื่องที่ต้องการสอบถามทิ้งไว้ในห้องนี้ได้เลยครับ\nทีมแอดมินจะเข้ามาตอบกลับโดยเร็วที่สุด`
-      )
-      .addFields(
-        {
-          name: "👤 ผู้เปิด",
-          value: `${interaction.user.username} (${interaction.user.id})`,
-          inline: true,
-        },
-        {
-          name: "⏱️ สถานะ",
-          value: "🟡 รอดำเนินการ (OPEN)",
-          inline: true,
-        }
+        `ยินดีต้อนรับคุณ <@${interaction.user.id}>\n\n` +
+        `กรุณาระบุรายละเอียดปัญหา เรื่องที่ต้องการสอบถาม หรือแนบหลักฐานทิ้งไว้ในห้องนี้ได้เลยครับ\n` +
+        `ทีมผู้ดูแลจะเข้ามาตรวจสอบและให้บริการอย่างรวดเร็วที่สุด\n\n` +
+        `> เจ้าหน้าที่: เฉพาะคุณและทีมงานเท่านั้นที่สามารถเข้าถึงห้องนี้ได้\n\n` +
+        `-# คลิกปุ่มด้านล่างเพื่อรับเรื่องหรือปิดทิกเก็ต`
       )
       .setFooter({
-        text: "คลิกปุ่มด้านล่างเพื่อรับเรื่องหรือปิดทิกเก็ต",
+        text: "LynnBot Operations System • Ticket Helpdesk",
       })
       .setTimestamp();
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder()
         .setCustomId("ticket_claim")
-        .setLabel("รับเรื่อง (Claim)")
+        .setLabel("รับเรื่อง • Claim")
         .setStyle(ButtonStyle.Success)
         .setEmoji("🙋‍♂️"),
       new ButtonBuilder()
         .setCustomId("ticket_close")
-        .setLabel("ปิดทิกเก็ต (Close)")
+        .setLabel("ปิดทิกเก็ต • Close")
         .setStyle(ButtonStyle.Danger)
         .setEmoji("🔒")
     );
@@ -179,10 +171,12 @@ export async function handleTicketClaim(interaction: ButtonInteraction) {
     });
 
     const embed = new EmbedBuilder()
-      .setColor(0x34c759)
+      .setColor(0x30d158)
+      .setTitle("🙋‍♂️  TICKET CLAIMED • เจ้าหน้าที่รับเรื่องแล้ว")
       .setDescription(
-        `🙋‍♂️ **แอดมินรับเรื่องแล้ว**\n<@${interaction.user.id}> (${interaction.user.username}) กำลังดูแลทิกเก็ตนี้ให้ท่านครับ`
+        `เจ้าหน้าที่ <@${interaction.user.id}> (${interaction.user.username}) ได้ทำการรับเรื่องและกำลังเข้าดูแลทิกเก็ตนี้ให้กับคุณครับ`
       )
+      .setFooter({ text: "LynnBot Operations System" })
       .setTimestamp();
 
     await interaction.reply({ embeds: [embed] });
@@ -243,11 +237,14 @@ export async function handleTicketClose(interaction: ButtonInteraction) {
     });
 
     const closeEmbed = new EmbedBuilder()
-      .setColor(0xff3b30)
-      .setTitle("🔒 ปิดทิกเก็ตเรียบร้อยแล้ว")
+      .setColor(0xff453a)
+      .setTitle("🔒  TICKET CLOSED • ปิดทิกเก็ตเรียบร้อยแล้ว")
       .setDescription(
-        `ทิกเก็ตถูกปิดโดย <@${interaction.user.id}>\nประวัติการสนทนาถูกบันทึกไว้ใน Web Dashboard เรียบร้อยแล้ว\n\n*ห้องนี้จะถูกลบโดยอัตโนมัติใน 5 วินาที...*`
+        `ทิกเก็ตนี้ถูกปิดโดย <@${interaction.user.id}>\n` +
+        `บันทึกประวัติการสนทนาถูกจัดเก็บลง Web Dashboard เรียบร้อยแล้ว\n\n` +
+        `> ห้องสนทนานี้จะถูกลบโดยอัตโนมัติภายใน 5 วินาที...`
       )
+      .setFooter({ text: "LynnBot Operations System" })
       .setTimestamp();
 
     await interaction.editReply({ embeds: [closeEmbed] });

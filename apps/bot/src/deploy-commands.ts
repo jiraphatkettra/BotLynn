@@ -22,6 +22,7 @@ import {
   giveBalanceCommand,
 } from "./commands/wallet.js";
 import { leaveCommand } from "./commands/leave.js";
+import { panelCommand } from "./commands/panel.js";
 
 const commands = [
   clockinCommand.data.toJSON(),
@@ -38,6 +39,7 @@ const commands = [
   topupCommand.data.toJSON(),
   giveBalanceCommand.data.toJSON(),
   leaveCommand.data.toJSON(),
+  panelCommand.data.toJSON(),
 ];
 
 const rest = new REST({ version: "10" }).setToken(
