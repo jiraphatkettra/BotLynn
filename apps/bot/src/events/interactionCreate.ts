@@ -26,6 +26,10 @@ import {
   handleShopConfirmBuy,
   handleWalletBalance,
   handleWalletTopupInfo,
+  showPromptPayModal,
+  handlePromptPayModalSubmit,
+  showTrueMoneyModal,
+  handleTrueMoneyModalSubmit,
   handleAdminStaffList,
   handleAdminPendingLeaves,
   handleAdminBackupServer,
@@ -100,6 +104,14 @@ export async function handleInteraction(
       await handleWalletTopupInfo(btn);
       return;
     }
+    if (btn.customId === "panel_topup_qr") {
+      await showPromptPayModal(btn);
+      return;
+    }
+    if (btn.customId === "panel_topup_truemoney") {
+      await showTrueMoneyModal(btn);
+      return;
+    }
 
     // Admin Hub Panel Buttons
     if (btn.customId === "panel_admin_staff") {
@@ -147,6 +159,14 @@ export async function handleInteraction(
     const modal = interaction as ModalSubmitInteraction;
     if (modal.customId === "modal_leave_request") {
       await handleLeaveModalSubmit(modal);
+      return;
+    }
+    if (modal.customId === "modal_topup_promptpay") {
+      await handlePromptPayModalSubmit(modal);
+      return;
+    }
+    if (modal.customId === "modal_topup_truemoney") {
+      await handleTrueMoneyModalSubmit(modal);
       return;
     }
     return;

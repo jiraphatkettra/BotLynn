@@ -422,6 +422,26 @@ export default function SettingsManager({
                 />
               </div>
             </div>
+
+            <div className="settings-row">
+              <div>
+                <div className="settings-row-label">เบอร์ TrueMoney Wallet สำหรับรับซองของขวัญ</div>
+                <div className="settings-row-desc">
+                  เบอร์โทรศัพท์ทรูมันนี่สำหรับให้บอทดึงเงินจากลิงก์ซองของขวัญ TrueMoney เข้ากระเป๋าอัตโนมัติ
+                </div>
+              </div>
+              <div style={{ minWidth: 280, maxWidth: 360, width: "100%" }}>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="เช่น 0812345678"
+                  disabled={!isSuperAdmin}
+                  value={settings.truemoney_phone || ""}
+                  onChange={(e) => handleChange("truemoney_phone", e.target.value)}
+                  style={{ width: "100%" }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
