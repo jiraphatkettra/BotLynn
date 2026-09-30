@@ -57,6 +57,8 @@ export default function TiltCard({
       className={`cyber-tilt-card ${className}`}
       style={{
         position: "relative",
+        minWidth: 0,
+        maxWidth: "100%",
         transformStyle: "preserve-3d",
         transform: isHovered
           ? `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) scale3d(1.025, 1.025, 1.025)`

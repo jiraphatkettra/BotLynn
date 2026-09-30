@@ -32,10 +32,12 @@ export default function CyberBackground() {
         top: 0,
         left: 0,
         width: "100vw",
+        maxWidth: "100%",
         height: "100vh",
         pointerEvents: "none",
         zIndex: 0,
         overflow: "hidden",
+        contain: "paint",
       }}
     >
       {/* 1. Cursor Reactive Ambient Light Spotlight */}

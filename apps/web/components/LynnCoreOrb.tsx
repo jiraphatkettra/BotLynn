@@ -115,6 +115,7 @@ export default function LynnCoreOrb() {
     >
       {/* 1. Background Ambient Glow */}
       <div
+        className="lynn-core-glow"
         style={{
           position: "absolute",
           width: "240px",
@@ -147,6 +148,7 @@ export default function LynnCoreOrb() {
 
       {/* 3. 3D Tilt Wrapper */}
       <div
+        className="core-tilt-inner"
         style={{
           position: "relative",
           width: "220px",
@@ -224,6 +226,7 @@ export default function LynnCoreOrb() {
         >
           {/* Internal Lynn Logo Symbol */}
           <div
+            className="core-logo-inner"
             style={{
               width: "42px",
               height: "42px",
@@ -247,6 +250,7 @@ export default function LynnCoreOrb() {
 
         {/* Sci-Fi Target HUD Overlay Brackets */}
         <div
+          className="hud-bracket-wrapper"
           style={{
             position: "absolute",
             width: "210px",
@@ -264,6 +268,7 @@ export default function LynnCoreOrb() {
 
       {/* Floating Status Pill Underneath Orb */}
       <div
+        className="core-status-pill"
         style={{
           position: "absolute",
           bottom: "-4px",

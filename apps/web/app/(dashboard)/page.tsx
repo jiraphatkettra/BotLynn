@@ -77,54 +77,17 @@ export default async function DashboardPage() {
   const userName = user?.displayName || user?.name || "ผู้ดูแลระบบ";
 
   return (
-    <div className="page-content" style={{ display: "flex", flexDirection: "column", gap: "48px" }}>
+    <div className="page-content dashboard-page-container">
       {/* ======================================================== */}
       {/* 1. HERO SECTION (REFERENCE DESIGN: STUDENT COURSE HUB)    */}
       {/* ======================================================== */}
-      <section
-        style={{
-          position: "relative",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          textAlign: "center",
-          padding: "56px 20px 24px",
-          width: "100%",
-        }}
-      >
+      <section className="dashboard-hero-section">
         {/* Subtle Ambient Radial Glow */}
-        <div
-          style={{
-            position: "absolute",
-            top: "10%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: "560px",
-            height: "360px",
-            borderRadius: "50%",
-            background: "radial-gradient(ellipse at center, rgba(10, 132, 255, 0.12) 0%, rgba(94, 92, 230, 0.04) 50%, rgba(0, 0, 0, 0) 75%)",
-            filter: "blur(60px)",
-            pointerEvents: "none",
-            zIndex: 0,
-          }}
-        />
+        <div className="dashboard-hero-glow" />
 
-        <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <div className="dashboard-hero-inner">
           {/* Top Pill Tag with glowing dot */}
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "10px",
-              padding: "7px 20px",
-              borderRadius: "9999px",
-              background: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              backdropFilter: "blur(16px)",
-              marginBottom: "32px",
-              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.4)",
-            }}
-          >
+          <div className="dashboard-hero-pill">
             <span
               style={{
                 width: "7px",
@@ -150,58 +113,29 @@ export default async function DashboardPage() {
           <LynnCoreOrb />
 
           {/* Hero Headline */}
-          <h1
-            style={{
-              fontSize: "clamp(36px, 6vw, 68px)",
-              fontWeight: 800,
-              letterSpacing: "-0.035em",
-              lineHeight: 1.15,
-              color: "#ffffff",
-              margin: "0 0 20px",
-              maxWidth: "960px",
-              textShadow: "0 2px 20px rgba(0, 0, 0, 0.6)",
-            }}
-          >
+          <h1 className="dashboard-hero-headline">
             LynnBot Control Hub
           </h1>
 
           {/* Subtitle */}
-          <p
-            style={{
-              fontSize: "clamp(15px, 1.8vw, 18px)",
-              color: "rgba(255, 255, 255, 0.68)",
-              lineHeight: 1.7,
-              maxWidth: "760px",
-              margin: "0 auto 36px",
-              fontWeight: 400,
-            }}
-          >
+          <p className="dashboard-hero-subtitle">
             ศูนย์รวมและบริหารจัดการระบบเซิร์ฟเวอร์ดิสคอร์ดสำหรับผู้ดูแล — วางแผนและควบคุมคอมมูนิตี้
             อย่างชาญฉลาด รวดเร็ว และแม่นยำ
           </p>
 
           {/* CTA Buttons */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "14px",
-              flexWrap: "wrap",
-              marginBottom: "48px",
-            }}
-          >
+          <div className="dashboard-hero-cta">
             <a
               href="#systems-showcase"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "10px",
-                padding: "13px 30px",
+                padding: "13px 28px",
                 borderRadius: "9999px",
                 background: "#0A84FF",
                 color: "#ffffff",
-                fontSize: "15px",
+                fontSize: "14.5px",
                 fontWeight: 600,
                 textDecoration: "none",
                 boxShadow: "0 6px 24px -2px rgba(10, 132, 255, 0.5)",
@@ -218,12 +152,12 @@ export default async function DashboardPage() {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "8px",
-                padding: "13px 26px",
+                padding: "13px 24px",
                 borderRadius: "9999px",
                 background: "rgba(255, 255, 255, 0.05)",
                 border: "1px solid rgba(255, 255, 255, 0.12)",
                 color: "#ffffff",
-                fontSize: "15px",
+                fontSize: "14.5px",
                 fontWeight: 500,
                 textDecoration: "none",
                 backdropFilter: "blur(12px)",
@@ -243,7 +177,7 @@ export default async function DashboardPage() {
                 justifyContent: "center",
                 gap: "10px",
                 flexWrap: "wrap",
-                marginBottom: "36px",
+                marginBottom: "32px",
               }}
             >
               {data.pendingSlipsCount > 0 && (
@@ -258,7 +192,7 @@ export default async function DashboardPage() {
                     background: "rgba(255, 159, 10, 0.14)",
                     border: "1px solid rgba(255, 159, 10, 0.35)",
                     color: "#ff9f0a",
-                    fontSize: "13px",
+                    fontSize: "12.5px",
                     fontWeight: 500,
                     textDecoration: "none",
                   }}
@@ -279,7 +213,7 @@ export default async function DashboardPage() {
                     background: "rgba(41, 151, 255, 0.14)",
                     border: "1px solid rgba(41, 151, 255, 0.35)",
                     color: "#2997ff",
-                    fontSize: "13px",
+                    fontSize: "12.5px",
                     fontWeight: 500,
                     textDecoration: "none",
                   }}
@@ -292,115 +226,38 @@ export default async function DashboardPage() {
           )}
 
           {/* Centered Metric Summary Cards with 3D Tilt & Laser Border Beams */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: "16px",
-              width: "100%",
-              maxWidth: "760px",
-            }}
-          >
+          <div className="dashboard-hero-metrics">
             {/* Card 1 - Admins */}
-            <TiltCard beamColor="#00F0FF" style={{ borderRadius: "18px" }}>
-              <div
-                style={{
-                  background: "rgba(255, 255, 255, 0.03)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                  borderRadius: "18px",
-                  padding: "24px 20px",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backdropFilter: "blur(20px)",
-                  boxShadow: "0 8px 30px rgba(0, 0, 0, 0.4)",
-                  height: "100%",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "36px",
-                    fontWeight: 700,
-                    color: "#ffffff",
-                    letterSpacing: "-0.03em",
-                    lineHeight: 1.1,
-                    marginBottom: "8px",
-                  }}
-                >
+            <TiltCard beamColor="#00F0FF" style={{ borderRadius: "18px", width: "100%" }}>
+              <div className="dashboard-hero-metric-inner">
+                <div className="dashboard-hero-metric-val">
                   {data.totalAdmins}
                 </div>
-                <div style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.5)", fontWeight: 400 }}>
+                <div className="dashboard-hero-metric-lbl">
                   ทีมงานในระบบ
                 </div>
               </div>
             </TiltCard>
 
             {/* Card 2 - Weekly Revenue */}
-            <TiltCard beamColor="#FFD700" style={{ borderRadius: "18px" }}>
-              <div
-                style={{
-                  background: "rgba(255, 255, 255, 0.03)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                  borderRadius: "18px",
-                  padding: "24px 20px",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backdropFilter: "blur(20px)",
-                  boxShadow: "0 8px 30px rgba(0, 0, 0, 0.4)",
-                  height: "100%",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "36px",
-                    fontWeight: 700,
-                    color: "#ffffff",
-                    letterSpacing: "-0.03em",
-                    lineHeight: 1.1,
-                    marginBottom: "8px",
-                  }}
-                >
+            <TiltCard beamColor="#FFD700" style={{ borderRadius: "18px", width: "100%" }}>
+              <div className="dashboard-hero-metric-inner">
+                <div className="dashboard-hero-metric-val">
                   ฿{formatCurrency(data.weeklyRevenue)}
                 </div>
-                <div style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.5)", fontWeight: 400 }}>
+                <div className="dashboard-hero-metric-lbl">
                   ยอดขายยศ (7 วัน)
                 </div>
               </div>
             </TiltCard>
 
             {/* Card 3 - Status */}
-            <TiltCard beamColor="#30D158" style={{ borderRadius: "18px" }}>
-              <div
-                style={{
-                  background: "rgba(255, 255, 255, 0.03)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                  borderRadius: "18px",
-                  padding: "24px 20px",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backdropFilter: "blur(20px)",
-                  boxShadow: "0 8px 30px rgba(0, 0, 0, 0.4)",
-                  height: "100%",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "36px",
-                    fontWeight: 700,
-                    color: "#30d158",
-                    letterSpacing: "-0.03em",
-                    lineHeight: 1.1,
-                    marginBottom: "8px",
-                  }}
-                >
+            <TiltCard beamColor="#30D158" style={{ borderRadius: "18px", width: "100%" }}>
+              <div className="dashboard-hero-metric-inner">
+                <div className="dashboard-hero-metric-val" style={{ color: "#30d158" }}>
                   100%
                 </div>
-                <div style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.5)", fontWeight: 400 }}>
+                <div className="dashboard-hero-metric-lbl">
                   สถานะระบบออนไลน์
                 </div>
               </div>
@@ -419,16 +276,7 @@ export default async function DashboardPage() {
           margin: "0 auto",
         }}
       >
-        <div
-          style={{
-            background: "linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "24px",
-            padding: "44px 48px",
-            boxShadow: "0 20px 48px -12px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.06)",
-            backdropFilter: "blur(24px)",
-          }}
-        >
+        <div className="dashboard-audience-card">
           {/* Small Cyan Sub-header */}
           <div
             style={{
@@ -520,27 +368,9 @@ export default async function DashboardPage() {
         </div>
 
         {/* 6 Modular Capability Cards Grid */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-            gap: "20px",
-          }}
-        >
+        <div className="dashboard-capabilities-grid">
           {/* Card 1: Slips */}
-          <div
-            style={{
-              background: "rgba(255, 255, 255, 0.02)",
-              border: "1px solid rgba(255, 255, 255, 0.07)",
-              borderRadius: "20px",
-              padding: "28px",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              gap: "20px",
-              transition: "transform 0.2s ease, border-color 0.2s ease",
-            }}
-          >
+          <div className="dashboard-capability-card">
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
                 <span style={{ fontSize: "28px" }}>🧾</span>
@@ -584,18 +414,7 @@ export default async function DashboardPage() {
           </div>
 
           {/* Card 2: Tickets */}
-          <div
-            style={{
-              background: "rgba(255, 255, 255, 0.02)",
-              border: "1px solid rgba(255, 255, 255, 0.07)",
-              borderRadius: "20px",
-              padding: "28px",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              gap: "20px",
-            }}
-          >
+          <div className="dashboard-capability-card">
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
                 <span style={{ fontSize: "28px" }}>🎫</span>
@@ -639,18 +458,7 @@ export default async function DashboardPage() {
           </div>
 
           {/* Card 3: Shop */}
-          <div
-            style={{
-              background: "rgba(255, 255, 255, 0.02)",
-              border: "1px solid rgba(255, 255, 255, 0.07)",
-              borderRadius: "20px",
-              padding: "28px",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              gap: "20px",
-            }}
-          >
+          <div className="dashboard-capability-card">
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
                 <span style={{ fontSize: "28px" }}>🛍️</span>
@@ -694,18 +502,7 @@ export default async function DashboardPage() {
           </div>
 
           {/* Card 4: Attendance */}
-          <div
-            style={{
-              background: "rgba(255, 255, 255, 0.02)",
-              border: "1px solid rgba(255, 255, 255, 0.07)",
-              borderRadius: "20px",
-              padding: "28px",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              gap: "20px",
-            }}
-          >
+          <div className="dashboard-capability-card">
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
                 <span style={{ fontSize: "28px" }}>⏱️</span>
@@ -749,18 +546,7 @@ export default async function DashboardPage() {
           </div>
 
           {/* Card 5: Admins & Root Owner */}
-          <div
-            style={{
-              background: "rgba(255, 255, 255, 0.02)",
-              border: "1px solid rgba(255, 255, 255, 0.07)",
-              borderRadius: "20px",
-              padding: "28px",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              gap: "20px",
-            }}
-          >
+          <div className="dashboard-capability-card">
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
                 <span style={{ fontSize: "28px" }}>👥</span>
@@ -804,18 +590,7 @@ export default async function DashboardPage() {
           </div>
 
           {/* Card 6: Settings */}
-          <div
-            style={{
-              background: "rgba(255, 255, 255, 0.02)",
-              border: "1px solid rgba(255, 255, 255, 0.07)",
-              borderRadius: "20px",
-              padding: "28px",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              gap: "20px",
-            }}
-          >
+          <div className="dashboard-capability-card">
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
                 <span style={{ fontSize: "28px" }}>⚙️</span>
@@ -863,25 +638,9 @@ export default async function DashboardPage() {
       {/* ======================================================== */}
       {/* 4. RECENT ACTIVITY FEED                                  */}
       {/* ======================================================== */}
-      <section
-        style={{
-          width: "100%",
-          maxWidth: "1080px",
-          margin: "0 auto 40px",
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
-          gap: "24px",
-        }}
-      >
+      <section className="dashboard-activity-grid">
         {/* Recent Transactions */}
-        <div
-          style={{
-            background: "rgba(255, 255, 255, 0.02)",
-            border: "1px solid rgba(255, 255, 255, 0.07)",
-            borderRadius: "20px",
-            padding: "24px",
-          }}
-        >
+        <div className="dashboard-activity-card">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
             <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#ffffff", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
               <span>🛍️</span>
@@ -938,14 +697,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Recent Audit Logs */}
-        <div
-          style={{
-            background: "rgba(255, 255, 255, 0.02)",
-            border: "1px solid rgba(255, 255, 255, 0.07)",
-            borderRadius: "20px",
-            padding: "24px",
-          }}
-        >
+        <div className="dashboard-activity-card">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
             <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#ffffff", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
               <span>📜</span>
