@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import AnnouncementStudio from "@/components/AnnouncementStudio";
+import AnnouncementHistory from "@/components/AnnouncementHistory";
 
 export const metadata = {
   title: "สตูดิโอประกาศ Discord | LynnBot",
@@ -15,6 +16,7 @@ export default function AnnouncementsPage() {
       />
       <div className="page-content">
         <AnnouncementStudio />
+        <AnnouncementHistory />
       </div>
     </>
   );

@@ -180,32 +180,18 @@ export default function TicketManager() {
           borderRadius: "12px",
         }}
       >
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+        <div className="apple-segmented">
           {[
-            { id: "ALL", label: "ทั้งหมด" },
-            { id: "OPEN", label: "รอดำเนินการ" },
-            { id: "CLAIMED", label: "กำลังดูแล" },
-            { id: "CLOSED", label: "ปิดแล้ว" },
+            { id: "ALL", label: `ทั้งหมด (${stats.total})` },
+            { id: "OPEN", label: `⏳ รอดำเนินการ (${stats.open})` },
+            { id: "CLAIMED", label: `💬 กำลังดูแล (${stats.claimed})` },
+            { id: "CLOSED", label: `✓ ปิดแล้ว (${stats.closed})` },
           ].map((tab) => (
             <button
               key={tab.id}
+              type="button"
+              className={`apple-segmented-item ${filterStatus === tab.id ? "active" : ""}`}
               onClick={() => setFilterStatus(tab.id)}
-              style={{
-                padding: "8px 14px",
-                borderRadius: "8px",
-                fontSize: "13px",
-                fontWeight: 500,
-                border: "1px solid",
-                borderColor:
-                  filterStatus === tab.id
-                    ? "rgba(255,255,255,0.25)"
-                    : "rgba(255,255,255,0.06)",
-                background:
-                  filterStatus === tab.id ? "#ffffff" : "rgba(255,255,255,0.03)",
-                color: filterStatus === tab.id ? "#000000" : "#86868b",
-                cursor: "pointer",
-                transition: "all 0.15s ease",
-              }}
             >
               {tab.label}
             </button>

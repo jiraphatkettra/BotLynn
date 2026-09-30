@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@lynnbot/database";
-import { getDiscordAvatarUrl } from "@/lib/utils";
+import { getDiscordAvatarUrl, isRootOwner, ROOT_OWNER_DISCORD_ID } from "@/lib/utils";
 
 // POST - Sync members from Discord based on mapped admin roles
 export async function POST(request: NextRequest) {
@@ -88,8 +88,10 @@ export async function POST(request: NextRequest) {
 
       let targetRole: "OWNER" | "MANAGER" | "ADMIN" | "MODERATOR" | null = null;
 
-      // Determine highest role based on hierarchy
-      if (ownerRoleId && userRoles.includes(ownerRoleId)) {
+      // Root Owner is always guaranteed OWNER role regardless of Discord roles
+      if (isRootOwner(m.user.id)) {
+        targetRole = "OWNER";
+      } else if (ownerRoleId && userRoles.includes(ownerRoleId)) {
         targetRole = "OWNER";
       } else if (managerRoleId && userRoles.includes(managerRoleId)) {
         targetRole = "MANAGER";
@@ -113,13 +115,14 @@ export async function POST(request: NextRequest) {
       });
 
       if (existing) {
+        const finalRole = isRootOwner(existing.discordId) ? "OWNER" : targetRole;
         await prisma.user.update({
           where: { id: existing.id },
           data: {
             username: m.user.username,
             displayName,
             avatar: avatarUrl,
-            role: targetRole,
+            role: finalRole,
             isActive: true,
           },
         });
@@ -140,7 +143,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Optional: Clean up users currently in DB who do NOT hold any mapped admin role
-    // (excluding the current session user so they don't get locked out)
+    // (excluding current session user and Root Owner so they can NEVER be removed)
     const body = await request.json().catch(() => ({}));
     let removedCount = 0;
 
@@ -148,11 +151,14 @@ export async function POST(request: NextRequest) {
       const allCurrentAdmins = await prisma.user.findMany({
         where: {
           id: { not: currentUserId },
-          discordId: { notIn: syncedDiscordIds },
+          discordId: {
+            notIn: [ROOT_OWNER_DISCORD_ID, ...syncedDiscordIds],
+          },
         },
       });
 
       for (const a of allCurrentAdmins) {
+        if (isRootOwner(a.discordId)) continue;
         await prisma.user.delete({ where: { id: a.id } });
         removedCount++;
       }

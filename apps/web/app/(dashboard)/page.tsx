@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@lynnbot/database";
 import { formatRelativeTime, formatCurrency, getDiscordAvatarUrl } from "@/lib/utils";
+import LynnCoreOrb from "@/components/LynnCoreOrb";
+import TiltCard from "@/components/TiltCard";
 
 async function getDashboardData() {
   const now = new Date();
@@ -74,816 +76,942 @@ export default async function DashboardPage() {
   const user = session?.user as any;
   const userName = user?.displayName || user?.name || "ผู้ดูแลระบบ";
 
-  // Time-based Thai greeting
-  const currentHour = new Date().getHours();
-  let greetingTime = "สวัสดีตอนเช้า";
-  if (currentHour >= 12 && currentHour < 17) greetingTime = "สวัสดีตอนบ่าย";
-  else if (currentHour >= 17 && currentHour < 21) greetingTime = "สวัสดีตอนเย็น";
-  else if (currentHour >= 21 || currentHour < 6) greetingTime = "สวัสดีตอนค่ำ";
-
-  const thaiDateStr = new Date().toLocaleDateString("th-TH", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-
   return (
-    <>
-      <div className="page-content" style={{ paddingTop: "28px" }}>
-        {/* ======================================================== */}
-        {/* 1. WELCOME HERO SECTION                                  */}
-        {/* ======================================================== */}
+    <div className="page-content" style={{ display: "flex", flexDirection: "column", gap: "48px" }}>
+      {/* ======================================================== */}
+      {/* 1. HERO SECTION (REFERENCE DESIGN: STUDENT COURSE HUB)    */}
+      {/* ======================================================== */}
+      <section
+        style={{
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          textAlign: "center",
+          padding: "56px 20px 24px",
+          width: "100%",
+        }}
+      >
+        {/* Subtle Ambient Radial Glow */}
         <div
-          className="card mb-24"
           style={{
-            position: "relative",
-            overflow: "hidden",
-            background: "linear-gradient(135deg, rgba(22, 22, 28, 0.95) 0%, rgba(28, 28, 38, 0.8) 100%)",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            padding: "32px",
-            borderRadius: "20px",
-            boxShadow: "0 20px 40px rgba(0, 0, 0, 0.4)",
+            position: "absolute",
+            top: "10%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "560px",
+            height: "360px",
+            borderRadius: "50%",
+            background: "radial-gradient(ellipse at center, rgba(10, 132, 255, 0.12) 0%, rgba(94, 92, 230, 0.04) 50%, rgba(0, 0, 0, 0) 75%)",
+            filter: "blur(60px)",
+            pointerEvents: "none",
+            zIndex: 0,
           }}
-        >
-          {/* Subtle Ambient Glow */}
+        />
+
+        <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}>
+          {/* Top Pill Tag with glowing dot */}
           <div
             style={{
-              position: "absolute",
-              top: "-80px",
-              right: "-80px",
-              width: "280px",
-              height: "280px",
-              borderRadius: "50%",
-              background: "radial-gradient(circle, rgba(0, 113, 227, 0.25) 0%, rgba(0,0,0,0) 70%)",
-              filter: "blur(40px)",
-              pointerEvents: "none",
-            }}
-          />
-
-          <div style={{ position: "relative", zIndex: 1 }}>
-            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "16px" }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
-                  <span
-                    className="badge badge-success"
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      fontSize: "12px",
-                      padding: "4px 10px",
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: "7px",
-                        height: "7px",
-                        borderRadius: "50%",
-                        background: "#30d158",
-                        boxShadow: "0 0 8px #30d158",
-                      }}
-                    />
-                    ระบบพร้อมใช้งาน • LynnBot Online
-                  </span>
-                  <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-                    📅 {thaiDateStr}
-                  </span>
-                </div>
-
-                <h1 style={{ fontSize: "28px", fontWeight: "700", color: "#fff", margin: "0 0 6px 0", letterSpacing: "-0.5px" }}>
-                  {greetingTime}, {userName} 👋
-                </h1>
-                <p style={{ margin: 0, fontSize: "14px", color: "var(--text-secondary)", maxWidth: "620px", lineHeight: "1.6" }}>
-                  ยินดีต้อนรับเข้าสู่ระบบบริหารจัดการ LynnBot Operations System ศูนย์ควบคุมสถิติ แอดมิน สลิปการชำระเงิน และการบริการเซิร์ฟเวอร์
-                </p>
-              </div>
-
-              {/* Quick Status Badges */}
-              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                {data.pendingSlipsCount > 0 ? (
-                  <Link
-                    href="/slips"
-                    className="btn btn-primary"
-                    style={{
-                      background: "#ff9f0a",
-                      borderColor: "#ff9f0a",
-                      color: "#000",
-                      fontWeight: 600,
-                      textDecoration: "none",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <span>🧾 สลิปรอตรวจ</span>
-                    <span
-                      style={{
-                        background: "#000",
-                        color: "#ff9f0a",
-                        borderRadius: "12px",
-                        padding: "1px 8px",
-                        fontSize: "12px",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {data.pendingSlipsCount}
-                    </span>
-                  </Link>
-                ) : null}
-
-                {data.openTicketsCount > 0 ? (
-                  <Link
-                    href="/tickets"
-                    className="btn btn-secondary"
-                    style={{
-                      textDecoration: "none",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <span>🎫 ทิกเก็ตที่เปิดอยู่</span>
-                    <span className="badge badge-purple" style={{ fontSize: "11px" }}>
-                      {data.openTicketsCount}
-                    </span>
-                  </Link>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ======================================================== */}
-        {/* 2. QUICK NAVIGATION HUB (ปุ่มนำทางไปยังแต่ละส่วน)          */}
-        {/* ======================================================== */}
-        <div style={{ marginBottom: "28px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
-            <h2 style={{ fontSize: "16px", fontWeight: "600", color: "#fff", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2997ff" strokeWidth="2">
-                <rect width="7" height="9" x="3" y="3" rx="1"/>
-                <rect width="7" height="5" x="14" y="3" rx="1"/>
-                <rect width="7" height="9" x="14" y="12" rx="1"/>
-                <rect width="7" height="5" x="3" y="16" rx="1"/>
-              </svg>
-              เมนูนำทางด่วน • Quick Navigation
-            </h2>
-            <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>คลิกเพื่อเปิดไปยังระบบต่างๆ</span>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-              gap: "14px",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "10px",
+              padding: "7px 20px",
+              borderRadius: "9999px",
+              background: "rgba(255, 255, 255, 0.04)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              backdropFilter: "blur(16px)",
+              marginBottom: "32px",
+              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.4)",
             }}
           >
-            {/* 1. Slips */}
-            <Link
-              href="/slips"
+            <span
               style={{
-                textDecoration: "none",
-                background: "rgba(255, 255, 255, 0.03)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: "14px",
-                padding: "16px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-                transition: "all 0.2s ease",
+                width: "7px",
+                height: "7px",
+                borderRadius: "50%",
+                background: "#0A84FF",
+                boxShadow: "0 0 10px #0A84FF",
               }}
-              className="quick-nav-card"
-            >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "10px",
-                    background: "rgba(48, 209, 88, 0.15)",
-                    color: "#30d158",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
-                    <circle cx="9" cy="9" r="2"/>
-                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
-                  </svg>
-                </div>
-                {data.pendingSlipsCount > 0 && (
-                  <span className="badge badge-warning" style={{ fontSize: "11px" }}>
-                    รอตรวจ {data.pendingSlipsCount}
-                  </span>
-                )}
-              </div>
-              <div style={{ fontWeight: 600, fontSize: "15px", color: "#fff" }}>จัดการสลิปโอนเงิน</div>
-              <div style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: "1.4" }}>
-                ตรวจทานรูปภาพสลิป อนุมัติยอดเงินเข้ากระเป๋า
-              </div>
-            </Link>
-
-            {/* 2. Tickets */}
-            <Link
-              href="/tickets"
+            />
+            <span
               style={{
-                textDecoration: "none",
-                background: "rgba(255, 255, 255, 0.03)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: "14px",
-                padding: "16px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-                transition: "all 0.2s ease",
+                fontSize: "13px",
+                fontWeight: 500,
+                color: "#c7c7cc",
+                letterSpacing: "0.01em",
               }}
-              className="quick-nav-card"
             >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "10px",
-                    background: "rgba(0, 113, 227, 0.15)",
-                    color: "#2997ff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                    <polyline points="22,6 12,13 2,6"/>
-                  </svg>
-                </div>
-                {data.openTicketsCount > 0 && (
-                  <span className="badge badge-purple" style={{ fontSize: "11px" }}>
-                    เปิดอยู่ {data.openTicketsCount}
-                  </span>
-                )}
-              </div>
-              <div style={{ fontWeight: 600, fontSize: "15px", color: "#fff" }}>ระบบทิกเก็ต</div>
-              <div style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: "1.4" }}>
-                ดูแลห้องช่วยเหลือ ดูบทสนทนา Transcript
-              </div>
-            </Link>
+              Next-Generation Discord Management
+            </span>
+          </div>
 
-            {/* 3. Attendance */}
-            <Link
-              href="/attendance"
+          {/* 3D Holographic Interactive Quantum Core Orb */}
+          <LynnCoreOrb />
+
+          {/* Hero Headline */}
+          <h1
+            style={{
+              fontSize: "clamp(36px, 6vw, 68px)",
+              fontWeight: 800,
+              letterSpacing: "-0.035em",
+              lineHeight: 1.15,
+              color: "#ffffff",
+              margin: "0 0 20px",
+              maxWidth: "960px",
+              textShadow: "0 2px 20px rgba(0, 0, 0, 0.6)",
+            }}
+          >
+            LynnBot Control Hub
+          </h1>
+
+          {/* Subtitle */}
+          <p
+            style={{
+              fontSize: "clamp(15px, 1.8vw, 18px)",
+              color: "rgba(255, 255, 255, 0.68)",
+              lineHeight: 1.7,
+              maxWidth: "760px",
+              margin: "0 auto 36px",
+              fontWeight: 400,
+            }}
+          >
+            ศูนย์รวมและบริหารจัดการระบบเซิร์ฟเวอร์ดิสคอร์ดสำหรับผู้ดูแล — วางแผนและควบคุมคอมมูนิตี้
+            อย่างชาญฉลาด รวดเร็ว และแม่นยำ
+          </p>
+
+          {/* CTA Buttons */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "14px",
+              flexWrap: "wrap",
+              marginBottom: "48px",
+            }}
+          >
+            <a
+              href="#systems-showcase"
               style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "10px",
+                padding: "13px 30px",
+                borderRadius: "9999px",
+                background: "#0A84FF",
+                color: "#ffffff",
+                fontSize: "15px",
+                fontWeight: 600,
                 textDecoration: "none",
-                background: "rgba(255, 255, 255, 0.03)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: "14px",
-                padding: "16px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-                transition: "all 0.2s ease",
+                boxShadow: "0 6px 24px -2px rgba(10, 132, 255, 0.5)",
+                transition: "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease",
               }}
-              className="quick-nav-card"
             >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "10px",
-                    background: "rgba(175, 82, 222, 0.15)",
-                    color: "#af52de",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
-                  </svg>
-                </div>
-                <span className="badge badge-success" style={{ fontSize: "11px" }}>
-                  วันนี้ {data.activeToday}
-                </span>
-              </div>
-              <div style={{ fontWeight: 600, fontSize: "15px", color: "#fff" }}>ตอกบัตรเข้างาน</div>
-              <div style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: "1.4" }}>
-                บันทึกเวลาทำงาน กะงาน และการลา
-              </div>
-            </Link>
+              <span>สำรวจระบบทั้งหมด</span>
+              <span>→</span>
+            </a>
 
-            {/* 4. Shop */}
-            <Link
-              href="/shop"
-              style={{
-                textDecoration: "none",
-                background: "rgba(255, 255, 255, 0.03)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: "14px",
-                padding: "16px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-                transition: "all 0.2s ease",
-              }}
-              className="quick-nav-card"
-            >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "10px",
-                    background: "rgba(255, 45, 85, 0.15)",
-                    color: "#ff2d55",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/>
-                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-                  </svg>
-                </div>
-              </div>
-              <div style={{ fontWeight: 600, fontSize: "15px", color: "#fff" }}>ร้านค้ายศ</div>
-              <div style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: "1.4" }}>
-                ตั้งค่ายศ ราคา และตรวจดูรายการสั่งซื้อ
-              </div>
-            </Link>
-
-            {/* 5. Announcements */}
-            <Link
-              href="/announcements"
-              style={{
-                textDecoration: "none",
-                background: "rgba(255, 255, 255, 0.03)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: "14px",
-                padding: "16px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-                transition: "all 0.2s ease",
-              }}
-              className="quick-nav-card"
-            >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "10px",
-                    background: "rgba(255, 159, 10, 0.15)",
-                    color: "#ff9f0a",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                  </svg>
-                </div>
-              </div>
-              <div style={{ fontWeight: 600, fontSize: "15px", color: "#fff" }}>สตูดิโอประกาศ</div>
-              <div style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: "1.4" }}>
-                สร้างและส่งข้อความ Embed ลงดิสคอร์ด
-              </div>
-            </Link>
-
-            {/* 6. Admins */}
-            <Link
-              href="/admins"
-              style={{
-                textDecoration: "none",
-                background: "rgba(255, 255, 255, 0.03)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: "14px",
-                padding: "16px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-                transition: "all 0.2s ease",
-              }}
-              className="quick-nav-card"
-            >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "10px",
-                    background: "rgba(90, 200, 250, 0.15)",
-                    color: "#5ac8fa",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                    <circle cx="9" cy="7" r="4"/>
-                  </svg>
-                </div>
-                <span className="badge badge-purple" style={{ fontSize: "11px" }}>
-                  {data.totalAdmins} คน
-                </span>
-              </div>
-              <div style={{ fontWeight: 600, fontSize: "15px", color: "#fff" }}>ทีมแอดมิน & ยศ</div>
-              <div style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: "1.4" }}>
-                ผูกยศ Discord กับตำแหน่งแอดมิน
-              </div>
-            </Link>
-
-            {/* 7. Backups */}
-            <Link
-              href="/backups"
-              style={{
-                textDecoration: "none",
-                background: "rgba(255, 255, 255, 0.03)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: "14px",
-                padding: "16px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-                transition: "all 0.2s ease",
-              }}
-              className="quick-nav-card"
-            >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "10px",
-                    background: "rgba(100, 210, 255, 0.15)",
-                    color: "#64d2ff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                  </svg>
-                </div>
-              </div>
-              <div style={{ fontWeight: 600, fontSize: "15px", color: "#fff" }}>สำรองและกู้ยศ</div>
-              <div style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: "1.4" }}>
-                บันทึก Snapshot สมาชิกและยศสำรองฉุกเฉิน
-              </div>
-            </Link>
-
-            {/* 8. Settings */}
             <Link
               href="/settings"
               style={{
-                textDecoration: "none",
-                background: "rgba(255, 255, 255, 0.03)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: "14px",
-                padding: "16px",
-                display: "flex",
-                flexDirection: "column",
+                display: "inline-flex",
+                alignItems: "center",
                 gap: "8px",
+                padding: "13px 26px",
+                borderRadius: "9999px",
+                background: "rgba(255, 255, 255, 0.05)",
+                border: "1px solid rgba(255, 255, 255, 0.12)",
+                color: "#ffffff",
+                fontSize: "15px",
+                fontWeight: 500,
+                textDecoration: "none",
+                backdropFilter: "blur(12px)",
                 transition: "all 0.2s ease",
               }}
-              className="quick-nav-card"
             >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "10px",
-                    background: "rgba(255, 255, 255, 0.1)",
-                    color: "#e5e5ea",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="3"/>
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                  </svg>
-                </div>
-              </div>
-              <div style={{ fontWeight: 600, fontSize: "15px", color: "#fff" }}>ตั้งค่าระบบ</div>
-              <div style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: "1.4" }}>
-                PromptPay, TrueMoney, ห้อง Log สลิป
-              </div>
+              <span>เกี่ยวกับระบบ</span>
             </Link>
           </div>
-        </div>
 
-        {/* ======================================================== */}
-        {/* 3. CORE STATS GRID                                       */}
-        {/* ======================================================== */}
-        <div className="stats-grid mb-24">
-          <div className="stat-card" id="stat-admins">
-            <div className="stat-card-header">
-              <div className="stat-card-icon">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                  <circle cx="9" cy="7" r="4"/>
-                </svg>
-              </div>
-              <div className="stat-card-change positive">Active</div>
-            </div>
-            <div className="stat-card-value">{data.totalAdmins}</div>
-            <div className="stat-card-label">แอดมินทั้งหมด</div>
-          </div>
-
-          <div className="stat-card" id="stat-attendance">
-            <div className="stat-card-header">
-              <div className="stat-card-icon">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <polyline points="12 6 12 12 16 14"/>
-                </svg>
-              </div>
-              <div className="stat-card-change positive">วันนี้</div>
-            </div>
-            <div className="stat-card-value">{data.activeToday}</div>
-            <div className="stat-card-label">ตอกบัตรวันนี้</div>
-          </div>
-
-          <div className="stat-card" id="stat-transactions">
-            <div className="stat-card-header">
-              <div className="stat-card-icon">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/>
-                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-                </svg>
-              </div>
-            </div>
-            <div className="stat-card-value">{data.totalTransactions}</div>
-            <div className="stat-card-label">ยอดซื้อยศทั้งหมด</div>
-          </div>
-
-          <div className="stat-card" id="stat-revenue">
-            <div className="stat-card-header">
-              <div className="stat-card-icon">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="12" x2="12" y1="2" y2="22"/>
-                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                </svg>
-              </div>
-              <div className="stat-card-change positive">7 วัน</div>
-            </div>
-            <div className="stat-card-value">{formatCurrency(data.weeklyRevenue)}</div>
-            <div className="stat-card-label">รายได้สัปดาห์นี้</div>
-          </div>
-        </div>
-
-        {/* ======================================================== */}
-        {/* 4. 2-COLUMN ACTIVITY & ATTENDANCE                        */}
-        {/* ======================================================== */}
-        <div className="grid-2">
-          {/* Recent Attendance */}
-          <div className="card" id="recent-attendance-card">
-            <div className="card-header">
-              <h3 className="card-title">
-                <span className="card-title-icon">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
-                  </svg>
-                </span>
-                การตอกบัตรล่าสุด
-              </h3>
-            </div>
-            <div className="card-body" style={{ padding: 0 }}>
-              {data.recentAttendance.length > 0 ? (
-                <div className="data-table-wrapper">
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>แอดมิน</th>
-                        <th>เข้างาน</th>
-                        <th>ออกงาน</th>
-                        <th>สถานะ</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.recentAttendance.map((att) => (
-                        <tr key={att.id}>
-                          <td>
-                            <div className="table-user">
-                              <div className="table-avatar">
-                                <img
-                                  src={getDiscordAvatarUrl(att.user.discordId, att.user.avatar)}
-                                  alt={att.user.displayName || att.user.username}
-                                />
-                              </div>
-                              <div className="table-user-name">
-                                {att.user.displayName || att.user.username}
-                              </div>
-                            </div>
-                          </td>
-                          <td style={{ color: "var(--text-primary)" }}>
-                            {new Date(att.clockIn).toLocaleTimeString("th-TH", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </td>
-                          <td style={{ color: "var(--text-muted)" }}>
-                            {att.clockOut
-                              ? new Date(att.clockOut).toLocaleTimeString("th-TH", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })
-                              : "—"}
-                          </td>
-                          <td>
-                            <span
-                              className={`badge ${
-                                att.status === "ON_TIME"
-                                  ? "badge-success"
-                                  : att.status === "LATE"
-                                    ? "badge-warning"
-                                    : "badge-error"
-                              }`}
-                            >
-                              {att.status === "ON_TIME"
-                                ? "ตรงเวลา"
-                                : att.status === "LATE"
-                                  ? "สาย"
-                                  : "ออกก่อน"}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="empty-state">
-                  <p className="empty-state-title">ยังไม่มีการตอกบัตร</p>
-                  <p className="empty-state-text">บันทึกจะแสดงที่นี่เมื่อมีแอดมินใช้ /clockin</p>
-                </div>
+          {/* Urgent Action Pills (if pending slips or open tickets exist) */}
+          {(data.pendingSlipsCount > 0 || data.openTicketsCount > 0) && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "10px",
+                flexWrap: "wrap",
+                marginBottom: "36px",
+              }}
+            >
+              {data.pendingSlipsCount > 0 && (
+                <Link
+                  href="/slips"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "6px 14px",
+                    borderRadius: "9999px",
+                    background: "rgba(255, 159, 10, 0.14)",
+                    border: "1px solid rgba(255, 159, 10, 0.35)",
+                    color: "#ff9f0a",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    textDecoration: "none",
+                  }}
+                >
+                  <span>⚠️ มีสลิปรอตรวจสอบ {data.pendingSlipsCount} รายการ</span>
+                  <span>→</span>
+                </Link>
+              )}
+              {data.openTicketsCount > 0 && (
+                <Link
+                  href="/tickets"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "6px 14px",
+                    borderRadius: "9999px",
+                    background: "rgba(41, 151, 255, 0.14)",
+                    border: "1px solid rgba(41, 151, 255, 0.35)",
+                    color: "#2997ff",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    textDecoration: "none",
+                  }}
+                >
+                  <span>💬 มีทิกเก็ตเปิดค้าง {data.openTicketsCount} เคส</span>
+                  <span>→</span>
+                </Link>
               )}
             </div>
+          )}
+
+          {/* Centered Metric Summary Cards with 3D Tilt & Laser Border Beams */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gap: "16px",
+              width: "100%",
+              maxWidth: "760px",
+            }}
+          >
+            {/* Card 1 - Admins */}
+            <TiltCard beamColor="#00F0FF" style={{ borderRadius: "18px" }}>
+              <div
+                style={{
+                  background: "rgba(255, 255, 255, 0.03)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  borderRadius: "18px",
+                  padding: "24px 20px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backdropFilter: "blur(20px)",
+                  boxShadow: "0 8px 30px rgba(0, 0, 0, 0.4)",
+                  height: "100%",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "36px",
+                    fontWeight: 700,
+                    color: "#ffffff",
+                    letterSpacing: "-0.03em",
+                    lineHeight: 1.1,
+                    marginBottom: "8px",
+                  }}
+                >
+                  {data.totalAdmins}
+                </div>
+                <div style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.5)", fontWeight: 400 }}>
+                  ทีมงานในระบบ
+                </div>
+              </div>
+            </TiltCard>
+
+            {/* Card 2 - Weekly Revenue */}
+            <TiltCard beamColor="#FFD700" style={{ borderRadius: "18px" }}>
+              <div
+                style={{
+                  background: "rgba(255, 255, 255, 0.03)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  borderRadius: "18px",
+                  padding: "24px 20px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backdropFilter: "blur(20px)",
+                  boxShadow: "0 8px 30px rgba(0, 0, 0, 0.4)",
+                  height: "100%",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "36px",
+                    fontWeight: 700,
+                    color: "#ffffff",
+                    letterSpacing: "-0.03em",
+                    lineHeight: 1.1,
+                    marginBottom: "8px",
+                  }}
+                >
+                  ฿{formatCurrency(data.weeklyRevenue)}
+                </div>
+                <div style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.5)", fontWeight: 400 }}>
+                  ยอดขายยศ (7 วัน)
+                </div>
+              </div>
+            </TiltCard>
+
+            {/* Card 3 - Status */}
+            <TiltCard beamColor="#30D158" style={{ borderRadius: "18px" }}>
+              <div
+                style={{
+                  background: "rgba(255, 255, 255, 0.03)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  borderRadius: "18px",
+                  padding: "24px 20px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backdropFilter: "blur(20px)",
+                  boxShadow: "0 8px 30px rgba(0, 0, 0, 0.4)",
+                  height: "100%",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "36px",
+                    fontWeight: 700,
+                    color: "#30d158",
+                    letterSpacing: "-0.03em",
+                    lineHeight: 1.1,
+                    marginBottom: "8px",
+                  }}
+                >
+                  100%
+                </div>
+                <div style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.5)", fontWeight: 400 }}>
+                  สถานะระบบออนไลน์
+                </div>
+              </div>
+            </TiltCard>
+          </div>
+        </div>
+      </section>
+
+      {/* ======================================================== */}
+      {/* 2. AUDIENCE & PURPOSE SECTION (FROM REFERENCE SCREENSHOT) */}
+      {/* ======================================================== */}
+      <section
+        style={{
+          width: "100%",
+          maxWidth: "1080px",
+          margin: "0 auto",
+        }}
+      >
+        <div
+          style={{
+            background: "linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            borderRadius: "24px",
+            padding: "44px 48px",
+            boxShadow: "0 20px 48px -12px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.06)",
+            backdropFilter: "blur(24px)",
+          }}
+        >
+          {/* Small Cyan Sub-header */}
+          <div
+            style={{
+              fontSize: "11px",
+              fontWeight: 700,
+              color: "#2997ff",
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              marginBottom: "14px",
+            }}
+          >
+            AUDIENCE & PURPOSE
           </div>
 
-          {/* Activity Feed */}
-          <div className="card" id="activity-feed-card">
-            <div className="card-header">
-              <h3 className="card-title">
-                <span className="card-title-icon">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="8" x2="21" y1="6" y2="6"/>
-                    <line x1="8" x2="21" y1="12" y2="12"/>
-                    <line x1="8" x2="21" y1="18" y2="18"/>
-                    <line x1="3" x2="3.01" y1="6" y2="6"/>
-                    <line x1="3" x2="3.01" y1="12" y2="12"/>
-                    <line x1="3" x2="3.01" y1="18" y2="18"/>
-                  </svg>
-                </span>
-                กิจกรรมล่าสุด
-              </h3>
+          {/* Section Title */}
+          <h2
+            style={{
+              fontSize: "clamp(22px, 3vw, 30px)",
+              fontWeight: 700,
+              color: "#ffffff",
+              letterSpacing: "-0.025em",
+              lineHeight: 1.25,
+              margin: "0 0 16px",
+            }}
+          >
+            กลุ่มผู้ใช้งานเป้าหมาย & ศูนย์ควบคุมระบบ
+          </h2>
+
+          {/* Section Body */}
+          <p
+            style={{
+              fontSize: "15px",
+              color: "rgba(255, 255, 255, 0.7)",
+              lineHeight: 1.75,
+              margin: 0,
+              maxWidth: "880px",
+            }}
+          >
+            ออกแบบมาเพื่อให้ผู้ดูแลและทีมงานเข้าถึงเครื่องมือจัดการเซิร์ฟเวอร์ได้อย่างราบรื่น
+            ตรวจสอบสลิปโอนเงิน อนุมัติยศอัตโนมัติ ติดตามเวลาทำงานของแอดมิน และดูแลสมาชิกผ่านระบบทิกเก็ตได้อย่างสะดวกและมีประสิทธิภาพสูงสุด
+            พร้อมระบบความปลอดภัยคุ้มครองสิทธิ์เจ้าของสูงสุด (Root Owner) ตลอด 24 ชั่วโมง
+          </p>
+        </div>
+      </section>
+
+      {/* ======================================================== */}
+      {/* 3. CORE SYSTEMS SHOWCASE (SCROLLABLE PRODUCT TOUR)       */}
+      {/* ======================================================== */}
+      <section
+        id="systems-showcase"
+        style={{
+          width: "100%",
+          maxWidth: "1080px",
+          margin: "0 auto",
+          display: "flex",
+          flexDirection: "column",
+          gap: "24px",
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "12px" }}>
+          <div>
+            <div
+              style={{
+                fontSize: "11px",
+                fontWeight: 700,
+                color: "#2997ff",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                marginBottom: "6px",
+              }}
+            >
+              CORE CAPABILITIES
             </div>
-            <div className="card-body">
-              {data.recentLogs.length > 0 ? (
-                <div className="activity-feed">
-                  {data.recentLogs.map((log) => (
-                    <div className="activity-item" key={log.id}>
-                      <div className="activity-icon">
-                        {log.category === "ATTENDANCE" ? (
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <circle cx="12" cy="12" r="10"/>
-                            <polyline points="12 6 12 12 16 14"/>
-                          </svg>
-                        ) : log.category === "SHOP" ? (
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/>
-                            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-                          </svg>
-                        ) : (
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <rect width="18" height="12" x="3" y="6" rx="2"/>
-                            <path d="M12 2v4"/>
-                          </svg>
-                        )}
-                      </div>
-                      <div className="activity-content">
-                        <div className="activity-text">
-                          <strong>{log.user?.displayName || log.user?.username || "ระบบ"}</strong>{" "}
-                          <span style={{ color: "var(--text-secondary)" }}>{log.action}</span>
+            <h2
+              style={{
+                fontSize: "clamp(22px, 3vw, 28px)",
+                fontWeight: 700,
+                color: "#ffffff",
+                letterSpacing: "-0.02em",
+                margin: 0,
+              }}
+            >
+              แนะนำระบบการทำงานหลักของเว็บ
+            </h2>
+          </div>
+          <span style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.45)" }}>
+            กด ⌘K เพื่อค้นหาหรือข้ามไปยังหน้าใดก็ได้ทันที
+          </span>
+        </div>
+
+        {/* 6 Modular Capability Cards Grid */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+            gap: "20px",
+          }}
+        >
+          {/* Card 1: Slips */}
+          <div
+            style={{
+              background: "rgba(255, 255, 255, 0.02)",
+              border: "1px solid rgba(255, 255, 255, 0.07)",
+              borderRadius: "20px",
+              padding: "28px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              gap: "20px",
+              transition: "transform 0.2s ease, border-color 0.2s ease",
+            }}
+          >
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+                <span style={{ fontSize: "28px" }}>🧾</span>
+                <span
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    padding: "3px 10px",
+                    borderRadius: "9999px",
+                    background: "rgba(255, 159, 10, 0.12)",
+                    color: "#ff9f0a",
+                    border: "1px solid rgba(255, 159, 10, 0.25)",
+                  }}
+                >
+                  {data.pendingSlipsCount > 0 ? `รอตรวจ ${data.pendingSlipsCount}` : "สลิปพร้อมเพย์"}
+                </span>
+              </div>
+              <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#ffffff", margin: "0 0 10px" }}>
+                ระบบตรวจสลิปโอนเงิน
+              </h3>
+              <p style={{ fontSize: "13.5px", color: "rgba(255, 255, 255, 0.6)", lineHeight: 1.65, margin: 0 }}>
+                รับภาพสลิปที่สมาชิกส่งในห้อง Discord ตรวจสอบความถูกต้อง พร้อมปุ่มเติมยอดเงินเข้าบัญชีสมาชิกทันทีในคลิกเดียว
+              </p>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "16px", borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}>
+              <span style={{ fontSize: "12px", color: data.pendingSlipsCount > 0 ? "#ff9f0a" : "rgba(255, 255, 255, 0.4)" }}>
+                {data.pendingSlipsCount > 0 ? `⚠️ มีสลิปรอตรวจ ${data.pendingSlipsCount} รายการ` : "✓ ดำเนินการครบแล้ว"}
+              </span>
+              <Link
+                href="/slips"
+                style={{
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  color: "#0A84FF",
+                  textDecoration: "none",
+                }}
+              >
+                เปิดระบบตรวจสลิป →
+              </Link>
+            </div>
+          </div>
+
+          {/* Card 2: Tickets */}
+          <div
+            style={{
+              background: "rgba(255, 255, 255, 0.02)",
+              border: "1px solid rgba(255, 255, 255, 0.07)",
+              borderRadius: "20px",
+              padding: "28px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              gap: "20px",
+            }}
+          >
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+                <span style={{ fontSize: "28px" }}>🎫</span>
+                <span
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    padding: "3px 10px",
+                    borderRadius: "9999px",
+                    background: "rgba(41, 151, 255, 0.12)",
+                    color: "#2997ff",
+                    border: "1px solid rgba(41, 151, 255, 0.25)",
+                  }}
+                >
+                  บริการ & ซัพพอร์ต
+                </span>
+              </div>
+              <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#ffffff", margin: "0 0 10px" }}>
+                ระบบทิกเก็ตดูแลสมาชิก
+              </h3>
+              <p style={{ fontSize: "13.5px", color: "rgba(255, 255, 255, 0.6)", lineHeight: 1.65, margin: 0 }}>
+                ศูนย์รับเรื่องร้องเรียนและช่วยเหลือสมาชิกใน Discord แอดมินสามารถเคลมเคส แชทโต้ตอบ และบันทึกประวัติข้อความได้ครบถ้วน
+              </p>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "16px", borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}>
+              <span style={{ fontSize: "12px", color: data.openTicketsCount > 0 ? "#2997ff" : "rgba(255, 255, 255, 0.4)" }}>
+                {data.openTicketsCount > 0 ? `💬 มีเคสค้าง ${data.openTicketsCount} รายการ` : "✓ ไม่มีเคสค้าง"}
+              </span>
+              <Link
+                href="/tickets"
+                style={{
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  color: "#0A84FF",
+                  textDecoration: "none",
+                }}
+              >
+                เข้าสู่ศูนย์ทิกเก็ต →
+              </Link>
+            </div>
+          </div>
+
+          {/* Card 3: Shop */}
+          <div
+            style={{
+              background: "rgba(255, 255, 255, 0.02)",
+              border: "1px solid rgba(255, 255, 255, 0.07)",
+              borderRadius: "20px",
+              padding: "28px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              gap: "20px",
+            }}
+          >
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+                <span style={{ fontSize: "28px" }}>🛍️</span>
+                <span
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    padding: "3px 10px",
+                    borderRadius: "9999px",
+                    background: "rgba(48, 209, 88, 0.12)",
+                    color: "#30d158",
+                    border: "1px solid rgba(48, 209, 88, 0.25)",
+                  }}
+                >
+                  ร้านค้ายศอัตโนมัติ
+                </span>
+              </div>
+              <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#ffffff", margin: "0 0 10px" }}>
+                ร้านค้ายศ Discord
+              </h3>
+              <p style={{ fontSize: "13.5px", color: "rgba(255, 255, 255, 0.6)", lineHeight: 1.65, margin: 0 }}>
+                เปิดขายยศดิสคอร์ดให้สมาชิกซื้อผ่านคำสั่งในบอท พร้อมจัดการสต็อก ตั้งราคา และส่งข้อความแจ้งเตือนอัตโนมัติ
+              </p>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "16px", borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}>
+              <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.4)" }}>
+                สำเร็จ {data.totalTransactions} ครั้ง
+              </span>
+              <Link
+                href="/shop"
+                style={{
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  color: "#0A84FF",
+                  textDecoration: "none",
+                }}
+              >
+                จัดการร้านค้ายศ →
+              </Link>
+            </div>
+          </div>
+
+          {/* Card 4: Attendance */}
+          <div
+            style={{
+              background: "rgba(255, 255, 255, 0.02)",
+              border: "1px solid rgba(255, 255, 255, 0.07)",
+              borderRadius: "20px",
+              padding: "28px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              gap: "20px",
+            }}
+          >
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+                <span style={{ fontSize: "28px" }}>⏱️</span>
+                <span
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    padding: "3px 10px",
+                    borderRadius: "9999px",
+                    background: "rgba(167, 139, 250, 0.12)",
+                    color: "#a78bfa",
+                    border: "1px solid rgba(167, 139, 250, 0.25)",
+                  }}
+                >
+                  เวลาทำงาน
+                </span>
+              </div>
+              <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#ffffff", margin: "0 0 10px" }}>
+                ตอกบัตร & ห้องเสียง
+              </h3>
+              <p style={{ fontSize: "13.5px", color: "rgba(255, 255, 255, 0.6)", lineHeight: 1.65, margin: 0 }}>
+                บันทึกเวลาเข้า-ออกงานของแอดมิน ตรวจวัดระยะเวลาสแตนด์บายห้องเสียงใน Discord พร้อมระบบยื่นขอลางาน
+              </p>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "16px", borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}>
+              <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.4)" }}>
+                เข้างานวันนี้ {data.activeToday} คน
+              </span>
+              <Link
+                href="/attendance"
+                style={{
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  color: "#0A84FF",
+                  textDecoration: "none",
+                }}
+              >
+                ดูบันทึกเวลา →
+              </Link>
+            </div>
+          </div>
+
+          {/* Card 5: Admins & Root Owner */}
+          <div
+            style={{
+              background: "rgba(255, 255, 255, 0.02)",
+              border: "1px solid rgba(255, 255, 255, 0.07)",
+              borderRadius: "20px",
+              padding: "28px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              gap: "20px",
+            }}
+          >
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+                <span style={{ fontSize: "28px" }}>👥</span>
+                <span
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    padding: "3px 10px",
+                    borderRadius: "9999px",
+                    background: "rgba(255, 69, 58, 0.12)",
+                    color: "#ff453a",
+                    border: "1px solid rgba(255, 69, 58, 0.25)",
+                  }}
+                >
+                  ทีมงาน & สิทธิ์
+                </span>
+              </div>
+              <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#ffffff", margin: "0 0 10px" }}>
+                จัดการทีมงาน & สิทธิ์
+              </h3>
+              <p style={{ fontSize: "13.5px", color: "rgba(255, 255, 255, 0.6)", lineHeight: 1.65, margin: 0 }}>
+                กำหนดสิทธิ์รายบุคคล ซิงค์ยศจาก Discord และมีระบบคุ้มครองเจ้าของสูงสุด (Root Owner) ในระดับแกนโค้ด
+              </p>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "16px", borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}>
+              <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.4)" }}>
+                ทีมงานทั้งหมด {data.totalAdmins} ท่าน
+              </span>
+              <Link
+                href="/admins"
+                style={{
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  color: "#0A84FF",
+                  textDecoration: "none",
+                }}
+              >
+                จัดการทีมงาน →
+              </Link>
+            </div>
+          </div>
+
+          {/* Card 6: Settings */}
+          <div
+            style={{
+              background: "rgba(255, 255, 255, 0.02)",
+              border: "1px solid rgba(255, 255, 255, 0.07)",
+              borderRadius: "20px",
+              padding: "28px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              gap: "20px",
+            }}
+          >
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+                <span style={{ fontSize: "28px" }}>⚙️</span>
+                <span
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    padding: "3px 10px",
+                    borderRadius: "9999px",
+                    background: "rgba(255, 255, 255, 0.06)",
+                    color: "#a1a1a6",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                  }}
+                >
+                  การตั้งค่าบอท
+                </span>
+              </div>
+              <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#ffffff", margin: "0 0 10px" }}>
+                ตั้งค่าระบบ & ห้อง Discord
+              </h3>
+              <p style={{ fontSize: "13.5px", color: "rgba(255, 255, 255, 0.6)", lineHeight: 1.65, margin: 0 }}>
+                กำหนดห้องส่งแจ้งเตือนสำหรับบอท เชื่อมต่อบัญชีพร้อมเพย์ และมีปุ่มทดสอบส่ง Ping ข้อความเข้า Discord ได้ทันที
+              </p>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "16px", borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}>
+              <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.4)" }}>
+                7 หมวดหมู่การตั้งค่า
+              </span>
+              <Link
+                href="/settings"
+                style={{
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  color: "#0A84FF",
+                  textDecoration: "none",
+                }}
+              >
+                เปิดหน้าตั้งค่า →
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ======================================================== */}
+      {/* 4. RECENT ACTIVITY FEED                                  */}
+      {/* ======================================================== */}
+      <section
+        style={{
+          width: "100%",
+          maxWidth: "1080px",
+          margin: "0 auto 40px",
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
+          gap: "24px",
+        }}
+      >
+        {/* Recent Transactions */}
+        <div
+          style={{
+            background: "rgba(255, 255, 255, 0.02)",
+            border: "1px solid rgba(255, 255, 255, 0.07)",
+            borderRadius: "20px",
+            padding: "24px",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
+            <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#ffffff", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
+              <span>🛍️</span>
+              <span>รายการซื้อยศล่าสุด</span>
+            </h3>
+            <Link href="/shop" style={{ fontSize: "12.5px", color: "#0A84FF", textDecoration: "none" }}>
+              ดูทั้งหมด →
+            </Link>
+          </div>
+
+          <div>
+            {data.recentTransactions.length > 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {data.recentTransactions.map((tx) => (
+                  <div
+                    key={tx.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "12px 14px",
+                      borderRadius: "12px",
+                      background: "rgba(255, 255, 255, 0.02)",
+                      border: "1px solid rgba(255, 255, 255, 0.05)",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <img
+                        src={getDiscordAvatarUrl(tx.user.discordId, tx.user.avatar)}
+                        alt={tx.user.displayName || tx.user.username}
+                        style={{ width: "34px", height: "34px", borderRadius: "50%" }}
+                      />
+                      <div>
+                        <div style={{ fontSize: "13px", fontWeight: 600, color: "#ffffff" }}>
+                          {tx.user.displayName || tx.user.username}
                         </div>
-                        <div className="activity-time">{formatRelativeTime(log.createdAt)}</div>
+                        <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.45)" }}>
+                          ซื้อยศ <span style={{ color: "#2997ff" }}>{tx.role.name}</span> • {formatRelativeTime(tx.createdAt)}
+                        </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="empty-state">
-                  <p className="empty-state-title">ยังไม่มีกิจกรรม</p>
-                  <p className="empty-state-text">กิจกรรมของระบบจะบันทึกอัตโนมัติ</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* ======================================================== */}
-        {/* 5. RECENT PURCHASES                                      */}
-        {/* ======================================================== */}
-        <div className="card mt-24" id="recent-transactions-card">
-          <div className="card-header">
-            <h3 className="card-title">
-              <span className="card-title-icon">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                </svg>
-              </span>
-              การซื้อยศล่าสุด
-            </h3>
-          </div>
-          <div className="card-body" style={{ padding: 0 }}>
-            {data.recentTransactions.length > 0 ? (
-              <div className="data-table-wrapper">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>ผู้ซื้อ</th>
-                      <th>ยศ</th>
-                      <th>ราคา</th>
-                      <th>สถานะ</th>
-                      <th>วันที่</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.recentTransactions.map((tx) => (
-                      <tr key={tx.id}>
-                        <td>
-                          <div className="table-user">
-                            <div className="table-avatar">
-                              <img
-                                src={getDiscordAvatarUrl(tx.user.discordId, tx.user.avatar)}
-                                alt={tx.user.displayName || tx.user.username}
-                              />
-                            </div>
-                            <div className="table-user-name">
-                              {tx.user.displayName || tx.user.username}
-                            </div>
-                          </div>
-                        </td>
-                        <td>
-                          <span
-                            className="badge badge-purple"
-                            style={{
-                              borderColor: tx.role.color ? `${tx.role.color}40` : undefined,
-                              color: tx.role.color || undefined,
-                            }}
-                          >
-                            {tx.role.name}
-                          </span>
-                        </td>
-                        <td style={{ fontWeight: 600, color: "var(--text-primary)" }}>
-                          {formatCurrency(tx.price)}
-                        </td>
-                        <td>
-                          <span
-                            className={`badge ${
-                              tx.status === "COMPLETED"
-                                ? "badge-success"
-                                : tx.status === "REFUNDED"
-                                  ? "badge-warning"
-                                  : "badge-error"
-                            }`}
-                          >
-                            {tx.status === "COMPLETED"
-                              ? "สำเร็จ"
-                              : tx.status === "REFUNDED"
-                                ? "คืนเงิน"
-                                : "ยกเลิก"}
-                          </span>
-                        </td>
-                        <td style={{ color: "var(--text-muted)" }}>
-                          {formatRelativeTime(tx.createdAt)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    <div style={{ fontSize: "14px", fontWeight: 600, color: "#30d158" }}>
+                      ฿{formatCurrency(tx.price)}
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
-              <div className="empty-state">
-                <p className="empty-state-title">ยังไม่มีการซื้อยศ</p>
-                <p className="empty-state-text">ข้อมูลจะแสดงเมื่อมีสมาชิกซื้อยศผ่านคำสั่ง /buy</p>
+              <div style={{ padding: "40px", textAlign: "center", color: "rgba(255, 255, 255, 0.4)", fontSize: "13px" }}>
+                ยังไม่มีรายการซื้อยศ
               </div>
             )}
           </div>
         </div>
-      </div>
-    </>
+
+        {/* Recent Audit Logs */}
+        <div
+          style={{
+            background: "rgba(255, 255, 255, 0.02)",
+            border: "1px solid rgba(255, 255, 255, 0.07)",
+            borderRadius: "20px",
+            padding: "24px",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
+            <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#ffffff", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
+              <span>📜</span>
+              <span>บันทึกกิจกรรมล่าสุด (Audit Logs)</span>
+            </h3>
+            <Link href="/logs" style={{ fontSize: "12.5px", color: "#0A84FF", textDecoration: "none" }}>
+              ดูทั้งหมด →
+            </Link>
+          </div>
+
+          <div>
+            {data.recentLogs.length > 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {data.recentLogs.map((log) => (
+                  <div
+                    key={log.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "12px 14px",
+                      borderRadius: "12px",
+                      background: "rgba(255, 255, 255, 0.02)",
+                      border: "1px solid rgba(255, 255, 255, 0.05)",
+                    }}
+                  >
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: "13px", fontWeight: 500, color: "#ffffff" }}>
+                        {log.action}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "12px",
+                          color: "rgba(255, 255, 255, 0.45)",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          maxWidth: "260px",
+                          marginTop: "2px",
+                        }}
+                      >
+                        {log.details || log.category} • {formatRelativeTime(log.createdAt)}
+                      </div>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: "11px",
+                        padding: "3px 8px",
+                        borderRadius: "6px",
+                        background: "rgba(255, 255, 255, 0.05)",
+                        color: "rgba(255, 255, 255, 0.6)",
+                      }}
+                    >
+                      {log.category}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ padding: "40px", textAlign: "center", color: "rgba(255, 255, 255, 0.4)", fontSize: "13px" }}>
+                ยังไม่มีบันทึกกิจกรรม
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }

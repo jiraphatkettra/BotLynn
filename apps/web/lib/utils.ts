@@ -1,5 +1,24 @@
 import { type UserRole } from "@lynnbot/database";
 
+/**
+ * =========================================================================
+ * ROOT OWNER CONFIGURATION (เจ้าของสูงสุดของระบบ)
+ * =========================================================================
+ * กำหนด Discord ID ของเจ้าของสูงสุดเพียงผู้เดียว
+ * - สิทธิ์ในระบบ: OWNER
+ * - Owner คนอื่นไม่สามารถลบ หรือแก้ไข/ลดสิทธิ์เจ้าของสูงสุดได้
+ * - การแก้ไขหรือเปลี่ยน Discord ID จะต้องเข้ามาแก้ในไฟล์นี้หรือ packages/database/index.ts เท่านั้น
+ */
+export const ROOT_OWNER_DISCORD_ID = "1078869442609561691";
+
+/**
+ * ฟังก์ชันตรวจสอบว่าเป็นเจ้าของสูงสุด (Root Owner) หรือไม่
+ */
+export function isRootOwner(discordId?: string | null): boolean {
+  if (!discordId) return false;
+  return discordId === ROOT_OWNER_DISCORD_ID;
+}
+
 // Format date to Thai locale
 export function formatDate(date: Date | string): string {
   return new Date(date).toLocaleDateString("th-TH", {

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@lynnbot/database";
-import { getDiscordAvatarUrl } from "@/lib/utils";
+import { getDiscordAvatarUrl, isRootOwner } from "@/lib/utils";
 
 // GET - List admins with permissions, attendance, and transactions
 export async function GET() {
@@ -60,9 +60,36 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    const targetUser = await prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!targetUser) {
+      return NextResponse.json(
+        { error: "ไม่พบข้อมูลแอดมินในระบบ" },
+        { status: 404 }
+      );
+    }
+
+    // Root Owner protection: Cannot demote role or deactivate Root Owner
+    if (isRootOwner(targetUser.discordId)) {
+      if (role && role !== "OWNER") {
+        return NextResponse.json(
+          { error: "ไม่สามารถเปลี่ยนตำแหน่งหรือลดสิทธิ์ของเจ้าของสูงสุดได้ (Root Owner ล็อคตำแหน่ง Owner ถาวร)" },
+          { status: 403 }
+        );
+      }
+      if (isActive === false) {
+        return NextResponse.json(
+          { error: "ไม่สามารถระงับการใช้งานเจ้าของสูงสุดได้ (Root Owner)" },
+          { status: 403 }
+        );
+      }
+    }
+
     const updateData: any = {};
-    if (role) updateData.role = role;
-    if (isActive !== undefined) updateData.isActive = isActive;
+    if (role) updateData.role = isRootOwner(targetUser.discordId) ? "OWNER" : role;
+    if (isActive !== undefined) updateData.isActive = isRootOwner(targetUser.discordId) ? true : isActive;
 
     const admin = await prisma.user.update({
       where: { id },
@@ -157,6 +184,14 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json(
         { error: "ไม่พบข้อมูลแอดมินในระบบ" },
         { status: 404 }
+      );
+    }
+
+    // Root Owner protection: Cannot be deleted by anyone, even other Owners
+    if (isRootOwner(targetUser.discordId)) {
+      return NextResponse.json(
+        { error: "ไม่สามารถลบเจ้าของสูงสุดของระบบได้ (Root Owner ได้รับการปกป้อง ต้องแก้ไขในโค้ดเท่านั้น)" },
+        { status: 403 }
       );
     }
 

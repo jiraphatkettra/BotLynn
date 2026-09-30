@@ -1,6 +1,9 @@
 import Header from "@/components/Header";
 import { prisma } from "@lynnbot/database";
 import AttendanceContainer from "@/components/AttendanceContainer";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { isRootOwner } from "@/lib/utils";
 
 async function getAttendanceData() {
   const now = new Date();
@@ -43,7 +46,23 @@ async function getAttendanceData() {
 }
 
 export default async function AttendancePage() {
-  const data = await getAttendanceData();
+  const [data, session] = await Promise.all([
+    getAttendanceData(),
+    getServerSession(authOptions),
+  ]);
+
+  const sessionUser = session?.user as any;
+  const isManager =
+    sessionUser?.role === "OWNER" ||
+    sessionUser?.role === "MANAGER" ||
+    isRootOwner(sessionUser?.discordId);
+
+  const myActiveAttendance = sessionUser?.id
+    ? await prisma.attendance.findFirst({
+        where: { userId: sessionUser.id, clockOut: null },
+        orderBy: { clockIn: "desc" },
+      })
+    : null;
 
   return (
     <>
@@ -53,7 +72,11 @@ export default async function AttendancePage() {
       />
 
       <div className="page-content">
-        <AttendanceContainer data={data} />
+        <AttendanceContainer
+          data={data}
+          initialActiveAttendance={myActiveAttendance}
+          isManager={isManager}
+        />
       </div>
     </>
   );

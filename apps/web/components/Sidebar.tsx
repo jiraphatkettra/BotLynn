@@ -1,9 +1,10 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { getDiscordAvatarUrl } from "@/lib/utils";
+import { getDiscordAvatarUrl, isRootOwner } from "@/lib/utils";
 
 const navItems = [
   {
@@ -93,6 +94,31 @@ const navItems = [
         ),
       },
       {
+        href: "/leaves",
+        label: "ลาหยุด / ลากิจ",
+        icon: (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+            <line x1="16" x2="16" y1="2" y2="6"/>
+            <line x1="8" x2="8" y1="2" y2="6"/>
+            <line x1="3" x2="21" y1="10" y2="10"/>
+            <line x1="10" x2="14" y1="14" y2="18"/>
+            <line x1="14" x2="10" y1="14" y2="18"/>
+          </svg>
+        ),
+      },
+      {
+        href: "/voice",
+        label: "สถิติห้องเสียง",
+        icon: (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" x2="12" y1="19" y2="22"/>
+          </svg>
+        ),
+      },
+      {
         href: "/backups",
         label: "สำรองและกู้ยศ",
         icon: (
@@ -167,6 +193,39 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { data: session } = useSession();
   const user = session?.user as any;
 
+  // Real-time badge counts for pending tasks
+  const [badges, setBadges] = useState<{ pendingSlips: number; openTickets: number }>({
+    pendingSlips: 0,
+    openTickets: 0,
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchBadges() {
+      try {
+        const res = await fetch("/api/badges");
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) {
+            setBadges({
+              pendingSlips: Number(data.pendingSlips) || 0,
+              openTickets: Number(data.openTickets) || 0,
+            });
+          }
+        }
+      } catch {
+        // ignore errors
+      }
+    }
+
+    fetchBadges();
+    const interval = setInterval(fetchBadges, 30000); // Poll every 30s
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []); // Run on mount, poll every 30s without spamming on page route changes
+
   return (
     <aside className={`sidebar ${isOpen ? "open" : ""}`} id="sidebar">
       {/* Brand */}
@@ -202,16 +261,33 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <div className="sidebar-section-title">{section.section}</div>
             {section.items.map((item) => {
               const isActive = pathname === item.href;
+              const badgeCount =
+                item.href === "/slips"
+                  ? badges.pendingSlips
+                  : item.href === "/tickets"
+                  ? badges.openTickets
+                  : 0;
+              const badgeType = item.href === "/slips" ? "warning" : "info";
+
               return (
                 <Link
                   key={item.href}
                   href={item.href}
+                  prefetch={true}
                   onClick={onClose}
                   className={`sidebar-link ${isActive ? "active" : ""}`}
                   id={`nav-${item.href.replace("/", "") || "dashboard"}`}
                 >
                   <span className="sidebar-link-icon">{item.icon}</span>
-                  <span>{item.label}</span>
+                  <span className="sidebar-link-text">{item.label}</span>
+                  {badgeCount > 0 && (
+                    <span
+                      className={`sidebar-badge ${badgeType} pulse`}
+                      title={`${badgeCount} รายการรอดำเนินการ`}
+                    >
+                      {badgeCount}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -235,8 +311,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <div className="sidebar-user-name">
               {user?.displayName || user?.name || "Admin"}
             </div>
-            <div className="sidebar-user-role">
-              {user?.role || "Staff"}
+            <div className="sidebar-user-role" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              {isRootOwner(user?.discordId) ? (
+                <span style={{ color: "#fbbf24", fontWeight: 600 }}>👑 Owner (Root)</span>
+              ) : (
+                user?.role || "Staff"
+              )}
             </div>
           </div>
           <button

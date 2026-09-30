@@ -69,7 +69,7 @@ export default async function ShopPage() {
 
         {/* Transaction History */}
         <div className="card" id="shop-transactions-card">
-          <div className="card-header">
+          <div className="card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <h3 className="card-title">
               <span className="card-title-icon">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -78,6 +78,26 @@ export default async function ShopPage() {
               </span>
               ประวัติการซื้อยศล่าสุด
             </h3>
+            <a
+              href="/api/export/sales"
+              download
+              className="btn btn-secondary"
+              style={{
+                padding: "6px 12px",
+                fontSize: "12px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                textDecoration: "none",
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              📥 ส่งออกยอดขาย CSV
+            </a>
           </div>
           <div className="card-body" style={{ padding: 0 }}>
             {data.recentTransactions.length > 0 ? (

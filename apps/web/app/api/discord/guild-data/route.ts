@@ -8,9 +8,9 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
     const userRole = (session?.user as any)?.role;
 
-    if (userRole !== "OWNER") {
+    if (userRole !== "OWNER" && userRole !== "MANAGER") {
       return NextResponse.json(
-        { error: "เฉพาะ SuperAdmin (OWNER) เท่านั้นที่สามารถเข้าถึงได้" },
+        { error: "เฉพาะ SuperAdmin หรือ Manager เท่านั้นที่สามารถเข้าถึงได้" },
         { status: 403 }
       );
     }

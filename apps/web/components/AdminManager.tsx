@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { getRoleInfo, getDiscordAvatarUrl } from "@/lib/utils";
+import { getRoleInfo, getDiscordAvatarUrl, isRootOwner, ROOT_OWNER_DISCORD_ID } from "@/lib/utils";
 import CustomSelect from "@/components/CustomSelect";
+import HolographicCard from "@/components/HolographicCard";
 
 interface PermissionItem {
   id: string;
@@ -78,6 +79,7 @@ export default function AdminManager({
   const [admins, setAdmins] = useState<AdminUser[]>(initialAdmins);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState<string>("ALL");
+  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
 
   // Selected admin for modals
   const [profileTarget, setProfileTarget] = useState<AdminUser | null>(null);
@@ -129,6 +131,57 @@ export default function AdminManager({
     navigator.clipboard.writeText(text);
     setCopiedId(text);
     setTimeout(() => setCopiedId(null), 2000);
+  }
+
+  // Wallet Adjustment States
+  const [walletTarget, setWalletTarget] = useState<AdminUser | null>(null);
+  const [walletAmount, setWalletAmount] = useState<string>("100");
+  const [walletType, setWalletType] = useState<"TOPUP" | "DEDUCT">("TOPUP");
+  const [walletNote, setWalletNote] = useState<string>("");
+  const [adjustingWallet, setAdjustingWallet] = useState(false);
+  const [walletError, setWalletError] = useState("");
+
+  async function handleConfirmWalletAdjust() {
+    if (!walletTarget) return;
+    const num = parseFloat(walletAmount);
+    if (isNaN(num) || num <= 0) {
+      setWalletError("กรุณาระบุจำนวนเงินเป็นตัวเลขที่มากกว่า 0");
+      return;
+    }
+
+    setAdjustingWallet(true);
+    setWalletError("");
+    const signedAmount = walletType === "TOPUP" ? num : -num;
+
+    try {
+      const res = await fetch("/api/wallet/adjust", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: walletTarget.id,
+          amount: signedAmount,
+          note: walletNote.trim() || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setAdmins((prev) =>
+          prev.map((a) => (a.id === walletTarget.id ? { ...a, balance: data.balance } : a))
+        );
+        showToast(
+          `ปรับปรุงยอดเงินให้ ${walletTarget.displayName || walletTarget.username} สำเร็จ (คงเหลือ: ฿${data.balance.toLocaleString()})`,
+          "success"
+        );
+        setWalletTarget(null);
+      } else {
+        setWalletError(data.error || "ไม่สามารถปรับยอดเงินได้");
+      }
+    } catch (e: any) {
+      setWalletError(e.message || "เกิดข้อผิดพลาดในการเชื่อมต่อ");
+    } finally {
+      setAdjustingWallet(false);
+    }
   }
 
   // Fetch Discord Roles and current mappings when opening modal
@@ -233,6 +286,10 @@ export default function AdminManager({
   // Delete Admin
   async function handleConfirmDeleteAdmin() {
     if (!deleteTarget || !isOwner) return;
+    if (isRootOwner(deleteTarget.discordId)) {
+      setDeleteError("ไม่สามารถลบเจ้าของสูงสุด (Root Owner) ออกจากระบบได้ ต้องแก้ไขในโค้ดเท่านั้น");
+      return;
+    }
     setDeletingAdmin(true);
     setDeleteError("");
 
@@ -283,6 +340,10 @@ export default function AdminManager({
     setPermError("");
     setSaveSuccessMsg("");
 
+    const isTargetRoot = isRootOwner(permTarget.discordId);
+    const finalRole = isTargetRoot ? "OWNER" : selectedRole;
+    const finalIsActive = isTargetRoot ? true : selectedIsActive;
+
     try {
       const permsArray = Object.entries(permissionsState).map(([permission, granted]) => ({
         permission,
@@ -294,8 +355,8 @@ export default function AdminManager({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: permTarget.id,
-          role: selectedRole,
-          isActive: selectedIsActive,
+          role: finalRole,
+          isActive: finalIsActive,
           permissions: permsArray,
         }),
       });
@@ -365,11 +426,43 @@ export default function AdminManager({
       )}
 
       {/* 1. Proportional Stats Row */}
-      <div className="stats-grid mb-24">
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <div className="stat-card-icon">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: 16,
+          marginBottom: 24,
+        }}
+      >
+        <div
+          style={{
+            background: "rgba(255, 255, 255, 0.025)",
+            border: "1px solid rgba(255, 255, 255, 0.07)",
+            borderRadius: 18,
+            padding: "20px 24px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.35)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+            <span style={{ fontSize: 13, color: "rgba(255, 255, 255, 0.5)", fontWeight: 500 }}>
+              แอดมินทั้งหมด
+            </span>
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                background: "rgba(255, 255, 255, 0.05)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "rgba(255, 255, 255, 0.7)",
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                 <circle cx="9" cy="7" r="4" />
                 <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
@@ -377,64 +470,141 @@ export default function AdminManager({
               </svg>
             </div>
           </div>
-          <div className="stat-card-value">{admins.length}</div>
-          <div className="stat-card-label">แอดมินทั้งหมด</div>
+          <div style={{ fontSize: 32, fontWeight: 700, color: "#ffffff", letterSpacing: "-0.03em" }}>
+            {admins.length}
+          </div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <div className="stat-card-icon" style={{ color: "var(--success)" }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <div
+          style={{
+            background: "rgba(255, 255, 255, 0.025)",
+            border: "1px solid rgba(255, 255, 255, 0.07)",
+            borderRadius: 18,
+            padding: "20px 24px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.35)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+            <span style={{ fontSize: 13, color: "rgba(255, 255, 255, 0.5)", fontWeight: 500 }}>
+              เปิดใช้งานอยู่
+            </span>
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                background: "rgba(48, 209, 88, 0.12)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#30d158",
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                 <polyline points="22 4 12 14.01 9 11.01" />
               </svg>
             </div>
           </div>
-          <div className="stat-card-value">
+          <div style={{ fontSize: 32, fontWeight: 700, color: "#ffffff", letterSpacing: "-0.03em" }}>
             {admins.filter((a) => a.isActive).length}
           </div>
-          <div className="stat-card-label">เปิดใช้งานอยู่</div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <div className="stat-card-icon" style={{ color: "var(--accent)" }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <div
+          style={{
+            background: "rgba(255, 255, 255, 0.025)",
+            border: "1px solid rgba(255, 255, 255, 0.07)",
+            borderRadius: 18,
+            padding: "20px 24px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.35)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+            <span style={{ fontSize: 13, color: "rgba(255, 255, 255, 0.5)", fontWeight: 500 }}>
+              ผู้จัดการ / Owner
+            </span>
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                background: "rgba(10, 132, 255, 0.12)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#2997ff",
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
               </svg>
             </div>
           </div>
-          <div className="stat-card-value">
+          <div style={{ fontSize: 32, fontWeight: 700, color: "#ffffff", letterSpacing: "-0.03em" }}>
             {admins.filter((a) => a.role === "OWNER" || a.role === "MANAGER").length}
           </div>
-          <div className="stat-card-label">ผู้จัดการ / Owner</div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <div className="stat-card-icon" style={{ color: "var(--purple, #8b5cf6)" }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <div
+          style={{
+            background: "rgba(255, 255, 255, 0.025)",
+            border: "1px solid rgba(255, 255, 255, 0.07)",
+            borderRadius: 18,
+            padding: "20px 24px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.35)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+            <span style={{ fontSize: 13, color: "rgba(255, 255, 255, 0.5)", fontWeight: 500 }}>
+              Admin / Mod
+            </span>
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                background: "rgba(167, 139, 250, 0.12)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#a78bfa",
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
               </svg>
             </div>
           </div>
-          <div className="stat-card-value">
+          <div style={{ fontSize: 32, fontWeight: 700, color: "#ffffff", letterSpacing: "-0.03em" }}>
             {admins.filter((a) => a.role === "ADMIN" || a.role === "MODERATOR").length}
           </div>
-          <div className="stat-card-label">Admin / Mod</div>
         </div>
       </div>
 
-      {/* 2. Management & Filter Bar */}
+      {/* 2. Management & Filter Bar (Apple Pro Toolbar) */}
       <div
-        className="card mb-24"
         style={{
-          padding: "16px 20px",
+          background: "rgba(255, 255, 255, 0.02)",
+          border: "1px solid rgba(255, 255, 255, 0.08)",
+          borderRadius: 18,
+          padding: "12px 18px",
           display: "flex",
           flexWrap: "wrap",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: 16,
+          gap: 14,
+          marginBottom: 28,
+          backdropFilter: "blur(20px)",
         }}
       >
         {/* Left: Search & Filter Tabs */}
@@ -442,24 +612,38 @@ export default function AdminManager({
           <div style={{ position: "relative", minWidth: 220, maxWidth: 300, width: "100%" }}>
             <input
               type="text"
-              className="form-input"
               placeholder="ค้นหาชื่อ, @username, ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
                 height: 38,
                 paddingLeft: 36,
+                paddingRight: 12,
                 fontSize: 13,
                 width: "100%",
+                background: "rgba(255, 255, 255, 0.04)",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+                borderRadius: 10,
+                color: "#ffffff",
+                outline: "none",
+                transition: "all 0.15s ease",
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = "rgba(10, 132, 255, 0.6)";
+                e.currentTarget.style.boxShadow = "0 0 0 3px rgba(10, 132, 255, 0.15)";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+                e.currentTarget.style.boxShadow = "none";
               }}
             />
             <svg
-              width="15"
-              height="15"
+              width="14"
+              height="14"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth="2"
+              strokeWidth="2.2"
               strokeLinecap="round"
               strokeLinejoin="round"
               style={{
@@ -467,7 +651,7 @@ export default function AdminManager({
                 left: 12,
                 top: "50%",
                 transform: "translateY(-50%)",
-                color: "var(--text-muted)",
+                color: "rgba(255, 255, 255, 0.4)",
               }}
             >
               <circle cx="11" cy="11" r="8" />
@@ -475,7 +659,7 @@ export default function AdminManager({
             </svg>
           </div>
 
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <div className="apple-segmented">
             {[
               { id: "ALL", label: "ทั้งหมด" },
               { id: "OWNER", label: "Owner" },
@@ -486,13 +670,44 @@ export default function AdminManager({
               <button
                 key={tab.id}
                 type="button"
-                className={`btn btn-sm ${filterRole === tab.id ? "btn-primary" : "btn-secondary"}`}
-                style={{ fontSize: 12, padding: "6px 12px", height: 38 }}
+                className={`apple-segmented-item ${filterRole === tab.id ? "active" : ""}`}
                 onClick={() => setFilterRole(tab.id)}
               >
                 {tab.label}
               </button>
             ))}
+          </div>
+
+          {/* Apple View Switcher (Grid vs Table) */}
+          <div className="apple-view-toggle">
+            <button
+              type="button"
+              className={`apple-view-toggle-btn ${viewMode === "grid" ? "active" : ""}`}
+              onClick={() => setViewMode("grid")}
+              title="มุมมองการ์ด (Grid)"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                <rect x="3" y="14" width="7" height="7" rx="1.5" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              className={`apple-view-toggle-btn ${viewMode === "table" ? "active" : ""}`}
+              onClick={() => setViewMode("table")}
+              title="มุมมองตาราง (Table)"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="8" y1="6" x2="21" y2="6" />
+                <line x1="8" y1="12" x2="21" y2="12" />
+                <line x1="8" y1="18" x2="21" y2="18" />
+                <line x1="3" y1="6" x2="3.01" y2="6" strokeWidth="3" />
+                <line x1="3" y1="12" x2="3.01" y2="12" strokeWidth="3" />
+                <line x1="3" y1="18" x2="3.01" y2="18" strokeWidth="3" />
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -502,7 +717,14 @@ export default function AdminManager({
             <button
               type="button"
               className="btn btn-secondary"
-              style={{ height: 38, fontSize: 13, gap: 8 }}
+              style={{
+                height: 38,
+                fontSize: 13,
+                gap: 8,
+                background: "rgba(255, 255, 255, 0.05)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                borderRadius: 10,
+              }}
               disabled={syncingStaff}
               onClick={handleQuickSync}
               title="ดึงข้อมูลสมาชิก Discord ที่มียศแอดมินเข้ามาในระบบทันที"
@@ -527,22 +749,261 @@ export default function AdminManager({
 
             <button
               type="button"
-              className="btn btn-primary"
-              style={{ height: 38, fontSize: 13, gap: 8 }}
+              style={{
+                height: 38,
+                fontSize: 13,
+                gap: 8,
+                padding: "0 16px",
+                display: "inline-flex",
+                alignItems: "center",
+                background: "rgba(10, 132, 255, 0.14)",
+                border: "1px solid rgba(10, 132, 255, 0.32)",
+                borderRadius: 10,
+                color: "#2997ff",
+                fontWeight: 550,
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
               onClick={handleOpenRoleMappingModal}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
                 <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
               </svg>
-              ตั้งค่ายศแอดมิน (Role Mapping)
+              <span>ตั้งค่ายศแอดมิน (Role Mapping)</span>
             </button>
           </div>
         )}
       </div>
 
-      {/* 3. Admin Cards Grid */}
+      {/* 3. Admins List (Grid vs Table View) */}
       {filteredAdmins.length > 0 ? (
+        viewMode === "table" ? (
+          <div className="apple-table-wrap mb-24">
+            <table className="apple-table">
+              <thead>
+                <tr>
+                  <th>สมาชิกทีมงาน</th>
+                  <th>บทบาท</th>
+                  <th>สถานะ</th>
+                  <th>ตอกบัตร</th>
+                  <th>ยอดขาย</th>
+                  <th>วันที่เพิ่ม</th>
+                  <th style={{ textAlign: "right" }}>จัดการ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredAdmins.map((admin) => {
+                  const roleInfo = getRoleInfo(admin.role);
+                  const lastAttendance = admin.attendances?.[0];
+                  const isSelf = admin.id === currentUserId;
+                  const isRoot = isRootOwner(admin.discordId);
+
+                  return (
+                    <tr key={admin.id}>
+                      {/* User Info */}
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          <div
+                            style={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: "50%",
+                              overflow: "hidden",
+                              background: "rgba(255,255,255,0.06)",
+                              flexShrink: 0,
+                            }}
+                          >
+                            <img
+                              src={getDiscordAvatarUrl(admin.discordId, admin.avatar)}
+                              alt={admin.username}
+                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                            />
+                          </div>
+                          <div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <span style={{ fontWeight: 600, color: "#ffffff" }}>
+                                {admin.displayName || admin.username}
+                              </span>
+                              {isRoot && (
+                                <span
+                                  className="apple-pill-badge apple-pill-badge-warning"
+                                  style={{
+                                    fontSize: 11,
+                                    padding: "2px 8px",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 4,
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                                    <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14" />
+                                  </svg>
+                                  Owner (Root)
+                                </span>
+                              )}
+                              {isSelf && (
+                                <span className="apple-pill-badge apple-pill-badge-info" style={{ fontSize: 10, padding: "2px 7px" }}>
+                                  คุณ
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+                              @{admin.username} • ID: {admin.discordId}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Role */}
+                      <td>
+                        <span
+                          className={`apple-pill-badge ${
+                            admin.role === "OWNER"
+                              ? "apple-pill-badge-warning"
+                              : admin.role === "MANAGER"
+                              ? "apple-pill-badge-info"
+                              : "apple-pill-badge-neutral"
+                          }`}
+                        >
+                          {roleInfo.label}
+                        </span>
+                      </td>
+
+                      {/* Status */}
+                      <td>
+                        {admin.isActive ? (
+                          <span className="apple-pill-badge apple-pill-badge-success">
+                            ✓ ใช้งาน
+                          </span>
+                        ) : (
+                          <span className="apple-pill-badge apple-pill-badge-danger">
+                            ✕ ระงับ
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Attendance */}
+                      <td>
+                        <div style={{ fontSize: 13, fontWeight: 500 }}>
+                          {admin._count.attendances} ครั้ง
+                        </div>
+                        {lastAttendance ? (
+                          <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                            ล่าสุด: {new Date(lastAttendance.clockIn).toLocaleDateString("th-TH", { day: "numeric", month: "short" })}
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: 11, color: "var(--text-disabled)" }}>
+                            ยังไม่เคยตอก
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Transactions */}
+                      <td>
+                        <div style={{ fontSize: 13, fontWeight: 500 }}>
+                          {admin._count.transactions} รายการ
+                        </div>
+                      </td>
+
+                      {/* Joined Date */}
+                      <td style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                        {new Date(admin.createdAt).toLocaleDateString("th-TH", {
+                          day: "numeric",
+                          month: "short",
+                          year: "2-digit",
+                        })}
+                      </td>
+
+                      {/* Actions */}
+                      <td style={{ textAlign: "right" }}>
+                        <div style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            style={{ padding: "4px 10px", fontSize: 12 }}
+                            onClick={() => setProfileTarget(admin)}
+                          >
+                            โปรไฟล์
+                          </button>
+
+                          {isOwner && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              style={{ padding: "4px 10px", fontSize: 12 }}
+                              onClick={() => handleOpenPermissionsModal(admin)}
+                            >
+                              สิทธิ์
+                            </button>
+                          )}
+
+                          {isOwner && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              style={{
+                                padding: "4px 9px",
+                                fontSize: 11,
+                                color: "#34c759",
+                                borderColor: "rgba(52, 199, 89, 0.35)",
+                                background: "rgba(52, 199, 89, 0.06)",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 4,
+                              }}
+                              onClick={() => {
+                                setWalletTarget(admin);
+                                setWalletAmount("100");
+                                setWalletType("TOPUP");
+                                setWalletNote("");
+                                setWalletError("");
+                              }}
+                              title="จัดการและปรับยอดเงินในกระเป๋า (Wallet)"
+                            >
+                              💰 ฿{(admin.balance || 0).toLocaleString()}
+                            </button>
+                          )}
+
+                          {isOwner && !isSelf && (
+                            <button
+                              type="button"
+                              className="btn btn-sm"
+                              disabled={isRoot}
+                              onClick={() => !isRoot && setDeleteTarget(admin)}
+                              title={isRoot ? "ไม่สามารถลบเจ้าของสูงสุดได้" : "ลบแอดมินออกจากระบบ"}
+                              style={{
+                                padding: "4px 8px",
+                                background: isRoot ? "rgba(255, 255, 255, 0.04)" : "var(--danger-subtle)",
+                                color: isRoot ? "var(--text-disabled)" : "var(--danger)",
+                                border: isRoot ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(255, 69, 58, 0.2)",
+                                cursor: isRoot ? "not-allowed" : "pointer",
+                                opacity: isRoot ? 0.6 : 1,
+                              }}
+                            >
+                              {isRoot ? (
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                </svg>
+                              ) : (
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <polyline points="3 6 5 6 21 6" />
+                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                </svg>
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
         <div
           style={{
             display: "grid",
@@ -557,20 +1018,24 @@ export default function AdminManager({
             const isSelf = admin.id === currentUserId;
 
             return (
-              <div
+              <HolographicCard
                 key={admin.id}
-                style={{
-                  background: "var(--bg-card)",
-                  border: "1px solid var(--border-subtle)",
-                  borderRadius: "var(--radius-lg)",
-                  padding: "20px 22px",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                  gap: 16,
-                  transition: "all 0.2s ease",
-                }}
+                isOwner={isRootOwner(admin.discordId)}
               >
+                <div
+                  style={{
+                    background: "rgba(18, 18, 24, 0.75)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    borderRadius: "20px",
+                    padding: "20px 22px",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    gap: 16,
+                    height: "100%",
+                    backdropFilter: "blur(20px)",
+                  }}
+                >
                 <div>
                   {/* Card Header: Avatar & User Info */}
                   <div
@@ -626,6 +1091,28 @@ export default function AdminManager({
                         <span className={`role-badge ${roleInfo.className}`}>
                           {roleInfo.label}
                         </span>
+                        {isRootOwner(admin.discordId) && (
+                          <span
+                            className="role-badge"
+                            style={{
+                              background: "linear-gradient(135deg, rgba(251, 191, 36, 0.22) 0%, rgba(245, 158, 11, 0.12) 100%)",
+                              color: "#fbbf24",
+                              border: "1px solid rgba(251, 191, 36, 0.4)",
+                              boxShadow: "0 0 8px rgba(251, 191, 36, 0.15)",
+                              fontSize: 11,
+                              fontWeight: 700,
+                              letterSpacing: "0.02em",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 5,
+                            }}
+                          >
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                              <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14" />
+                            </svg>
+                            Owner (Root)
+                          </span>
+                        )}
                       </div>
                       <p
                         className="text-muted text-xs"
@@ -744,6 +1231,33 @@ export default function AdminManager({
                     {isOwner ? "สิทธิ์" : "ดูสิทธิ์"}
                   </button>
 
+                  {isOwner && (
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      style={{
+                        padding: "0 8px",
+                        fontSize: 11,
+                        color: "#34c759",
+                        borderColor: "rgba(52, 199, 89, 0.35)",
+                        background: "rgba(52, 199, 89, 0.06)",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                      onClick={() => {
+                        setWalletTarget(admin);
+                        setWalletAmount("100");
+                        setWalletType("TOPUP");
+                        setWalletNote("");
+                        setWalletError("");
+                      }}
+                      title="จัดการและปรับยอดเงินในกระเป๋า (Wallet)"
+                    >
+                      💰 ฿{(admin.balance || 0).toLocaleString()}
+                    </button>
+                  )}
+
                   {/* Delete Admin Button (Owner only) */}
                   {isOwner && (
                     <button
@@ -752,30 +1266,48 @@ export default function AdminManager({
                       style={{
                         padding: "0 10px",
                         fontSize: 12,
-                        color: isSelf ? "var(--text-disabled)" : "var(--danger)",
-                        borderColor: isSelf ? "transparent" : "rgba(255, 69, 58, 0.25)",
-                        background: isSelf ? "transparent" : "rgba(255, 69, 58, 0.06)",
+                        color: isSelf || isRootOwner(admin.discordId) ? "var(--text-disabled)" : "var(--danger)",
+                        borderColor: isSelf || isRootOwner(admin.discordId) ? "transparent" : "rgba(255, 69, 58, 0.25)",
+                        background: isSelf || isRootOwner(admin.discordId) ? "transparent" : "rgba(255, 69, 58, 0.06)",
+                        cursor: isSelf || isRootOwner(admin.discordId) ? "not-allowed" : "pointer",
+                        opacity: isSelf || isRootOwner(admin.discordId) ? 0.45 : 1,
                       }}
-                      disabled={isSelf}
-                      title={isSelf ? "ไม่สามารถลบบัญชีของตนเองได้" : "ลบแอดมินออกจากระบบ"}
+                      disabled={isSelf || isRootOwner(admin.discordId)}
+                      title={
+                        isRootOwner(admin.discordId)
+                          ? "เจ้าของสูงสุด (Root Owner) — ป้องกันการลบจากระบบ ต้องแก้ไขในโค้ดเท่านั้น"
+                          : isSelf
+                          ? "ไม่สามารถลบบัญชีของตนเองได้"
+                          : "ลบแอดมินออกจากระบบ"
+                      }
                       onClick={() => {
+                        if (isRootOwner(admin.discordId)) return;
                         setDeleteError("");
                         setDeleteTarget(admin);
                       }}
                     >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="3 6 5 6 21 6" />
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                        <line x1="10" y1="11" x2="10" y2="17" />
-                        <line x1="14" y1="11" x2="14" y2="17" />
-                      </svg>
+                      {isRootOwner(admin.discordId) ? (
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        </svg>
+                      ) : (
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                          <line x1="10" y1="11" x2="10" y2="17" />
+                          <line x1="14" y1="11" x2="14" y2="17" />
+                        </svg>
+                      )}
                     </button>
                   )}
                 </div>
               </div>
-            );
+            </HolographicCard>
+          );
           })}
         </div>
+        )
       ) : (
         <div className="card mb-24">
           <div className="card-body">
@@ -959,6 +1491,30 @@ export default function AdminManager({
                     {profileTarget._count.transactions} ครั้ง
                   </div>
                 </div>
+
+                <div
+                  style={{
+                    background: "rgba(52, 199, 89, 0.06)",
+                    border: "1px solid rgba(52, 199, 89, 0.25)",
+                    borderRadius: "var(--radius-md)",
+                    padding: 12,
+                    textAlign: "center",
+                  }}
+                >
+                  <span style={{ fontSize: 11, color: "#34c759", fontWeight: 600 }}>
+                    ยอดเงินในกระเป๋า
+                  </span>
+                  <div
+                    style={{
+                      fontSize: 18,
+                      fontWeight: 700,
+                      color: "#34c759",
+                      marginTop: 4,
+                    }}
+                  >
+                    ฿{(profileTarget.balance || 0).toLocaleString()}
+                  </div>
+                </div>
               </div>
 
               {/* Dates Info */}
@@ -1064,17 +1620,42 @@ export default function AdminManager({
                   </div>
                 )}
 
+                {/* Root Owner Banner */}
+                {isRootOwner(permTarget.discordId) && (
+                  <div
+                    style={{
+                      background: "rgba(251, 191, 36, 0.1)",
+                      border: "1px solid rgba(251, 191, 36, 0.3)",
+                      borderRadius: "var(--radius-md)",
+                      padding: "12px 14px",
+                      marginBottom: 16,
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 10,
+                      color: "#fbbf24",
+                    }}
+                  >
+                    <span style={{ fontSize: 18 }}>👑</span>
+                    <div style={{ fontSize: 13, lineHeight: 1.5 }}>
+                      <strong>บัญชีนี้คือเจ้าของสูงสุดของระบบ (Root Owner)</strong>
+                      <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2, color: "var(--text-secondary)" }}>
+                        มีบทบาทเป็น Owner ถาวร และได้รับการปกป้องในระดับโค้ด ห้ามลดสิทธิ์ ระงับการใช้งาน หรือลบออกจากระบบ (แก้ไขหรือเปลี่ยน Discord ID ได้ที่โค้ดเท่านั้น)
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Role Level Selector */}
                 <div className="form-group">
                   <label className="form-label">ระดับบทบาท (Role Level)</label>
                   <select
                     className="form-select"
-                    value={selectedRole}
-                    disabled={!isOwner || savingPerms}
+                    value={isRootOwner(permTarget.discordId) ? "OWNER" : selectedRole}
+                    disabled={!isOwner || savingPerms || isRootOwner(permTarget.discordId)}
                     onChange={(e) => setSelectedRole(e.target.value)}
                     style={{ height: 40 }}
                   >
-                    <option value="OWNER">Owner (สิทธิ์สูงสุดทุกระบบ)</option>
+                    <option value="OWNER">Owner (สิทธิ์สูงสุดทุกระบบ{isRootOwner(permTarget.discordId) ? " - ล็อคถาวร" : ""})</option>
                     <option value="MANAGER">Manager (ผู้จัดการระบบ)</option>
                     <option value="ADMIN">Admin (ผู้ดูแลทั่วไป)</option>
                     <option value="MODERATOR">Moderator (ผู้ช่วยดูแล)</option>
@@ -1086,12 +1667,12 @@ export default function AdminManager({
                   <label className="form-label">สถานะการเข้าใช้งานระบบ</label>
                   <label
                     className="flex items-center gap-8"
-                    style={{ fontSize: 13, cursor: isOwner ? "pointer" : "default" }}
+                    style={{ fontSize: 13, cursor: isOwner && !isRootOwner(permTarget.discordId) ? "pointer" : "default" }}
                   >
                     <input
                       type="checkbox"
-                      checked={selectedIsActive}
-                      disabled={!isOwner || savingPerms}
+                      checked={isRootOwner(permTarget.discordId) ? true : selectedIsActive}
+                      disabled={!isOwner || savingPerms || isRootOwner(permTarget.discordId)}
                       onChange={(e) => setSelectedIsActive(e.target.checked)}
                     />
                     <span>เปิดให้เข้าใช้งานระบบ Dashboard</span>
@@ -1480,6 +2061,23 @@ export default function AdminManager({
                   {deleteError}
                 </div>
               )}
+
+              {isRootOwner(deleteTarget.discordId) && (
+                <div
+                  style={{
+                    background: "rgba(251, 191, 36, 0.1)",
+                    border: "1px solid rgba(251, 191, 36, 0.3)",
+                    borderRadius: "var(--radius-md)",
+                    padding: "10px 14px",
+                    fontSize: 12,
+                    color: "#fbbf24",
+                    marginTop: 12,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  👑 <strong>ได้รับการปกป้อง:</strong> ผู้ใช้นี้คือเจ้าของสูงสุด (Root Owner) ระบบล็อคไม่ให้ลบออกจากระบบในทุกกรณี
+                </div>
+              )}
             </div>
 
             <div className="modal-footer">
@@ -1496,14 +2094,189 @@ export default function AdminManager({
                 type="button"
                 className="btn btn-danger"
                 style={{
-                  background: "var(--danger)",
-                  color: "#fff",
+                  background: isRootOwner(deleteTarget.discordId) ? "var(--bg-secondary)" : "var(--danger)",
+                  color: isRootOwner(deleteTarget.discordId) ? "var(--text-disabled)" : "#fff",
                   fontWeight: 500,
+                  cursor: isRootOwner(deleteTarget.discordId) ? "not-allowed" : "pointer",
                 }}
-                disabled={deletingAdmin}
+                disabled={deletingAdmin || isRootOwner(deleteTarget.discordId)}
                 onClick={handleConfirmDeleteAdmin}
               >
-                {deletingAdmin ? "กำลังลบ..." : "ยืนยันการลบ"}
+                {deletingAdmin ? "กำลังลบ..." : isRootOwner(deleteTarget.discordId) ? "ไม่สามารถลบได้" : "ยืนยันการลบ"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 5: WALLET ADJUSTMENT MODAL (Owner Only)                             */}
+      {/* ========================================================================= */}
+      {walletTarget && (
+        <div className="modal-overlay" onClick={() => !adjustingWallet && setWalletTarget(null)}>
+          <div
+            className="modal-card"
+            style={{ maxWidth: 450 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3 className="modal-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span>💰</span>
+                <span>ปรับปรุงยอดเงินกระเป๋า (Wallet)</span>
+              </h3>
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={() => setWalletTarget(null)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="modal-body" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {/* Target User Info */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "12px 14px",
+                  background: "rgba(255, 255, 255, 0.03)",
+                  borderRadius: 12,
+                  border: "1px solid rgba(255, 255, 255, 0.06)",
+                }}
+              >
+                <img
+                  src={getDiscordAvatarUrl(walletTarget.discordId, walletTarget.avatar)}
+                  alt={walletTarget.username}
+                  style={{ width: 42, height: 42, borderRadius: "50%", objectFit: "cover" }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, color: "#ffffff", fontSize: 14 }}>
+                    {walletTarget.displayName || walletTarget.username}
+                  </div>
+                  <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                    ยอดเงินปัจจุบัน:{" "}
+                    <span style={{ color: "#34c759", fontWeight: 700 }}>
+                      ฿{(walletTarget.balance || 0).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Type: Top-up or Deduct */}
+              <div>
+                <label style={{ display: "block", fontSize: 12, color: "var(--text-secondary)", marginBottom: 8, fontWeight: 500 }}>
+                  ประเภทการทำรายการ
+                </label>
+                <div className="apple-segmented" style={{ width: "100%" }}>
+                  <button
+                    type="button"
+                    className={`apple-segmented-item ${walletType === "TOPUP" ? "active" : ""}`}
+                    onClick={() => setWalletType("TOPUP")}
+                    style={walletType === "TOPUP" ? { background: "#34c759", color: "#000", fontWeight: 600 } : { flex: 1 }}
+                  >
+                    ➕ เติมเงิน (Top-up)
+                  </button>
+                  <button
+                    type="button"
+                    className={`apple-segmented-item ${walletType === "DEDUCT" ? "active" : ""}`}
+                    onClick={() => setWalletType("DEDUCT")}
+                    style={walletType === "DEDUCT" ? { background: "#ff453a", color: "#fff", fontWeight: 600 } : { flex: 1 }}
+                  >
+                    ➖ หักเงิน (Deduct)
+                  </button>
+                </div>
+              </div>
+
+              {/* Amount Input */}
+              <div>
+                <label style={{ display: "block", fontSize: 12, color: "var(--text-secondary)", marginBottom: 6, fontWeight: 500 }}>
+                  จำนวนเงิน (บาท)
+                </label>
+                <input
+                  type="number"
+                  className="form-input"
+                  min="1"
+                  step="1"
+                  value={walletAmount}
+                  onChange={(e) => setWalletAmount(e.target.value)}
+                  placeholder="เช่น 100"
+                  style={{ width: "100%", fontSize: 15, fontWeight: 600 }}
+                  autoFocus
+                />
+                {/* Preset Pills */}
+                <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+                  {[50, 100, 300, 500, 1000].map((amt) => (
+                    <button
+                      key={amt}
+                      type="button"
+                      onClick={() => setWalletAmount(String(amt))}
+                      style={{
+                        padding: "3px 8px",
+                        borderRadius: "var(--radius-pill)",
+                        background: walletAmount === String(amt) ? "rgba(255, 255, 255, 0.15)" : "rgba(255, 255, 255, 0.04)",
+                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                        color: walletAmount === String(amt) ? "#ffffff" : "var(--text-secondary)",
+                        fontSize: 11,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {amt.toLocaleString()} ฿
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Note Input */}
+              <div>
+                <label style={{ display: "block", fontSize: 12, color: "var(--text-secondary)", marginBottom: 6, fontWeight: 500 }}>
+                  หมายเหตุ / เหตุผล
+                </label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={walletNote}
+                  onChange={(e) => setWalletNote(e.target.value)}
+                  placeholder="เช่น เติมเงินสดผ่านแอดมิน, ค่าตอบแทนพิเศษ, คืนเงิน"
+                  style={{ width: "100%", fontSize: 13 }}
+                />
+              </div>
+
+              {/* Error Message */}
+              {walletError && (
+                <div style={{ color: "#ff453a", fontSize: 12, background: "rgba(255, 69, 58, 0.08)", padding: "8px 12px", borderRadius: 8 }}>
+                  ⚠️ {walletError}
+                </div>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={adjustingWallet}
+                onClick={() => setWalletTarget(null)}
+              >
+                ยกเลิก
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={adjustingWallet}
+                onClick={handleConfirmWalletAdjust}
+                style={{
+                  background: walletType === "TOPUP" ? "#34c759" : "#ff453a",
+                  borderColor: walletType === "TOPUP" ? "#34c759" : "#ff453a",
+                  color: walletType === "TOPUP" ? "#000000" : "#ffffff",
+                  fontWeight: 600,
+                }}
+              >
+                {adjustingWallet
+                  ? "กำลังบันทึก..."
+                  : walletType === "TOPUP"
+                  ? `ยืนยันเติมเงิน +฿${parseFloat(walletAmount || "0").toLocaleString()}`
+                  : `ยืนยันหักเงิน -฿${parseFloat(walletAmount || "0").toLocaleString()}`}
               </button>
             </div>
           </div>

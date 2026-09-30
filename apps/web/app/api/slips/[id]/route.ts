@@ -3,6 +3,69 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@lynnbot/database";
 
+// Helper to notify Discord (either channel or DM)
+async function notifyDiscordUser(
+  token: string,
+  discordId: string,
+  channelId: string | null,
+  embed: any
+) {
+  try {
+    let sent = false;
+
+    // 1. Try sending to ticket/submission channel if present
+    if (channelId) {
+      const channelRes = await fetch(
+        `https://discord.com/api/v10/channels/${channelId}/messages`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bot ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            content: `<@${discordId}>`,
+            embeds: [embed],
+          }),
+        }
+      );
+      if (channelRes.ok) sent = true;
+    }
+
+    // 2. If not sent to channel or no channel, attempt Direct Message
+    if (!sent && discordId) {
+      const dmRes = await fetch(
+        "https://discord.com/api/v10/users/@me/channels",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bot ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ recipient_id: discordId }),
+        }
+      );
+
+      if (dmRes.ok) {
+        const dmData = await dmRes.json();
+        await fetch(
+          `https://discord.com/api/v10/channels/${dmData.id}/messages`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bot ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ embeds: [embed] }),
+          }
+        );
+      }
+    }
+  } catch (err) {
+    console.error("Failed to send Discord notification for slip:", err);
+  }
+}
+
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
@@ -33,6 +96,8 @@ export async function PATCH(
     if (!reviewer) {
       return NextResponse.json({ error: "ไม่พบข้อมูลผู้ตรวจสอบ" }, { status: 403 });
     }
+
+    const token = process.env.DISCORD_TOKEN;
 
     if (action === "approve") {
       const parsedAmount = parseFloat(amount);
@@ -97,14 +162,36 @@ export async function PATCH(
         }),
       ]);
 
+      // Notify Discord user
+      if (token) {
+        const approveEmbed = {
+          title: "🎉  PAYMENT APPROVED • สลิปได้รับการอนุมัติแล้ว",
+          description:
+            `สลิปโอนเงินของคุณได้รับการตรวจสอบและอนุมัติผ่าน Web Dashboard เรียบร้อยแล้ว!\n\n` +
+            `• **ยอดเงินที่ได้รับ:** **+฿${parsedAmount.toLocaleString("th-TH", { minimumFractionDigits: 2 })}**\n` +
+            `• **รหัสอ้างอิง:** \`#${slip.id.slice(-6).toUpperCase()}\`\n` +
+            `• **ผู้อนุมัติ:** ${reviewer.displayName || reviewer.username}\n` +
+            `• **เวลาอนุมัติ:** <t:${Math.floor(Date.now() / 1000)}:f>\n` +
+            (note ? `• **หมายเหตุ:** ${note}\n\n` : `\n`) +
+            `> ยอดเงินถูกเติมเข้ากระเป๋าของคุณเรียบร้อยแล้ว สามารถนำไปซื้อยศได้ทันทีครับ ✨`,
+          color: 0x30d158,
+          timestamp: new Date().toISOString(),
+          footer: { text: "LynnBot Slip Verification • Web Dashboard" },
+        };
+        // Fire and don't await to keep response instant
+        notifyDiscordUser(token, slip.discordId, slip.channelId, approveEmbed);
+      }
+
       return NextResponse.json({ success: true, message: "อนุมัติสลิปสำเร็จ" });
     } else if (action === "reject") {
+      const rejectNote = note?.trim() || "ไม่ระบุสาเหตุ";
+
       await prisma.$transaction([
         prisma.slip.update({
           where: { id },
           data: {
             status: "REJECTED",
-            note: note || "ปฏิเสธผ่าน Web Dashboard",
+            note: rejectNote,
             reviewedById: reviewer.id,
             reviewedByName: reviewer.displayName || reviewer.username,
             reviewedAt: new Date(),
@@ -115,10 +202,28 @@ export async function PATCH(
             userId: reviewer.id,
             action: "ปฏิเสธสลิปโอนเงิน (Web)",
             category: "SLIP",
-            details: `${reviewer.username} ปฏิเสธสลิป #${slip.id.slice(-6).toUpperCase()} ของ ${slip.discordName} (สาเหตุ: ${note || "ไม่ระบุ"})`,
+            details: `${reviewer.username} ปฏิเสธสลิป #${slip.id.slice(-6).toUpperCase()} ของ ${slip.discordName} (สาเหตุ: ${rejectNote})`,
           },
         }),
       ]);
+
+      // Notify Discord user
+      if (token) {
+        const rejectEmbed = {
+          title: "❌  SLIP REJECTED • สลิปโอนเงินถูกปฏิเสธ",
+          description:
+            `สลิปโอนเงินของคุณไม่ผ่านการอนุมัติจากการตรวจสอบผ่าน Web Dashboard\n\n` +
+            `• **รหัสอ้างอิง:** \`#${slip.id.slice(-6).toUpperCase()}\`\n` +
+            `• **สาเหตุที่ปฏิเสธ:** **${rejectNote}**\n` +
+            `• **ผู้ตรวจสอบ:** ${reviewer.displayName || reviewer.username}\n` +
+            `• **เวลาตรวจสอบ:** <t:${Math.floor(Date.now() / 1000)}:f>\n\n` +
+            `> หากมีข้อสงสัยหรือต้องการส่งสลิปใหม่ สามารถเปิดทิกเก็ตหรือติดต่อแอดมินได้ครับ`,
+          color: 0xff453a,
+          timestamp: new Date().toISOString(),
+          footer: { text: "LynnBot Slip Verification • Web Dashboard" },
+        };
+        notifyDiscordUser(token, slip.discordId, slip.channelId, rejectEmbed);
+      }
 
       return NextResponse.json({ success: true, message: "ปฏิเสธสลิปเรียบร้อยแล้ว" });
     }

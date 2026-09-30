@@ -243,15 +243,26 @@ export default function VoiceStandbyWidget() {
                               border: "1px solid rgba(52,199,89,0.2)",
                             }}
                           >
-                            <span
-                              style={{
-                                width: "6px",
-                                height: "6px",
-                                borderRadius: "50%",
-                                background: "#34c759",
-                              }}
-                            />
-                            {item.currentChannel ? `ในห้อง ${item.currentChannel}` : "กำลังออนไลน์"}
+                            <div style={{ position: "relative", width: "8px", height: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                              <span className="voice-audio-pulse-ring" />
+                              <span
+                                style={{
+                                  position: "relative",
+                                  width: "6px",
+                                  height: "6px",
+                                  borderRadius: "50%",
+                                  background: "#34c759",
+                                  boxShadow: "0 0 8px #34c759",
+                                }}
+                              />
+                            </div>
+                            <span>{item.currentChannel ? `ในห้อง ${item.currentChannel}` : "กำลังออนไลน์"}</span>
+                            {/* Animated Audio Equalizer Visualizer */}
+                            <div style={{ display: "inline-flex", alignItems: "flex-end", gap: "2px", height: "10px", marginLeft: "2px" }}>
+                              <span style={{ width: "2px", height: "60%", background: "#34c759", borderRadius: "1px", animation: "pulseGlow 0.9s infinite alternate" }} />
+                              <span style={{ width: "2px", height: "100%", background: "#34c759", borderRadius: "1px", animation: "pulseGlow 0.7s infinite alternate 0.2s" }} />
+                              <span style={{ width: "2px", height: "45%", background: "#34c759", borderRadius: "1px", animation: "pulseGlow 1.1s infinite alternate 0.4s" }} />
+                            </div>
                           </span>
                         ) : (
                           <span style={{ fontSize: "12px", color: "#48484a" }}>

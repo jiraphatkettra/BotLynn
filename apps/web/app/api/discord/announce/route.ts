@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { channelId, title, description, color, imageUrl, mention } = body;
+    const { channelId, channelName, title, description, color, imageUrl, mention, mentionRoles, customMention } = body;
 
     if (!channelId || !title || !description) {
       return NextResponse.json(
@@ -59,9 +59,30 @@ export async function POST(request: Request) {
       embed.image = { url: imageUrl };
     }
 
-    let content = "";
-    if (mention === "everyone") content = "@everyone";
-    else if (mention === "here") content = "@here";
+    // Construct outer message content for Discord notifications
+    const contentParts: string[] = [];
+    if (mention === "everyone") {
+      contentParts.push("@everyone");
+    } else if (mention === "here") {
+      contentParts.push("@here");
+    }
+
+    if (Array.isArray(mentionRoles) && mentionRoles.length > 0) {
+      for (const rId of mentionRoles) {
+        if (typeof rId === "string" && rId.trim()) {
+          const formatted = `<@&${rId.trim()}>`;
+          if (!contentParts.includes(formatted)) {
+            contentParts.push(formatted);
+          }
+        }
+      }
+    }
+
+    if (customMention && typeof customMention === "string" && customMention.trim()) {
+      contentParts.push(customMention.trim());
+    }
+
+    const content = contentParts.join(" ").trim();
 
     const discordRes = await fetch(
       `https://discord.com/api/v10/channels/${channelId}/messages`,
@@ -74,6 +95,9 @@ export async function POST(request: Request) {
         body: JSON.stringify({
           content: content || undefined,
           embeds: [embed],
+          allowed_mentions: {
+            parse: ["everyone", "roles", "users"],
+          },
         }),
       }
     );
@@ -90,11 +114,22 @@ export async function POST(request: Request) {
         userId: (session.user as any).id,
         action: "ANNOUNCEMENT_SENT",
         category: "ANNOUNCEMENT",
-        details: `ส่งประกาศหัวข้อ "${title}" ลงห้อง ID: ${channelId}`,
+        details: `ส่งประกาศหัวข้อ "${title}" ${content ? `(แท็ก: ${content})` : "(ไม่แท็ก)"} ลงห้อง ID: ${channelId}`,
+        metadata: {
+          title,
+          description: description?.slice(0, 300),
+          channelId,
+          channelName: channelName || channelId,
+          mention,
+          mentionRoles: Array.isArray(mentionRoles) ? mentionRoles : [],
+          customMention: customMention || null,
+          color: color || null,
+          messageId: msgData?.id || null,
+        },
       },
     });
 
-    return NextResponse.json({ success: true, messageId: msgData.id });
+    return NextResponse.json({ success: true, messageId: msgData?.id });
   } catch (error: any) {
     console.error("POST /api/discord/announce error:", error);
     return NextResponse.json(

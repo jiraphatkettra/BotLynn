@@ -1,14 +1,9 @@
 import Header from "@/components/Header";
+import LogsViewer from "@/components/LogsViewer";
 import { prisma } from "@lynnbot/database";
-import { formatDateTime, formatRelativeTime, getDiscordAvatarUrl } from "@/lib/utils";
 
-async function getLogsData() {
-  const [logs, totalLogs, categoryCounts] = await Promise.all([
-    prisma.auditLog.findMany({
-      take: 100,
-      orderBy: { createdAt: "desc" },
-      include: { user: true },
-    }),
+async function getLogsStats() {
+  const [totalLogs, categoryCounts] = await Promise.all([
     prisma.auditLog.count(),
     prisma.auditLog.groupBy({
       by: ["category"],
@@ -16,7 +11,7 @@ async function getLogsData() {
     }),
   ]);
 
-  return { logs, totalLogs, categoryCounts };
+  return { totalLogs, categoryCounts };
 }
 
 const categoryIcons: Record<string, string> = {
@@ -27,6 +22,13 @@ const categoryIcons: Record<string, string> = {
   SYSTEM: "⚙️",
   BOT: "🤖",
   PERMISSION: "🔑",
+  VOICE: "🎙️",
+  TICKET: "🎫",
+  BACKUP: "💾",
+  WALLET: "💰",
+  ANNOUNCEMENT: "📢",
+  LEAVE: "🏖️",
+  SLIP: "🧾",
 };
 
 const categoryLabels: Record<string, string> = {
@@ -37,16 +39,28 @@ const categoryLabels: Record<string, string> = {
   SYSTEM: "ระบบ",
   BOT: "บอท",
   PERMISSION: "สิทธิ์",
+  VOICE: "ห้องเสียง",
+  TICKET: "ทิกเก็ต",
+  BACKUP: "สำรองข้อมูล",
+  WALLET: "กระเป๋าเงิน",
+  ANNOUNCEMENT: "ประกาศ",
+  LEAVE: "ลาหยุด",
+  SLIP: "สลิป",
+};
+
+export const metadata = {
+  title: "ประวัติกิจกรรม | LynnBot",
+  description: "บันทึกและตรวจสอบกิจกรรมทั้งหมดภายในระบบ พร้อมระบบค้นหาและกรอง",
 };
 
 export default async function LogsPage() {
-  const data = await getLogsData();
+  const data = await getLogsStats();
 
   return (
     <>
       <Header
         title="ประวัติกิจกรรม"
-        subtitle={`ทั้งหมด ${data.totalLogs} รายการ`}
+        subtitle={`บันทึกกิจกรรมทั้งหมด ${data.totalLogs.toLocaleString()} รายการ`}
       />
 
       <div className="page-content">
@@ -60,11 +74,11 @@ export default async function LogsPage() {
               key={cat.category}
               className="flex items-center gap-8"
               style={{
-                padding: "10px 18px",
+                padding: "8px 16px",
                 background: "var(--glass-bg)",
                 border: "1px solid var(--glass-border)",
                 borderRadius: "var(--radius-full)",
-                fontSize: 14,
+                fontSize: 13,
               }}
             >
               <span>{categoryIcons[cat.category] || "📋"}</span>
@@ -75,104 +89,14 @@ export default async function LogsPage() {
                   color: "var(--primary-300)",
                 }}
               >
-                {cat._count}
+                {cat._count.toLocaleString()}
               </span>
             </div>
           ))}
         </div>
 
-        {/* Logs Table */}
-        <div className="card" id="logs-table-card">
-          <div className="card-header">
-            <h3 className="card-title">
-              <span className="card-title-icon">📝</span>
-              บันทึกกิจกรรม
-            </h3>
-          </div>
-          <div className="card-body">
-            {data.logs.length > 0 ? (
-              <div className="data-table-wrapper">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>เวลา</th>
-                      <th>ผู้ใช้</th>
-                      <th>ประเภท</th>
-                      <th>การกระทำ</th>
-                      <th>รายละเอียด</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.logs.map((log) => (
-                      <tr key={log.id}>
-                        <td>
-                          <div>
-                            <div style={{ fontSize: 13 }}>
-                              {formatRelativeTime(log.createdAt)}
-                            </div>
-                            <div
-                              className="text-muted"
-                              style={{ fontSize: 11 }}
-                            >
-                              {formatDateTime(log.createdAt)}
-                            </div>
-                          </div>
-                        </td>
-                        <td>
-                          {log.user ? (
-                            <div className="table-user">
-                                <div className="table-avatar">
-                                  <img
-                                    src={getDiscordAvatarUrl(log.user.discordId, log.user.avatar)}
-                                    alt={log.user.displayName || log.user.username}
-                                  />
-                                </div>
-                              <div className="table-user-name">
-                                {log.user.displayName || log.user.username}
-                              </div>
-                            </div>
-                          ) : (
-                            <span className="text-muted">System</span>
-                          )}
-                        </td>
-                        <td>
-                          <span
-                            className={`badge ${
-                              log.category === "AUTH"
-                                ? "badge-info"
-                                : log.category === "ATTENDANCE"
-                                  ? "badge-success"
-                                  : log.category === "SHOP"
-                                    ? "badge-purple"
-                                    : log.category === "BOT"
-                                      ? "badge-warning"
-                                      : "badge-neutral"
-                            }`}
-                          >
-                            {categoryIcons[log.category]}{" "}
-                            {categoryLabels[log.category] || log.category}
-                          </span>
-                        </td>
-                        <td style={{ fontWeight: 500 }}>{log.action}</td>
-                        <td className="text-muted text-sm">
-                          {log.details || "—"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="empty-state">
-                <div className="empty-state-icon">📝</div>
-                <p className="empty-state-title">ยังไม่มีประวัติ</p>
-                <p className="empty-state-text">
-                  กิจกรรมจะถูกบันทึกอัตโนมัติ
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
+        {/* Interactive Logs Viewer */}
+        <LogsViewer />
       </div>
     </>
   );

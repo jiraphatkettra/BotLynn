@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } from "discord.js";
-import { prisma } from "@lynnbot/database";
+import { prisma, isRootOwner, ROOT_OWNER_DISCORD_ID } from "@lynnbot/database";
 import type { BotCommand } from "../index.js";
 
 export const adminCommand: BotCommand = {
@@ -66,9 +66,11 @@ export const adminCommand: BotCommand = {
         return;
       }
 
-      const lines = admins.map(
-        (a) => `**${a.displayName || a.username}** — ${a.role} • ตอกบัตร: ${a._count.attendances} ครั้ง`
-      );
+      const lines = admins.map((a) => {
+        const isRoot = isRootOwner(a.discordId);
+        const roleLabel = isRoot ? "👑 OWNER (Root Owner)" : a.role;
+        return `**${a.displayName || a.username}** — ${roleLabel} • ตอกบัตร: ${a._count.attendances} ครั้ง`;
+      });
 
       const embed = new EmbedBuilder()
         .setColor(0x2997ff)
@@ -104,6 +106,9 @@ export const adminCommand: BotCommand = {
         ? `<t:${Math.floor(lastAtt.clockIn.getTime() / 1000)}:R>`
         : "ยังไม่มีประวัติ";
 
+      const isRoot = isRootOwner(targetUser.id);
+      const roleLabel = isRoot ? "👑 OWNER (Root Owner - เจ้าของสูงสุด)" : admin.role;
+
       const embed = new EmbedBuilder()
         .setColor(0x2997ff)
         .setAuthor({
@@ -112,7 +117,7 @@ export const adminCommand: BotCommand = {
         })
         .setTitle("ข้อมูลแอดมิน")
         .setDescription(
-          `ตำแหน่ง: **${admin.role}** • ตอกบัตร: **${admin._count.attendances}** ครั้ง • ซื้อยศ: **${admin._count.transactions}** รายการ\nการตอกบัตรล่าสุด: ${lastSeen}`
+          `ตำแหน่ง: **${roleLabel}** • ตอกบัตร: **${admin._count.attendances}** ครั้ง • ซื้อยศ: **${admin._count.transactions}** รายการ\nการตอกบัตรล่าสุด: ${lastSeen}`
         )
         .setFooter({ text: "LynnBot" });
 
@@ -123,6 +128,14 @@ export const adminCommand: BotCommand = {
     if (subcommand === "setrole") {
       const targetUser = interaction.options.getUser("user", true);
       const newRole = interaction.options.getString("role", true) as any;
+
+      // Root Owner protection: Cannot change role away from OWNER
+      if (isRootOwner(targetUser.id) && newRole !== "OWNER") {
+        await interaction.editReply({
+          content: "❌ ไม่สามารถเปลี่ยนตำแหน่งหรือลดสิทธิ์ของเจ้าของสูงสุดของระบบได้ (Root Owner ได้รับการปกป้อง ต้องแก้ไขในโค้ดเท่านั้น)",
+        });
+        return;
+      }
 
       let admin = await prisma.user.findUnique({
         where: { discordId: targetUser.id },
@@ -135,20 +148,20 @@ export const adminCommand: BotCommand = {
             username: targetUser.username,
             displayName: targetUser.displayName || targetUser.username,
             avatar: targetUser.displayAvatarURL(),
-            role: newRole,
+            role: isRootOwner(targetUser.id) ? "OWNER" : newRole,
           },
         });
       } else {
         await prisma.user.update({
           where: { id: admin.id },
-          data: { role: newRole },
+          data: { role: isRootOwner(targetUser.id) ? "OWNER" : newRole },
         });
       }
 
       const embed = new EmbedBuilder()
         .setColor(0x30d158)
         .setTitle("ปรับตำแหน่งสำเร็จ")
-        .setDescription(`กำหนดให้ <@${targetUser.id}> เป็นตำแหน่ง **${newRole}** เรียบร้อยแล้ว`)
+        .setDescription(`กำหนดให้ <@${targetUser.id}> เป็นตำแหน่ง **${isRootOwner(targetUser.id) ? "OWNER" : newRole}** เรียบร้อยแล้ว`)
         .setFooter({ text: "LynnBot" });
 
       await interaction.editReply({ embeds: [embed] });

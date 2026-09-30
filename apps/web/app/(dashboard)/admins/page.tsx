@@ -4,6 +4,8 @@ import { prisma } from "@lynnbot/database";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+import { isRootOwner } from "@/lib/utils";
+
 async function getAdminsData() {
   const admins = await prisma.user.findMany({
     orderBy: { createdAt: "desc" },
@@ -31,8 +33,10 @@ export default async function AdminsPage() {
     getServerSession(authOptions),
   ]);
 
-  const isOwner = (session?.user as any)?.role === "OWNER";
-  const currentUserId = (session?.user as any)?.id;
+  const sessionUser = session?.user as any;
+  const isOwner =
+    sessionUser?.role === "OWNER" || isRootOwner(sessionUser?.discordId);
+  const currentUserId = sessionUser?.id;
 
   return (
     <>

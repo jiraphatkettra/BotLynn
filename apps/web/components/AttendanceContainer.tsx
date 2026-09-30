@@ -5,63 +5,184 @@ import VoiceStandbyWidget from "@/components/VoiceStandbyWidget";
 import LeaveManager from "@/components/LeaveManager";
 import { formatDate, formatTime, formatDuration, getDiscordAvatarUrl } from "@/lib/utils";
 
+interface AttendanceRecord {
+  id: string;
+  userId: string;
+  clockIn: string | Date;
+  clockOut: string | Date | null;
+  duration: number | null;
+  status: string;
+  note: string | null;
+  channel: string | null;
+  user: {
+    id: string;
+    discordId: string;
+    username: string;
+    displayName: string | null;
+    avatar: string | null;
+  };
+}
+
 interface AttendanceContainerProps {
   data: {
-    attendances: any[];
+    attendances: AttendanceRecord[];
     todayCount: number;
     monthCount: number;
     avgDuration: number;
     totalAdmins: number;
   };
+  initialActiveAttendance?: any;
+  isManager?: boolean;
 }
 
-export default function AttendanceContainer({ data }: AttendanceContainerProps) {
+export default function AttendanceContainer({
+  data,
+  initialActiveAttendance,
+  isManager = false,
+}: AttendanceContainerProps) {
   const [activeTab, setActiveTab] = useState<"attendance" | "leave">("attendance");
+  const [attendances, setAttendances] = useState<AttendanceRecord[]>(data.attendances);
+  const [myActive, setMyActive] = useState<any>(initialActiveAttendance || null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [forcingId, setForcingId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+  const showToast = (message: string, type: "success" | "error" = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const handleSelfClockIn = async () => {
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/attendance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channel: "Web Dashboard",
+          note: "ตอกบัตรเข้างานผ่าน Web Dashboard",
+        }),
+      });
+
+      const resData = await res.json();
+      if (res.ok) {
+        setMyActive(resData.data);
+        setAttendances((prev) => [resData.data, ...prev]);
+        showToast("ตอกบัตรเข้างานเรียบร้อยแล้ว ขอให้ทำงานอย่างราบรื่นครับ!", "success");
+      } else {
+        showToast(resData.error || "ไม่สามารถตอกบัตรเข้างานได้", "error");
+      }
+    } catch (e) {
+      showToast("เกิดข้อผิดพลาดในการเชื่อมต่อ", "error");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleSelfClockOut = async () => {
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/attendance", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          note: "ตอกบัตรออกงานผ่าน Web Dashboard",
+        }),
+      });
+
+      const resData = await res.json();
+      if (res.ok) {
+        setMyActive(null);
+        setAttendances((prev) =>
+          prev.map((a) => (a.id === resData.data.id ? { ...a, ...resData.data } : a))
+        );
+        showToast("ตอกบัตรออกงานเรียบร้อยแล้ว ขอบคุณสำหรับการทำงานครับ!", "success");
+      } else {
+        showToast(resData.error || "ไม่สามารถตอกบัตรออกงานได้", "error");
+      }
+    } catch (e) {
+      showToast("เกิดข้อผิดพลาดในการเชื่อมต่อ", "error");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleForceClockOut = async (attendanceId: string, staffName: string) => {
+    if (!confirm(`คุณต้องการบังคับตอกบัตรออกงานให้ "${staffName}" ใช่หรือไม่?`)) return;
+
+    setForcingId(attendanceId);
+    try {
+      const res = await fetch("/api/attendance", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          attendanceId,
+          isForce: true,
+        }),
+      });
+
+      const resData = await res.json();
+      if (res.ok) {
+        setAttendances((prev) =>
+          prev.map((a) => (a.id === attendanceId ? { ...a, ...resData.data } : a))
+        );
+        if (myActive?.id === attendanceId) {
+          setMyActive(null);
+        }
+        showToast(`บังคับออกงานให้ ${staffName} สำเร็จแล้ว`, "success");
+      } else {
+        showToast(resData.error || "ไม่สามารถบังคับออกงานได้", "error");
+      }
+    } catch (e) {
+      showToast("เกิดข้อผิดพลาดในการเชื่อมต่อ", "error");
+    } finally {
+      setForcingId(null);
+    }
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-      {/* Tab Switcher */}
-      <div
-        style={{
-          display: "flex",
-          gap: "8px",
-          background: "rgba(255,255,255,0.03)",
-          padding: "4px",
-          borderRadius: "10px",
-          border: "1px solid rgba(255,255,255,0.06)",
-          alignSelf: "flex-start",
-        }}
-      >
-        <button
-          onClick={() => setActiveTab("attendance")}
+      {/* Toast Notification */}
+      {toast && (
+        <div
           style={{
-            padding: "8px 16px",
-            borderRadius: "8px",
+            position: "fixed",
+            bottom: "24px",
+            right: "24px",
+            zIndex: 9999,
+            background: toast.type === "success" ? "#1e2b22" : "#321619",
+            border: `1px solid ${toast.type === "success" ? "#34c759" : "#ff3b30"}`,
+            color: "#ffffff",
+            padding: "12px 20px",
+            borderRadius: "10px",
+            boxShadow: "0 8px 30px rgba(0,0,0,0.5)",
             fontSize: "13px",
             fontWeight: 500,
-            border: "none",
-            cursor: "pointer",
-            background: activeTab === "attendance" ? "#ffffff" : "transparent",
-            color: activeTab === "attendance" ? "#000000" : "#86868b",
-            transition: "all 0.15s ease",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            animation: "scaleIn 0.2s ease-out",
           }}
+        >
+          <span>{toast.type === "success" ? "✅" : "⚠️"}</span>
+          <span>{toast.message}</span>
+        </div>
+      )}
+
+      {/* Apple Segmented Tab Switcher */}
+      <div className="apple-segmented" style={{ alignSelf: "flex-start" }}>
+        <button
+          type="button"
+          className={`apple-segmented-item ${activeTab === "attendance" ? "active" : ""}`}
+          onClick={() => setActiveTab("attendance")}
         >
           ⏱️ บันทึกการเข้างาน & ห้องเสียง
         </button>
 
         <button
+          type="button"
+          className={`apple-segmented-item ${activeTab === "leave" ? "active" : ""}`}
           onClick={() => setActiveTab("leave")}
-          style={{
-            padding: "8px 16px",
-            borderRadius: "8px",
-            fontSize: "13px",
-            fontWeight: 500,
-            border: "none",
-            cursor: "pointer",
-            background: activeTab === "leave" ? "#ffffff" : "transparent",
-            color: activeTab === "leave" ? "#000000" : "#86868b",
-            transition: "all 0.15s ease",
-          }}
         >
           🌴 ระบบแจ้งลางาน (Leave Requests)
         </button>
@@ -69,6 +190,120 @@ export default function AttendanceContainer({ data }: AttendanceContainerProps) 
 
       {activeTab === "attendance" ? (
         <>
+          {/* Quick Clock In/Out Banner for Logged In User */}
+          <div
+            className="card"
+            style={{
+              padding: "18px 24px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "16px",
+              background: myActive
+                ? "linear-gradient(90deg, rgba(52, 199, 89, 0.08) 0%, rgba(52, 199, 89, 0.02) 100%)"
+                : "rgba(255, 255, 255, 0.02)",
+              border: `1px solid ${
+                myActive ? "rgba(52, 199, 89, 0.3)" : "rgba(255, 255, 255, 0.08)"
+              }`,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+              <div
+                style={{
+                  width: "42px",
+                  height: "42px",
+                  borderRadius: "12px",
+                  background: myActive ? "rgba(52, 199, 89, 0.15)" : "rgba(255, 255, 255, 0.06)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "20px",
+                }}
+              >
+                {myActive ? "💼" : "⏱️"}
+              </div>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ fontSize: "15px", fontWeight: 600, color: "#ffffff" }}>
+                    สถานะการทำงานของคุณ
+                  </span>
+                  <span
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      background: myActive ? "#34c759" : "#86868b",
+                      boxShadow: myActive ? "0 0 8px #34c759" : "none",
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      color: myActive ? "#34c759" : "#86868b",
+                    }}
+                  >
+                    {myActive ? "กำลังปฏิบัติงาน (Clocked In)" : "ยังไม่ได้เข้างาน (Clocked Out)"}
+                  </span>
+                </div>
+                <div style={{ fontSize: "12px", color: "#86868b", marginTop: "3px" }}>
+                  {myActive
+                    ? `เข้างานเมื่อ: ${formatTime(myActive.clockIn)} (${formatDate(myActive.clockIn)})`
+                    : "คุณสามารถกดตอกบัตรเข้างานเพื่อบันทึกเวลาทำงานได้ทันทีจากที่นี่"}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              {myActive ? (
+                <button
+                  type="button"
+                  onClick={handleSelfClockOut}
+                  disabled={actionLoading}
+                  className="btn btn-danger"
+                  style={{
+                    padding: "8px 18px",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                  </svg>
+                  {actionLoading ? "กำลังบันทึก..." : "🔴 ตอกบัตรออกงาน"}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleSelfClockIn}
+                  disabled={actionLoading}
+                  className="btn btn-primary"
+                  style={{
+                    background: "#34c759",
+                    borderColor: "#34c759",
+                    color: "#000000",
+                    padding: "8px 18px",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  {actionLoading ? "กำลังบันทึก..." : "🟢 ตอกบัตรเข้างาน"}
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* Stats Grid */}
           <div className="stats-grid stagger">
             <div className="stat-card" id="att-stat-today">
@@ -157,7 +392,7 @@ export default function AttendanceContainer({ data }: AttendanceContainerProps) 
                   ประวัติการเข้างาน (บันทึกเวลาเข้า-ออก)
                 </h3>
                 <span style={{ fontSize: "12px", color: "#86868b" }}>
-                  บันทึกจากคำสั่ง /clockin และ /clockout
+                  บันทึกจากคำสั่ง Discord /clockin, /clockout และ Web Dashboard
                 </span>
               </div>
               <a
@@ -183,7 +418,7 @@ export default function AttendanceContainer({ data }: AttendanceContainerProps) 
             </div>
 
             <div className="card-body" style={{ padding: "0" }}>
-              {data.attendances.length > 0 ? (
+              {attendances.length > 0 ? (
                 <div className="table-responsive">
                   <table className="table" style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
@@ -194,11 +429,14 @@ export default function AttendanceContainer({ data }: AttendanceContainerProps) 
                         <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "left" }}>เวลาออกงาน</th>
                         <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "left" }}>ระยะเวลา</th>
                         <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "left" }}>สถานะ</th>
-                        <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "left" }}>หมายเหตุ</th>
+                        <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "left" }}>ช่องทาง / หมายเหตุ</th>
+                        {isManager && (
+                          <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "right" }}>การจัดการ</th>
+                        )}
                       </tr>
                     </thead>
                     <tbody>
-                      {data.attendances.map((att) => (
+                      {attendances.map((att) => (
                         <tr key={att.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
                           <td style={{ padding: "12px 20px" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -230,7 +468,16 @@ export default function AttendanceContainer({ data }: AttendanceContainerProps) 
                                 {formatTime(att.clockOut)}
                               </span>
                             ) : (
-                              <span style={{ padding: "3px 8px", borderRadius: "6px", fontSize: "11px", background: "rgba(52,199,89,0.12)", color: "#34c759" }}>
+                              <span
+                                style={{
+                                  padding: "3px 8px",
+                                  borderRadius: "6px",
+                                  fontSize: "11px",
+                                  background: "rgba(52,199,89,0.12)",
+                                  color: "#34c759",
+                                  fontWeight: 600,
+                                }}
+                              >
                                 กำลังทำงาน
                               </span>
                             )}
@@ -270,8 +517,34 @@ export default function AttendanceContainer({ data }: AttendanceContainerProps) 
                             )}
                           </td>
                           <td style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b" }}>
-                            {att.note || "—"}
+                            {att.note || att.channel || "—"}
                           </td>
+                          {isManager && (
+                            <td style={{ padding: "12px 20px", textAlign: "right" }}>
+                              {!att.clockOut && (
+                                <button
+                                  type="button"
+                                  disabled={forcingId === att.id}
+                                  onClick={() =>
+                                    handleForceClockOut(
+                                      att.id,
+                                      att.user.displayName || att.user.username
+                                    )
+                                  }
+                                  className="btn btn-secondary btn-sm"
+                                  style={{
+                                    fontSize: "11px",
+                                    padding: "3px 8px",
+                                    borderColor: "rgba(255, 159, 10, 0.4)",
+                                    color: "#ff9f0a",
+                                  }}
+                                  title="ปิดกะและบังคับออกงานให้แอดมินคนนี้"
+                                >
+                                  {forcingId === att.id ? "กำลังปิด..." : "บังคับออกงาน"}
+                                </button>
+                              )}
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -279,7 +552,7 @@ export default function AttendanceContainer({ data }: AttendanceContainerProps) 
                 </div>
               ) : (
                 <div style={{ textAlign: "center", padding: "40px", color: "#86868b" }}>
-                  ยังไม่มีข้อมูลเข้างาน แอดมินสามารถใช้คำสั่ง /clockin ใน Discord เพื่อเริ่มงาน
+                  ยังไม่มีข้อมูลเข้างาน แอดมินสามารถกดตอกบัตรเข้างานด้านบน หรือใช้คำสั่ง /clockin ใน Discord ได้ครับ
                 </div>
               )}
             </div>

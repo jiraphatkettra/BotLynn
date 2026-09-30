@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { formatDate, formatCurrency, getDiscordAvatarUrl } from "@/lib/utils";
+import { triggerCelebration } from "@/lib/confetti";
 
 interface Slip {
   id: string;
@@ -64,6 +65,27 @@ export default function SlipManager() {
   const [approveNote, setApproveNote] = useState<string>("");
   const [rejectReason, setRejectReason] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
+  const [isLaserScanning, setIsLaserScanning] = useState(true);
+  const [showApprovalCelebration, setShowApprovalCelebration] = useState<{ id: string; amount: number; user: string } | null>(null);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+
+  // Tab Title Badge
+  useEffect(() => {
+    if (stats.pending > 0) {
+      document.title = `(${stats.pending}) ตรวจสลิป | LynnBot`;
+    } else {
+      document.title = "ตรวจสลิป | LynnBot";
+    }
+  }, [stats.pending]);
+
+  // Auto-poll every 25s
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const interval = setInterval(() => {
+      fetchSlips();
+    }, 25000);
+    return () => clearInterval(interval);
+  }, [autoRefresh, activeTab, search]);
 
   const fetchSlips = async () => {
     try {
@@ -126,6 +148,20 @@ export default function SlipManager() {
       });
 
       if (res.ok) {
+        // Trigger metallic & neon celebration confetti!
+        triggerCelebration({
+          particleCount: 150,
+          spread: 85,
+          colors: ["#FFD700", "#00F0FF", "#30D158", "#FFFFFF", "#FF9F0A"],
+        });
+
+        setShowApprovalCelebration({
+          id: approvingSlip.id,
+          amount: amountVal,
+          user: approvingSlip.discordName,
+        });
+        setTimeout(() => setShowApprovalCelebration(null), 4500);
+
         setApprovingSlip(null);
         if (previewSlip?.id === approvingSlip.id) {
           setPreviewSlip(null);
@@ -255,53 +291,82 @@ export default function SlipManager() {
             justifyContent: "space-between",
           }}
         >
-          {/* Tab Buttons */}
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          {/* Tab Buttons with Apple Segmented Control */}
+          <div className="apple-segmented">
             <button
-              className={`btn btn-sm ${activeTab === "ALL" ? "btn-primary" : "btn-secondary"}`}
+              type="button"
+              className={`apple-segmented-item ${activeTab === "ALL" ? "active" : ""}`}
               onClick={() => setActiveTab("ALL")}
             >
               ทั้งหมด ({stats.total})
             </button>
             <button
-              className={`btn btn-sm ${activeTab === "PENDING" ? "btn-primary" : "btn-secondary"}`}
+              type="button"
+              className={`apple-segmented-item ${activeTab === "PENDING" ? "active" : ""}`}
               onClick={() => setActiveTab("PENDING")}
-              style={{
-                background: activeTab === "PENDING" ? "#ff9f0a" : undefined,
-                borderColor: activeTab === "PENDING" ? "#ff9f0a" : undefined,
-                color: activeTab === "PENDING" ? "#000" : undefined,
-              }}
+              style={activeTab === "PENDING" ? { background: "#ff9f0a", color: "#000" } : undefined}
             >
               ⏳ รอตรวจสอบ ({stats.pending})
             </button>
             <button
-              className={`btn btn-sm ${activeTab === "APPROVED" ? "btn-primary" : "btn-secondary"}`}
+              type="button"
+              className={`apple-segmented-item ${activeTab === "APPROVED" ? "active" : ""}`}
               onClick={() => setActiveTab("APPROVED")}
             >
-              ✅ อนุมัติแล้ว ({stats.approved})
+              ✓ อนุมัติแล้ว ({stats.approved})
             </button>
             <button
-              className={`btn btn-sm ${activeTab === "REJECTED" ? "btn-primary" : "btn-secondary"}`}
+              type="button"
+              className={`apple-segmented-item ${activeTab === "REJECTED" ? "active" : ""}`}
               onClick={() => setActiveTab("REJECTED")}
             >
-              ❌ ปฏิเสธ ({stats.rejected})
+              ✕ ปฏิเสธ ({stats.rejected})
             </button>
           </div>
 
-          {/* Search Bar */}
-          <form onSubmit={handleSearchSubmit} style={{ display: "flex", gap: "8px", minWidth: 260 }}>
-            <input
-              type="text"
-              className="form-input"
-              placeholder="ค้นหาชื่อผู้ใช้, Discord ID, รหัสทิกเก็ต..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{ fontSize: "13px" }}
-            />
-            <button type="submit" className="btn btn-secondary btn-sm">
-              ค้นหา
+          {/* Controls Right Side: Auto-refresh + Search */}
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+            <button
+              type="button"
+              onClick={() => setAutoRefresh(!autoRefresh)}
+              className="btn btn-secondary btn-sm"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                borderColor: autoRefresh ? "rgba(48, 209, 88, 0.4)" : "rgba(255, 255, 255, 0.1)",
+                color: autoRefresh ? "#30d158" : "var(--text-muted)",
+                fontSize: "12px",
+              }}
+              title="เปิด/ปิดการดึงข้อมูลสลิปใหม่อัตโนมัติทุก 25 วินาที"
+            >
+              <span
+                style={{
+                  width: "6px",
+                  height: "6px",
+                  borderRadius: "50%",
+                  background: autoRefresh ? "#30d158" : "#86868b",
+                  boxShadow: autoRefresh ? "0 0 6px #30d158" : "none",
+                }}
+              />
+              Auto Sync {autoRefresh ? "เปิด" : "ปิด"}
             </button>
-          </form>
+
+            {/* Search Bar */}
+            <form onSubmit={handleSearchSubmit} style={{ display: "flex", gap: "8px", minWidth: 260 }}>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="ค้นหาชื่อผู้ใช้, Discord ID, รหัสทิกเก็ต..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{ fontSize: "13px" }}
+              />
+              <button type="submit" className="btn btn-secondary btn-sm">
+                ค้นหา
+              </button>
+            </form>
+          </div>
         </div>
       </div>
 
@@ -579,7 +644,25 @@ export default function SlipManager() {
                 </p>
               </div>
 
-              <div style={{ display: "flex", gap: "8px" }}>
+              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  style={{
+                    background: isLaserScanning ? "rgba(0, 240, 255, 0.15)" : "rgba(255, 255, 255, 0.05)",
+                    borderColor: isLaserScanning ? "rgba(0, 240, 255, 0.45)" : "rgba(255, 255, 255, 0.12)",
+                    color: isLaserScanning ? "#00f0ff" : "rgba(255, 255, 255, 0.7)",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    boxShadow: isLaserScanning ? "0 0 12px rgba(0, 240, 255, 0.25)" : "none",
+                  }}
+                  onClick={() => setIsLaserScanning(!isLaserScanning)}
+                >
+                  <span style={{ fontSize: "12px" }}>🛰️</span>
+                  <span>{isLaserScanning ? "ปิดเลเซอร์สแกน" : "เปิดเลเซอร์สแกน"}</span>
+                </button>
+
                 <a
                   href={previewSlip.imageUrl}
                   target="_blank"
@@ -598,7 +681,7 @@ export default function SlipManager() {
               </div>
             </div>
 
-            {/* Body / Image */}
+            {/* Body / Image with Laser Scan Line */}
             <div
               style={{
                 padding: "20px",
@@ -607,20 +690,51 @@ export default function SlipManager() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                background: "rgba(0,0,0,0.6)",
+                background: "rgba(0,0,0,0.75)",
               }}
             >
-              <img
-                src={previewSlip.imageUrl}
-                alt="Full Slip Preview"
-                style={{
-                  maxWidth: "100%",
-                  maxHeight: "65vh",
-                  objectFit: "contain",
-                  borderRadius: "12px",
-                  boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
-                }}
-              />
+              <div style={{ position: "relative", display: "inline-block", maxWidth: "100%", maxHeight: "65vh" }}>
+                <img
+                  src={previewSlip.imageUrl}
+                  alt="Full Slip Preview"
+                  style={{
+                    maxWidth: "100%",
+                    maxHeight: "65vh",
+                    objectFit: "contain",
+                    borderRadius: "12px",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
+                    display: "block",
+                  }}
+                />
+
+                {/* Laser Scanning Beam */}
+                {isLaserScanning && (
+                  <>
+                    <div className="slip-laser-scanner" />
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "10px",
+                        right: "10px",
+                        background: "rgba(10, 15, 25, 0.85)",
+                        border: "1px solid rgba(0, 240, 255, 0.45)",
+                        borderRadius: "6px",
+                        padding: "4px 8px",
+                        fontSize: "10px",
+                        fontWeight: 600,
+                        color: "#00f0ff",
+                        fontFamily: "var(--font-mono, monospace)",
+                        letterSpacing: "0.06em",
+                        boxShadow: "0 0 10px rgba(0, 240, 255, 0.3)",
+                        pointerEvents: "none",
+                        zIndex: 11,
+                      }}
+                    >
+                      AI SCANNING // OCR ACTIVE
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Footer Actions */}
@@ -734,6 +848,29 @@ export default function SlipManager() {
                   step="0.01"
                   autoFocus
                 />
+                {/* Apple Quick Amount Preset Pills */}
+                <div style={{ display: "flex", gap: "6px", marginTop: "8px", flexWrap: "wrap" }}>
+                  {[50, 100, 200, 300, 500, 1000].map((amt) => (
+                    <button
+                      key={amt}
+                      type="button"
+                      onClick={() => setApproveAmount(String(amt))}
+                      style={{
+                        padding: "4px 10px",
+                        borderRadius: "var(--radius-pill)",
+                        background: approveAmount === String(amt) ? "rgba(48, 209, 88, 0.2)" : "rgba(255, 255, 255, 0.05)",
+                        border: `1px solid ${approveAmount === String(amt) ? "rgba(48, 209, 88, 0.5)" : "rgba(255, 255, 255, 0.08)"}`,
+                        color: approveAmount === String(amt) ? "#30d158" : "var(--text-secondary)",
+                        fontSize: "12px",
+                        fontWeight: 500,
+                        cursor: "pointer",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      {amt.toLocaleString()} ฿
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div>
@@ -846,9 +983,48 @@ export default function SlipManager() {
                   placeholder="เช่น ไม่พบยอดโอนเงินจริงในบัญชี, สลิปซ้ำซ้อน, ยอดเงินไม่ถูกต้อง"
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
-                  style={{ width: "100%", minHeight: "90px", fontSize: "13px", resize: "vertical" }}
+                  style={{ width: "100%", minHeight: "80px", fontSize: "13px", resize: "vertical" }}
                   autoFocus
                 />
+                {/* Quick Reject Presets */}
+                <div style={{ display: "flex", gap: "6px", marginTop: "8px", flexWrap: "wrap" }}>
+                  {[
+                    "ไม่พบยอดโอนเงินจริงในบัญชี",
+                    "สลิปซ้ำ / เคยถูกใช้งานไปแล้ว",
+                    "ยอดเงินไม่ตรงกับรายการ",
+                    "โอนผิดบัญชีปลายทาง",
+                    "รูปภาพไม่ชัดเจน / ไม่มี QR",
+                    "เวลาในสลิปไม่ถูกต้อง",
+                  ].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setRejectReason(preset)}
+                      style={{
+                        padding: "4px 8px",
+                        borderRadius: "var(--radius-pill)",
+                        background:
+                          rejectReason === preset
+                            ? "rgba(255, 69, 58, 0.25)"
+                            : "rgba(255, 255, 255, 0.05)",
+                        border: `1px solid ${
+                          rejectReason === preset
+                            ? "rgba(255, 69, 58, 0.6)"
+                            : "rgba(255, 255, 255, 0.08)"
+                        }`,
+                        color:
+                          rejectReason === preset
+                            ? "#ff453a"
+                            : "var(--text-secondary)",
+                        fontSize: "11px",
+                        cursor: "pointer",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div
@@ -892,6 +1068,65 @@ export default function SlipManager() {
               >
                 {submitting ? "กำลังบันทึก..." : "ยืนยันการปฏิเสธ"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Holographic Approval Celebration Popup */}
+      {showApprovalCelebration && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: "32px",
+            right: "32px",
+            background: "linear-gradient(135deg, rgba(14, 20, 32, 0.96), rgba(8, 12, 22, 0.96))",
+            border: "1px solid rgba(0, 240, 255, 0.45)",
+            borderRadius: "18px",
+            padding: "16px 22px",
+            boxShadow: "0 24px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(0, 240, 255, 0.3)",
+            backdropFilter: "blur(24px)",
+            zIndex: 99999,
+            display: "flex",
+            alignItems: "center",
+            gap: "16px",
+            animation: "delayedSkeletonFade 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+          }}
+        >
+          <div
+            style={{
+              width: "44px",
+              height: "44px",
+              borderRadius: "12px",
+              background: "rgba(48, 209, 88, 0.15)",
+              border: "1.5px solid rgba(48, 209, 88, 0.45)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#30d158",
+              fontSize: "22px",
+              boxShadow: "0 0 16px rgba(48, 209, 88, 0.3)",
+            }}
+          >
+            ✓
+          </div>
+          <div>
+            <div
+              style={{
+                fontSize: "11px",
+                fontWeight: 700,
+                color: "#00F0FF",
+                letterSpacing: "0.06em",
+                fontFamily: "var(--font-mono, monospace)",
+              }}
+            >
+              TRANSACTION VERIFIED // SLIP APPROVED
+            </div>
+            <div style={{ fontSize: "14.5px", fontWeight: 600, color: "#ffffff", marginTop: "2px" }}>
+              อนุมัติยอด ฿{formatCurrency(showApprovalCelebration.amount)} สำเร็จ
+            </div>
+            <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.5)" }}>
+              สมาชิก: {showApprovalCelebration.user}
             </div>
           </div>
         </div>

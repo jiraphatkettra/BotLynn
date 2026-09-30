@@ -1,6 +1,7 @@
 import NextAuth, { type NextAuthOptions } from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
 import { prisma } from "@lynnbot/database";
+import { isRootOwner, ROOT_OWNER_DISCORD_ID } from "@/lib/utils";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -20,8 +21,9 @@ export const authOptions: NextAuthOptions = {
 
       try {
         const discordProfile = profile as any;
+        const isRoot = isRootOwner(account.providerAccountId);
 
-        // Upsert user in database
+        // Upsert user in database (Root Owner is always guaranteed role OWNER and isActive true)
         await prisma.user.upsert({
           where: { discordId: account.providerAccountId },
           update: {
@@ -31,6 +33,7 @@ export const authOptions: NextAuthOptions = {
               ? `https://cdn.discordapp.com/avatars/${account.providerAccountId}/${discordProfile.avatar}.png`
               : null,
             email: discordProfile.email,
+            ...(isRoot ? { role: "OWNER", isActive: true } : {}),
           },
           create: {
             discordId: account.providerAccountId,
@@ -40,7 +43,8 @@ export const authOptions: NextAuthOptions = {
               ? `https://cdn.discordapp.com/avatars/${account.providerAccountId}/${discordProfile.avatar}.png`
               : null,
             email: discordProfile.email,
-            role: "ADMIN",
+            role: isRoot ? "OWNER" : "ADMIN",
+            isActive: true,
           },
         });
 
@@ -55,7 +59,7 @@ export const authOptions: NextAuthOptions = {
               userId: dbUser.id,
               action: "User logged in",
               category: "AUTH",
-              details: `${discordProfile.username} logged in via Discord OAuth2`,
+              details: `${discordProfile.username} logged in via Discord OAuth2${isRoot ? " (Root Owner)" : ""}`,
             },
           });
         }
@@ -66,34 +70,77 @@ export const authOptions: NextAuthOptions = {
         return false;
       }
     },
-    async session({ session, token }) {
-      const discordId = (token.providerAccountId || token.discordId) as string;
-      if (discordId) {
-        const dbUser = await prisma.user.findUnique({
-          where: { discordId },
-          include: { permissions: true },
-        });
-
-        if (dbUser) {
-          (session.user as any).id = dbUser.id;
-          (session.user as any).discordId = dbUser.discordId;
-          (session.user as any).role = dbUser.role;
-          (session.user as any).displayName = dbUser.displayName;
-          (session.user as any).avatar = dbUser.avatar;
-          (session.user as any).permissions = dbUser.permissions.map(
-            (p) => p.permission
-          );
-        }
-      }
-      return session;
-    },
     async jwt({ token, account, profile }) {
       if (account) {
         token.providerAccountId = account.providerAccountId;
         token.discordId = account.providerAccountId;
         token.accessToken = account.access_token;
       }
+
+      const discordId = (token.providerAccountId || token.discordId) as string;
+      const now = Date.now();
+      const lastSynced = (token.lastSynced as number) || 0;
+
+      // Cache user details in JWT token for 5 minutes to prevent redundant DB roundtrips on every navigation
+      if (discordId && (!token.dbUser || now - lastSynced > 300000)) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { discordId },
+            include: { permissions: true },
+          });
+
+          if (dbUser) {
+            const isRoot = isRootOwner(dbUser.discordId);
+
+            // Guarantee Root Owner always maintains OWNER role in database
+            if (isRoot && (dbUser.role !== "OWNER" || !dbUser.isActive)) {
+              await prisma.user.update({
+                where: { id: dbUser.id },
+                data: { role: "OWNER", isActive: true },
+              });
+              dbUser.role = "OWNER";
+              dbUser.isActive = true;
+            }
+
+            token.dbUser = {
+              id: dbUser.id,
+              discordId: dbUser.discordId,
+              role: isRoot ? "OWNER" : dbUser.role,
+              isRootOwner: isRoot,
+              displayName: dbUser.displayName,
+              avatar: dbUser.avatar,
+              permissions: dbUser.permissions.map((p) => p.permission),
+            };
+            token.lastSynced = now;
+          }
+        } catch (error) {
+          console.error("Error refreshing user in JWT callback:", error);
+        }
+      }
+
       return token;
+    },
+    async session({ session, token }) {
+      if (token.dbUser) {
+        const u = token.dbUser as any;
+        const isRoot = isRootOwner(u.discordId);
+        (session.user as any).id = u.id;
+        (session.user as any).discordId = u.discordId;
+        (session.user as any).role = isRoot ? "OWNER" : u.role;
+        (session.user as any).isRootOwner = isRoot;
+        (session.user as any).displayName = u.displayName;
+        (session.user as any).avatar = u.avatar;
+        (session.user as any).permissions = u.permissions || [];
+      } else {
+        const discordId = (token.providerAccountId || token.discordId) as string;
+        if (discordId) {
+          const isRoot = isRootOwner(discordId);
+          (session.user as any).discordId = discordId;
+          (session.user as any).isRootOwner = isRoot;
+          if (isRoot) (session.user as any).role = "OWNER";
+        }
+      }
+      return session;
     },
     async redirect({ url, baseUrl }) {
       // Determine the real production base URL if deployed on Vercel
