@@ -413,6 +413,14 @@ model Slip {
   amount         Float?      // Claimed or approved amount (THB)
   status         SlipStatus  @default(PENDING)
   note           String?     // Admin note or rejection reason
+  transRef       String?     @unique // Bank transaction reference code
+  isAutoVerified Boolean     @default(false) // Auto-verified by SlipOK/EasySlip API
+  senderName     String?     // Sender name from slip
+  senderBank     String?     // Sender bank code/name
+  receiverName   String?     // Receiver name from slip
+  receiverBank   String?     // Receiver bank code/name
+  transDate      DateTime?   // Timestamp of transaction from bank slip
+  rawSlipData    Json?       // Full payload response from slip verification API
   reviewedById   String?
   reviewedBy     User?       @relation("ReviewedSlips", fields: [reviewedById], references: [id], onDelete: SetNull)
   reviewedByName String?

@@ -17,6 +17,7 @@ import {
 import { prisma } from "@lynnbot/database";
 import { THEME_COLORS } from "../utils/theme.js";
 import { uploadToR2 } from "./r2Service.js";
+import { executeSlipVerification } from "./slipVerificationService.js";
 
 /**
  * Ensures user exists in database and returns the record
@@ -110,7 +111,149 @@ export async function recordIncomingSlip({
     },
   });
 
-  // 4. Forward to Admin Slip Review Channel
+  // 4. Automatic Verification Check (SlipOK / EasySlip)
+  let autoVerified = false;
+  let autoRejected = false;
+  let verifiedAmount = amount || 0;
+  let verificationOutcome: any = null;
+
+  try {
+    const outcome = await executeSlipVerification(imageUrl, slip.id);
+    verificationOutcome = outcome;
+
+    if (outcome.approved && outcome.data) {
+      const v = outcome.data;
+      verifiedAmount = v.amount || 0;
+
+      // Execute approved transaction in database
+      const [updatedSlip, updatedUser] = await prisma.$transaction([
+        prisma.slip.update({
+          where: { id: slip.id },
+          data: {
+            status: "APPROVED",
+            isAutoVerified: true,
+            amount: verifiedAmount,
+            transRef: v.transRef,
+            senderName: v.senderName,
+            senderBank: v.senderBank,
+            receiverName: v.receiverName,
+            receiverBank: v.receiverBank,
+            transDate: v.transDate,
+            rawSlipData: v.raw,
+            note: "ตรวจสอบผ่านระบบอัตโนมัติ (SlipOK / EasySlip)",
+            reviewedByName: "SYSTEM (Auto Verified)",
+            reviewedAt: new Date(),
+          },
+        }),
+        prisma.user.update({
+          where: { discordId: author.id },
+          data: { balance: { increment: verifiedAmount } },
+        }),
+        prisma.walletTransaction.create({
+          data: {
+            userId: user.id,
+            amount: verifiedAmount,
+            type: "TOPUP",
+            note: `เติมเงินอัตโนมัติจากสลิป #${slip.id.slice(-6).toUpperCase()} (${v.transRef || "API"})`,
+            createdBy: "SYSTEM:AUTO_SLIP",
+          },
+        }),
+        prisma.auditLog.create({
+          data: {
+            userId: user.id,
+            action: "ตรวจสลิปอัตโนมัติสำเร็จ",
+            category: "SLIP",
+            details: `สลิป #${slip.id.slice(-6).toUpperCase()} ยอด ฿${verifiedAmount} ผ่านการตรวจอัตโนมัติ (Ref: ${v.transRef})`,
+          },
+        }),
+      ]);
+
+      autoVerified = true;
+
+      // Assign auto role if configured
+      try {
+        const autoRoleSetting = await prisma.setting.findUnique({
+          where: { key: "slip_auto_role_id" },
+        });
+        if (autoRoleSetting?.value) {
+          const member = await guild.members.fetch(author.id).catch(() => null);
+          if (member && !member.roles.cache.has(autoRoleSetting.value)) {
+            await member.roles.add(autoRoleSetting.value);
+          }
+        }
+      } catch (rErr) {
+        console.error("Failed to assign auto role:", rErr);
+      }
+
+      // Send celebration message in ticket / submission channel
+      if (channelId) {
+        const subChannel = guild.channels.cache.get(channelId) as TextChannel | undefined;
+        if (subChannel) {
+          const successEmbed = new EmbedBuilder()
+            .setColor(THEME_COLORS.success)
+            .setTitle("✅ ตรวจสอบสลิปโอนเงินสำเร็จอัตโนมัติ!")
+            .setDescription(
+              `ขอบคุณสำหรับการชำระเงิน ระบบได้ทำการตรวจสอบสลิปและปรับยอดเงินเข้ากระเป๋าของคุณเรียบร้อยแล้ว 🎉\n\n` +
+              `• **รหัสสลิป:** \`#${slip.id.slice(-6).toUpperCase()}\`\n` +
+              (v.transRef ? `• **รหัสอ้างอิงธนาคาร:** \`${v.transRef}\`\n` : "") +
+              `• **จำนวนเงิน:** **฿${verifiedAmount.toLocaleString("th-TH", { minimumFractionDigits: 2 })}**\n` +
+              (v.senderName ? `• **ผู้โอน:** \`${v.senderName}\` (${v.senderBank || "-"})\n` : "") +
+              (v.receiverName ? `• **ผู้รับ:** \`${v.receiverName}\` (${v.receiverBank || "-"})\n` : "") +
+              `• **ยอดเงินคงเหลือในกระเป๋า:** **฿${updatedUser.balance.toLocaleString("th-TH", { minimumFractionDigits: 2 })}**\n\n` +
+              `> คุณสามารถพิมพ์ \`/shop\` หรือกดซื้อสินค้า/ยศในดิสคอร์ดได้ทันที!`
+            )
+            .setTimestamp();
+
+          await subChannel.send({
+            content: `<@${author.id}>`,
+            embeds: [successEmbed],
+          });
+        }
+      }
+    } else if (outcome.rejectReason) {
+      // Auto-reject (e.g. duplicate slip)
+      await prisma.slip.update({
+        where: { id: slip.id },
+        data: {
+          status: "REJECTED",
+          note: outcome.rejectReason,
+          transRef: outcome.data?.transRef,
+          reviewedByName: "SYSTEM (Auto Rejected)",
+          reviewedAt: new Date(),
+        },
+      });
+
+      autoRejected = true;
+
+      if (channelId) {
+        const subChannel = guild.channels.cache.get(channelId) as TextChannel | undefined;
+        if (subChannel) {
+          const rejectEmbed = new EmbedBuilder()
+            .setColor(THEME_COLORS.danger)
+            .setTitle("❌ ไม่สามารถอนุมัติสลิปโอนเงินได้")
+            .setDescription(
+              `<@${author.id}>\n${outcome.rejectReason}\n\n` +
+              `> หากคิดว่าเป็นข้อผิดพลาด กรุณาติดต่อแอดมินหรือรอการตรวจสอบเพิ่มเติมครับ`
+            )
+            .setTimestamp();
+
+          await subChannel.send({ embeds: [rejectEmbed] });
+        }
+      }
+    } else if (outcome.pendingReason) {
+      await prisma.slip.update({
+        where: { id: slip.id },
+        data: {
+          note: outcome.pendingReason,
+          rawSlipData: outcome.data?.raw || undefined,
+        },
+      });
+    }
+  } catch (autoErr) {
+    console.error("Error executing automatic slip verification:", autoErr);
+  }
+
+  // 5. Forward to Admin Slip Review Channel
   try {
     const slipChannelSetting = await prisma.setting.findUnique({
       where: { key: "slip_notify_channel" },
@@ -125,55 +268,126 @@ export async function recordIncomingSlip({
       if (adminChannel) {
         const webUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
 
-        const embed = new EmbedBuilder()
-          .setColor(THEME_COLORS.accent)
-          .setTitle("🧾  NEW PAYMENT SLIP • ได้รับสลิปโอนเงินใหม่")
-          .setDescription(
-            `มีสมาชิกส่งสลิปโอนเงินเข้ามาเพื่อรอการตรวจสอบและอนุมัติ\n\n` +
-            `• **รหัสสลิป:** \`#${slip.id.slice(-6).toUpperCase()}\`\n` +
-            `• **ผู้ส่ง:** <@${author.id}> (\`${author.username}\`)\n` +
-            (ticketId ? `• **ห้องทิกเก็ต:** \`${ticketId}\`\n` : "") +
-            (amount ? `• **ยอดที่ระบุ:** **฿${amount.toLocaleString("th-TH", { minimumFractionDigits: 2 })}**\n` : "") +
-            `• **สถานะ:** ⏳ **รอตรวจสอบ (PENDING)**\n` +
-            `• **เวลาส่ง:** <t:${Math.floor(Date.now() / 1000)}:f>\n` +
-            (r2Key ? `• **ระบบจัดเก็บ:** ☁️ Cloudflare R2 (ถาวร)\n\n` : `• **ระบบจัดเก็บ:** 📁 Discord Storage\n\n`) +
-            `> แอดมินสามารถกดปุ่มด้านล่างเพื่ออนุมัติหรือปฏิเสธสลิปได้ทันที`
-          )
-          .setImage(imageUrl)
-          .setFooter({ text: "LynnBot Operations System • Slip Verification" })
-          .setTimestamp();
+        if (autoVerified && verificationOutcome?.data) {
+          const v = verificationOutcome.data;
+          const embed = new EmbedBuilder()
+            .setColor(THEME_COLORS.success)
+            .setTitle("⚡  AUTO-VERIFIED • ตรวจสอบสลิปผ่านอัตโนมัติ")
+            .setDescription(
+              `ระบบได้ทำการตรวจสอบสลิปและปรับยอดเงินให้สมาชิกเรียบร้อยแล้ว\n\n` +
+              `• **รหัสสลิป:** \`#${slip.id.slice(-6).toUpperCase()}\`\n` +
+              (v.transRef ? `• **รหัสอ้างอิง:** \`${v.transRef}\`\n` : "") +
+              `• **ผู้ส่ง:** <@${author.id}> (\`${author.username}\`)\n` +
+              `• **ยอดเงิน:** **฿${verifiedAmount.toLocaleString("th-TH", { minimumFractionDigits: 2 })}**\n` +
+              (v.senderName ? `• **ผู้โอน:** \`${v.senderName}\` (${v.senderBank || "-"})\n` : "") +
+              (v.receiverName ? `• **ผู้รับ:** \`${v.receiverName}\` (${v.receiverBank || "-"})\n` : "") +
+              `• **สถานะ:** ✅ **อนุมัติแล้ว (AUTO-VERIFIED)**\n` +
+              `• **เวลาส่ง:** <t:${Math.floor(Date.now() / 1000)}:f>\n` +
+              (r2Key ? `• **จัดเก็บ:** ☁️ Cloudflare R2\n\n` : `• **จัดเก็บ:** 📁 Discord Storage\n\n`) +
+              `> ระบบได้ปรับยอดเงินเข้ากระเป๋าของสมาชิกเรียบร้อยแล้ว`
+            )
+            .setImage(imageUrl)
+            .setFooter({ text: "LynnBot Operations System • Automatic Slip Verification" })
+            .setTimestamp();
 
-        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-          new ButtonBuilder()
-            .setCustomId(`slip_approve_${slip.id}`)
-            .setLabel("อนุมัติ & ปรับยอดเงิน")
-            .setEmoji("✅")
-            .setStyle(ButtonStyle.Success),
-          new ButtonBuilder()
-            .setCustomId(`slip_reject_${slip.id}`)
-            .setLabel("ปฏิเสธสลิป")
-            .setEmoji("❌")
-            .setStyle(ButtonStyle.Danger),
-          new ButtonBuilder()
-            .setLabel("เปิดใน Web Dashboard")
-            .setEmoji("🌐")
-            .setStyle(ButtonStyle.Link)
-            .setURL(`${webUrl}/slips`)
-        );
+          const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+              .setLabel("เปิดดูใน Web Dashboard")
+              .setEmoji("🌐")
+              .setStyle(ButtonStyle.Link)
+              .setURL(`${webUrl}/slips`)
+          );
 
-        // If buffer is available and no R2, also attach image for permanent discord archiving
-        if (buffer && !r2Key) {
-          const file = new AttachmentBuilder(buffer, { name: `slip_${slip.id.slice(-6)}.png` });
-          embed.setImage(`attachment://slip_${slip.id.slice(-6)}.png`);
-          await adminChannel.send({ embeds: [embed], files: [file], components: [row] });
+          if (buffer && !r2Key) {
+            const file = new AttachmentBuilder(buffer, { name: `slip_${slip.id.slice(-6)}.png` });
+            embed.setImage(`attachment://slip_${slip.id.slice(-6)}.png`);
+            await adminChannel.send({ embeds: [embed], files: [file], components: [row] });
+          } else {
+            await adminChannel.send({ embeds: [embed], components: [row] });
+          }
+        } else if (autoRejected) {
+          const embed = new EmbedBuilder()
+            .setColor(THEME_COLORS.danger)
+            .setTitle("⚠️  AUTO-REJECTED • ปฏิเสธสลิปอัตโนมัติ")
+            .setDescription(
+              `ระบบตรวจพบสลิปผิดปกติหรือสลิปซ้ำ และได้ทำการปฏิเสธอัตโนมัติ\n\n` +
+              `• **รหัสสลิป:** \`#${slip.id.slice(-6).toUpperCase()}\`\n` +
+              `• **ผู้ส่ง:** <@${author.id}> (\`${author.username}\`)\n` +
+              `• **เหตุผล:** **${verificationOutcome?.rejectReason || "สลิปไม่ถูกต้อง"}**\n` +
+              `• **เวลาส่ง:** <t:${Math.floor(Date.now() / 1000)}:f>\n`
+            )
+            .setImage(imageUrl)
+            .setFooter({ text: "LynnBot Operations System • Slip Verification" })
+            .setTimestamp();
+
+          const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+              .setLabel("เปิดดูใน Web Dashboard")
+              .setEmoji("🌐")
+              .setStyle(ButtonStyle.Link)
+              .setURL(`${webUrl}/slips`)
+          );
+
+          if (buffer && !r2Key) {
+            const file = new AttachmentBuilder(buffer, { name: `slip_${slip.id.slice(-6)}.png` });
+            embed.setImage(`attachment://slip_${slip.id.slice(-6)}.png`);
+            await adminChannel.send({ embeds: [embed], files: [file], components: [row] });
+          } else {
+            await adminChannel.send({ embeds: [embed], components: [row] });
+          }
         } else {
-          await adminChannel.send({ embeds: [embed], components: [row] });
+          // Standard Pending for Admin Review
+          const embed = new EmbedBuilder()
+            .setColor(THEME_COLORS.accent)
+            .setTitle("🧾  NEW PAYMENT SLIP • ได้รับสลิปโอนเงินใหม่")
+            .setDescription(
+              `มีสมาชิกส่งสลิปโอนเงินเข้ามาเพื่อรอการตรวจสอบและอนุมัติ\n\n` +
+              `• **รหัสสลิป:** \`#${slip.id.slice(-6).toUpperCase()}\`\n` +
+              `• **ผู้ส่ง:** <@${author.id}> (\`${author.username}\`)\n` +
+              (ticketId ? `• **ห้องทิกเก็ต:** \`${ticketId}\`\n` : "") +
+              (amount ? `• **ยอดที่ระบุ:** **฿${amount.toLocaleString("th-TH", { minimumFractionDigits: 2 })}**\n` : "") +
+              `• **สถานะ:** ⏳ **รอตรวจสอบ (PENDING)**\n` +
+              (verificationOutcome?.pendingReason ? `• **หมายเหตุ AI:** \`${verificationOutcome.pendingReason}\`\n` : "") +
+              `• **เวลาส่ง:** <t:${Math.floor(Date.now() / 1000)}:f>\n` +
+              (r2Key ? `• **ระบบจัดเก็บ:** ☁️ Cloudflare R2 (ถาวร)\n\n` : `• **ระบบจัดเก็บ:** 📁 Discord Storage\n\n`) +
+              `> แอดมินสามารถกดปุ่มด้านล่างเพื่ออนุมัติหรือปฏิเสธสลิปได้ทันที`
+            )
+            .setImage(imageUrl)
+            .setFooter({ text: "LynnBot Operations System • Slip Verification" })
+            .setTimestamp();
+
+          const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+              .setCustomId(`slip_approve_${slip.id}`)
+              .setLabel("อนุมัติ & ปรับยอดเงิน")
+              .setEmoji("✅")
+              .setStyle(ButtonStyle.Success),
+            new ButtonBuilder()
+              .setCustomId(`slip_reject_${slip.id}`)
+              .setLabel("ปฏิเสธสลิป")
+              .setEmoji("❌")
+              .setStyle(ButtonStyle.Danger),
+            new ButtonBuilder()
+              .setLabel("เปิดใน Web Dashboard")
+              .setEmoji("🌐")
+              .setStyle(ButtonStyle.Link)
+              .setURL(`${webUrl}/slips`)
+          );
+
+          if (buffer && !r2Key) {
+            const file = new AttachmentBuilder(buffer, { name: `slip_${slip.id.slice(-6)}.png` });
+            embed.setImage(`attachment://slip_${slip.id.slice(-6)}.png`);
+            await adminChannel.send({ embeds: [embed], files: [file], components: [row] });
+          } else {
+            await adminChannel.send({ embeds: [embed], components: [row] });
+          }
         }
       }
     }
   } catch (err) {
     console.error("Error sending slip to admin channel:", err);
   }
+
 
   return slip;
 }

@@ -17,6 +17,14 @@ interface Slip {
   amount: number | null;
   status: "PENDING" | "APPROVED" | "REJECTED";
   note: string | null;
+  transRef?: string | null;
+  isAutoVerified?: boolean;
+  senderName?: string | null;
+  senderBank?: string | null;
+  receiverName?: string | null;
+  receiverBank?: string | null;
+  transDate?: string | null;
+  rawSlipData?: any;
   reviewedById: string | null;
   reviewedByName: string | null;
   reviewedAt: string | null;
@@ -40,6 +48,7 @@ interface SlipStats {
   pending: number;
   approved: number;
   rejected: number;
+  autoVerified: number;
   totalApprovedAmount: number;
 }
 
@@ -50,6 +59,7 @@ export default function SlipManager() {
     pending: 0,
     approved: 0,
     rejected: 0,
+    autoVerified: 0,
     totalApprovedAmount: 0,
   });
   const [loading, setLoading] = useState(true);
@@ -57,10 +67,11 @@ export default function SlipManager() {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"ALL" | "PENDING" | "APPROVED" | "REJECTED">("ALL");
 
-  // Modals
+  // Modals & Actions
   const [previewSlip, setPreviewSlip] = useState<Slip | null>(null);
   const [approvingSlip, setApprovingSlip] = useState<Slip | null>(null);
   const [rejectingSlip, setRejectingSlip] = useState<Slip | null>(null);
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const [approveAmount, setApproveAmount] = useState<string>("");
   const [approveNote, setApproveNote] = useState<string>("");
   const [rejectReason, setRejectReason] = useState<string>("");
@@ -213,6 +224,38 @@ export default function SlipManager() {
     }
   };
 
+  const handleVerifyWithAPI = async (slip: Slip) => {
+    try {
+      setVerifyingId(slip.id);
+      const res = await fetch(`/api/slips/${slip.id}/verify`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (res.ok && data.approved) {
+        triggerCelebration();
+        setShowApprovalCelebration({
+          id: slip.id,
+          amount: data.verification?.amount || slip.amount || 0,
+          user: slip.user?.displayName || slip.discordName,
+        });
+        if (previewSlip?.id === slip.id) {
+          setPreviewSlip(null);
+        }
+        await fetchSlips();
+      } else if (data.rejected) {
+        alert(`❌ สลิปถูกปฏิเสธ: ${data.message}`);
+        await fetchSlips();
+      } else {
+        alert(`⚠️ ผลการตรวจสแกน: ${data.message || "ไม่สามารถอนุมัติอัตโนมัติได้ ต้องให้แอดมินตรวจด้วยตนเอง"}`);
+        await fetchSlips();
+      }
+    } catch (err: any) {
+      alert(`เกิดข้อผิดพลาดในการเชื่อมต่อ: ${err.message}`);
+    } finally {
+      setVerifyingId(null);
+    }
+  };
+
   return (
     <div>
       {/* 1. Summary Metrics */}
@@ -249,6 +292,19 @@ export default function SlipManager() {
           </div>
           <div className="stat-card-value">{stats.approved}</div>
           <div className="stat-card-label">อนุมัติแล้ว (Approved)</div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <div className="stat-card-icon" style={{ background: "rgba(10, 132, 255, 0.15)", color: "#0A84FF" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+              </svg>
+            </div>
+            <span className="badge" style={{ background: "rgba(10, 132, 255, 0.15)", color: "#0A84FF" }}>AUTO</span>
+          </div>
+          <div className="stat-card-value">{stats.autoVerified}</div>
+          <div className="stat-card-label">ตรวจอัตโนมัติ (SlipOK)</div>
         </div>
 
         <div className="stat-card">
@@ -488,9 +544,21 @@ export default function SlipManager() {
                       {/* Amount */}
                       <td>
                         {slip.amount ? (
-                          <span style={{ fontWeight: 700, color: "#30d158", fontSize: "14px" }}>
-                            {formatCurrency(slip.amount)}
-                          </span>
+                          <div>
+                            <span style={{ fontWeight: 700, color: "#30d158", fontSize: "14px" }}>
+                              {formatCurrency(slip.amount)}
+                            </span>
+                            {slip.transRef && (
+                              <div style={{ fontSize: "10px", color: "var(--text-muted)", fontFamily: "monospace", marginTop: 2 }}>
+                                Ref: {slip.transRef}
+                              </div>
+                            )}
+                            {slip.senderBank && (
+                              <div style={{ fontSize: "10px", color: "var(--accent)", marginTop: 1 }}>
+                                🏦 {slip.senderBank}
+                              </div>
+                            )}
+                          </div>
                         ) : (
                           <span style={{ color: "var(--text-muted)", fontSize: "12px" }}>— ไม่ระบุ —</span>
                         )}
@@ -514,21 +582,41 @@ export default function SlipManager() {
 
                       {/* Status */}
                       <td>
-                        <span
-                          className={`badge ${
-                            slip.status === "APPROVED"
-                              ? "badge-success"
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" }}>
+                          <span
+                            className={`badge ${
+                              slip.status === "APPROVED"
+                                ? "badge-success"
+                                : slip.status === "PENDING"
+                                  ? "badge-warning"
+                                  : "badge-error"
+                            }`}
+                          >
+                            {slip.status === "APPROVED"
+                              ? "อนุมัติแล้ว"
                               : slip.status === "PENDING"
-                                ? "badge-warning"
-                                : "badge-error"
-                          }`}
-                        >
-                          {slip.status === "APPROVED"
-                            ? "อนุมัติแล้ว"
-                            : slip.status === "PENDING"
-                              ? "รอตรวจสอบ"
-                              : "ปฏิเสธ"}
-                        </span>
+                                ? "รอตรวจสอบ"
+                                : "ปฏิเสธ"}
+                          </span>
+                          {slip.isAutoVerified && (
+                            <span
+                              style={{
+                                fontSize: "10px",
+                                fontWeight: 700,
+                                padding: "2px 6px",
+                                borderRadius: 4,
+                                background: "rgba(48, 209, 88, 0.15)",
+                                color: "#30d158",
+                                border: "1px solid rgba(48, 209, 88, 0.3)",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 3,
+                              }}
+                            >
+                              ⚡ AUTO-VERIFIED
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Created At */}
@@ -566,6 +654,20 @@ export default function SlipManager() {
                           </button>
                           {slip.status === "PENDING" && (
                             <>
+                              <button
+                                className="btn btn-sm"
+                                disabled={verifyingId === slip.id}
+                                style={{
+                                  background: "rgba(10, 132, 255, 0.15)",
+                                  borderColor: "rgba(10, 132, 255, 0.4)",
+                                  color: "#0A84FF",
+                                  fontWeight: 600,
+                                }}
+                                onClick={() => handleVerifyWithAPI(slip)}
+                                title="สแกนและตรวจสอบด้วย SlipOK / EasySlip API"
+                              >
+                                {verifyingId === slip.id ? "⏳ กำลังสแกน..." : "⚡ สแกน AI"}
+                              </button>
                               <button
                                 className="btn btn-primary btn-sm"
                                 style={{ background: "#30d158", borderColor: "#30d158", color: "#000" }}
@@ -749,30 +851,75 @@ export default function SlipManager() {
               }}
             >
               <div>
-                <span
-                  className={`badge ${
-                    previewSlip.status === "APPROVED"
-                      ? "badge-success"
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <span
+                    className={`badge ${
+                      previewSlip.status === "APPROVED"
+                        ? "badge-success"
+                        : previewSlip.status === "PENDING"
+                          ? "badge-warning"
+                          : "badge-error"
+                    }`}
+                  >
+                    {previewSlip.status === "APPROVED"
+                      ? `อนุมัติแล้ว (฿${previewSlip.amount?.toLocaleString("th-TH") || 0})`
                       : previewSlip.status === "PENDING"
-                        ? "badge-warning"
-                        : "badge-error"
-                  }`}
-                >
-                  {previewSlip.status === "APPROVED"
-                    ? `อนุมัติแล้ว (฿${previewSlip.amount?.toLocaleString("th-TH") || 0})`
-                    : previewSlip.status === "PENDING"
-                      ? "รอการตรวจสอบ"
-                      : "ปฏิเสธ"}
-                </span>
-                {previewSlip.note && (
-                  <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "8px" }}>
-                    ({previewSlip.note})
+                        ? "รอการตรวจสอบ"
+                        : "ปฏิเสธ"}
                   </span>
+
+                  {previewSlip.isAutoVerified && (
+                    <span
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        padding: "2px 8px",
+                        borderRadius: 4,
+                        background: "rgba(48, 209, 88, 0.15)",
+                        color: "#30d158",
+                        border: "1px solid rgba(48, 209, 88, 0.3)",
+                      }}
+                    >
+                      ⚡ AUTO-VERIFIED
+                    </span>
+                  )}
+
+                  {previewSlip.transRef && (
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)", fontFamily: "monospace" }}>
+                      Ref: {previewSlip.transRef}
+                    </span>
+                  )}
+                </div>
+
+                {previewSlip.senderName && (
+                  <div style={{ fontSize: "11px", color: "var(--text-secondary)", marginTop: "4px" }}>
+                    ผู้โอน: {previewSlip.senderName} ({previewSlip.senderBank || "-"}) ➔ ผู้รับ: {previewSlip.receiverName || "-"} ({previewSlip.receiverBank || "-"})
+                  </div>
+                )}
+
+                {previewSlip.note && (
+                  <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>
+                    หมายเหตุ: {previewSlip.note}
+                  </div>
                 )}
               </div>
 
               {previewSlip.status === "PENDING" && (
                 <div style={{ display: "flex", gap: "8px" }}>
+                  <button
+                    className="btn btn-secondary"
+                    disabled={verifyingId === previewSlip.id}
+                    style={{
+                      background: "rgba(10, 132, 255, 0.15)",
+                      borderColor: "rgba(10, 132, 255, 0.4)",
+                      color: "#0A84FF",
+                      fontWeight: 600,
+                    }}
+                    onClick={() => handleVerifyWithAPI(previewSlip)}
+                    title="สแกนผ่าน SlipOK / EasySlip API"
+                  >
+                    {verifyingId === previewSlip.id ? "⏳ กำลังสแกน..." : "⚡ สแกนด้วย AI/API"}
+                  </button>
                   <button
                     className="btn btn-primary"
                     style={{ background: "#30d158", borderColor: "#30d158", color: "#000" }}

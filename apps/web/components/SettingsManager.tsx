@@ -15,6 +15,7 @@ interface SettingsManagerProps {
 
 const TABS = [
   { id: "all", label: "🌐 ทั้งหมด" },
+  { id: "auto_slip", label: "🤖 ตรวจสลิปอัตโนมัติ" },
   { id: "channels", label: "📢 ห้องแจ้งเตือน Discord" },
   { id: "attendance", label: "⏱️ ระบบตอกบัตร" },
   { id: "shop", label: "🛍️ ร้านค้ายศ" },
@@ -42,6 +43,11 @@ export default function SettingsManager({
   // Quick channel test
   const [testingChannel, setTestingChannel] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<{ channelId: string; success: boolean; message: string } | null>(null);
+
+  // Auto Slip API Test
+  const [testingApi, setTestingApi] = useState(false);
+  const [apiTestResult, setApiTestResult] = useState<{ success: boolean; message: string; details?: string } | null>(null);
+  const [showApiKey, setShowApiKey] = useState(false);
 
   useEffect(() => {
     if (isSuperAdmin) {
@@ -158,6 +164,41 @@ export default function SettingsManager({
     }
   }
 
+  // Quick Slip API test
+  async function handleTestSlipApi() {
+    const provider = settings.slip_provider || "slipok";
+    const apiKey = provider === "easyslip" ? settings.easyslip_api_key : settings.slipok_api_key;
+    const branchId = settings.slipok_branch_id;
+
+    if (!apiKey || !apiKey.trim()) {
+      showToast("กรุณากรอก API Key ก่อนทดสอบ", "error");
+      return;
+    }
+
+    setTestingApi(true);
+    setApiTestResult(null);
+
+    try {
+      const res = await fetch("/api/slips/test-api", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider, apiKey, branchId }),
+      });
+      const data = await res.json();
+      setApiTestResult(data);
+      if (data.success) {
+        showToast(data.message, "success");
+      } else {
+        showToast(data.message, "error");
+      }
+    } catch (err: any) {
+      setApiTestResult({ success: false, message: err.message || "เกิดข้อผิดพลาดในการเชื่อมต่อ" });
+      showToast("ไม่สามารถทดสอบ API ได้", "error");
+    } finally {
+      setTestingApi(false);
+    }
+  }
+
   // Search filter helper
   const q = searchQuery.toLowerCase().trim();
   function matchesSearch(...texts: (string | undefined | null)[]) {
@@ -166,6 +207,20 @@ export default function SettingsManager({
   }
 
   // Section visibility checks
+  const showAutoSlipCard =
+    (activeTab === "all" || activeTab === "auto_slip") &&
+    (matchesSearch(
+      "ระบบตรวจสลิปอัตโนมัติ",
+      "slipok",
+      "easyslip",
+      "สแกนสลิป",
+      "auto verify",
+      "api key",
+      "branch id",
+      "ตรวจบัญชีผู้รับ",
+      "สลิป"
+    ));
+
   const showChannelsCard =
     (activeTab === "all" || activeTab === "channels") &&
     (matchesSearch(
@@ -879,12 +934,390 @@ export default function SettingsManager({
         </div>
       )}
 
+      {/* 7. Auto Slip Verification (SlipOK & EasySlip) */}
+      {showAutoSlipCard && (
+        <div className="card mb-24" style={{ border: settings.slip_auto_verify === "true" ? "1px solid rgba(48, 209, 88, 0.3)" : undefined }}>
+          <div className="card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h3 className="card-title">
+              <span className="card-title-icon" style={{ color: settings.slip_auto_verify === "true" ? "#30d158" : undefined }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                </svg>
+              </span>
+              ระบบตรวจสลิปอัตโนมัติ (SlipOK & EasySlip Auto-Verification)
+            </h3>
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                padding: "3px 8px",
+                borderRadius: 9999,
+                background: settings.slip_auto_verify === "true" ? "rgba(48, 209, 88, 0.15)" : "rgba(255, 255, 255, 0.05)",
+                color: settings.slip_auto_verify === "true" ? "#30d158" : "var(--text-muted)",
+                border: `1px solid ${settings.slip_auto_verify === "true" ? "rgba(48, 209, 88, 0.3)" : "rgba(255, 255, 255, 0.1)"}`,
+              }}
+            >
+              {settings.slip_auto_verify === "true" ? "● กำลังทำงาน (ACTIVE)" : "○ ปิดใช้งาน (DISABLED)"}
+            </span>
+          </div>
+
+          <div className="card-body">
+            <div className="settings-section">
+              {/* Row 1: Enable Auto Verify */}
+              <div className="settings-row">
+                <div>
+                  <div className="settings-row-label">เปิดใช้งานระบบตรวจสลิปอัตโนมัติ 24 ชม.</div>
+                  <div className="settings-row-desc">
+                    เมื่อสมาชิกส่งภาพสลิปในห้องทิกเก็ต บอทจะสแกน QR Code ตรวจสอบยอดเงิน วันที่ และบัญชีผู้รับ แล้วเติมเงินให้ทันทีใน 3 วินาที
+                  </div>
+                </div>
+                <div>
+                  <label className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      disabled={!isSuperAdmin}
+                      checked={settings.slip_auto_verify === "true"}
+                      onChange={(e) => handleChange("slip_auto_verify", e.target.checked ? "true" : "false")}
+                    />
+                    <span className="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Row 2: Provider Selection */}
+              <div className="settings-row">
+                <div>
+                  <div className="settings-row-label">ผู้ให้บริการตรวจสอบสลิป (API Provider)</div>
+                  <div className="settings-row-desc">
+                    เลือก API ที่คุณใช้งาน (SlipOK คือมาตรฐานยอดนิยมสำหรับสลิปธนาคารไทย)
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button
+                    type="button"
+                    disabled={!isSuperAdmin}
+                    onClick={() => handleChange("slip_provider", "slipok")}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: "var(--radius-sm)",
+                      border: (settings.slip_provider || "slipok") === "slipok" ? "1px solid var(--accent)" : "1px solid var(--border)",
+                      background: (settings.slip_provider || "slipok") === "slipok" ? "rgba(10, 132, 255, 0.15)" : "rgba(255,255,255,0.03)",
+                      color: (settings.slip_provider || "slipok") === "slipok" ? "var(--accent)" : "var(--text-muted)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    ⚡ SlipOK (แนะนำ)
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!isSuperAdmin}
+                    onClick={() => handleChange("slip_provider", "easyslip")}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: "var(--radius-sm)",
+                      border: settings.slip_provider === "easyslip" ? "1px solid var(--accent)" : "1px solid var(--border)",
+                      background: settings.slip_provider === "easyslip" ? "rgba(10, 132, 255, 0.15)" : "rgba(255,255,255,0.03)",
+                      color: settings.slip_provider === "easyslip" ? "var(--accent)" : "var(--text-muted)",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    🌐 EasySlip
+                  </button>
+                </div>
+              </div>
+
+              {/* Row 3: API Key & Branch ID based on Provider */}
+              {(settings.slip_provider || "slipok") === "slipok" ? (
+                <>
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-row-label">SlipOK Authorization API Key</div>
+                      <div className="settings-row-desc">
+                        คีย์ x-authorization ที่ได้จากแดชบอร์ด SlipOK (https://slipok.com)
+                      </div>
+                    </div>
+                    <div style={{ minWidth: 280, maxWidth: 420, width: "100%", display: "flex", gap: 8 }}>
+                      <div style={{ position: "relative", flex: 1 }}>
+                        <input
+                          type={showApiKey ? "text" : "password"}
+                          className="form-input"
+                          placeholder="เช่น eyJhbGciOi..."
+                          disabled={!isSuperAdmin}
+                          value={settings.slipok_api_key || ""}
+                          onChange={(e) => handleChange("slipok_api_key", e.target.value)}
+                          style={{ width: "100%", paddingRight: 40 }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowApiKey(!showApiKey)}
+                          style={{
+                            position: "absolute",
+                            right: 8,
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            background: "none",
+                            border: "none",
+                            color: "var(--text-muted)",
+                            cursor: "pointer",
+                            fontSize: 12,
+                          }}
+                        >
+                          {showApiKey ? "🙈" : "👁️"}
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        className="channel-test-btn"
+                        disabled={!isSuperAdmin || testingApi || !settings.slipok_api_key}
+                        onClick={handleTestSlipApi}
+                        style={{ whiteSpace: "nowrap" }}
+                      >
+                        {testingApi ? "⏳ กำลังทดสอบ..." : "🧪 ทดสอบ API"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-row-label">SlipOK รหัสสาขา (Branch ID)</div>
+                      <div className="settings-row-desc">
+                        (ทางเลือก) ระบุรหัสสาขาหากสร้าง Branch ไว้ใน SlipOK หรือปล่อยว่างไว้เพื่อใช้สาขาหลัก
+                      </div>
+                    </div>
+                    <div style={{ minWidth: 280, maxWidth: 360, width: "100%" }}>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="เช่น 1 หรือ branch_01 (ไม่ใส่ก็ได้)"
+                        disabled={!isSuperAdmin}
+                        value={settings.slipok_branch_id || ""}
+                        onChange={(e) => handleChange("slipok_branch_id", e.target.value)}
+                        style={{ width: "100%" }}
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="settings-row">
+                  <div>
+                    <div className="settings-row-label">EasySlip Bearer Token</div>
+                    <div className="settings-row-desc">
+                      API Token ที่ได้จาก EasySlip Developer Dashboard (https://developer.easyslip.com)
+                    </div>
+                  </div>
+                  <div style={{ minWidth: 280, maxWidth: 420, width: "100%", display: "flex", gap: 8 }}>
+                    <div style={{ position: "relative", flex: 1 }}>
+                      <input
+                        type={showApiKey ? "text" : "password"}
+                        className="form-input"
+                        placeholder="Bearer Token..."
+                        disabled={!isSuperAdmin}
+                        value={settings.easyslip_api_key || ""}
+                        onChange={(e) => handleChange("easyslip_api_key", e.target.value)}
+                        style={{ width: "100%", paddingRight: 40 }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowApiKey(!showApiKey)}
+                        style={{
+                          position: "absolute",
+                          right: 8,
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          background: "none",
+                          border: "none",
+                          color: "var(--text-muted)",
+                          cursor: "pointer",
+                          fontSize: 12,
+                        }}
+                      >
+                        {showApiKey ? "🙈" : "👁️"}
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      className="channel-test-btn"
+                      disabled={!isSuperAdmin || testingApi || !settings.easyslip_api_key}
+                      onClick={handleTestSlipApi}
+                      style={{ whiteSpace: "nowrap" }}
+                    >
+                      {testingApi ? "⏳ กำลังทดสอบ..." : "🧪 ทดสอบ API"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* API Test Result Banner */}
+              {apiTestResult && (
+                <div
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: "var(--radius-sm)",
+                    background: apiTestResult.success ? "rgba(48, 209, 88, 0.12)" : "rgba(255, 69, 58, 0.12)",
+                    border: `1px solid ${apiTestResult.success ? "rgba(48, 209, 88, 0.3)" : "rgba(255, 69, 58, 0.3)"}`,
+                    color: apiTestResult.success ? "#30d158" : "#ff453a",
+                    fontSize: 12,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    marginBottom: 12,
+                  }}
+                >
+                  <span>{apiTestResult.success ? "✅" : "❌"}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600 }}>{apiTestResult.message}</div>
+                    {apiTestResult.details && <div style={{ fontSize: 11, opacity: 0.8 }}>{apiTestResult.details}</div>}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setApiTestResult(null)}
+                    style={{ background: "none", border: "none", color: "inherit", cursor: "pointer" }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+
+              {/* Row 4: Account Protection & Anti-Fraud */}
+              <div className="settings-row">
+                <div>
+                  <div className="settings-row-label">ระบบป้องกันสลิปผิดบัญชี (Check Receiver Account)</div>
+                  <div className="settings-row-desc">
+                    ตรวจสอบว่าบัญชีผู้รับในสลิปตรงกับบัญชีร้านของคุณหรือไม่ หากไม่ตรงระบบจะไม่ปล่อยผ่านอัตโนมัติ
+                  </div>
+                </div>
+                <div>
+                  <label className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      disabled={!isSuperAdmin}
+                      checked={settings.slip_check_receiver === "true"}
+                      onChange={(e) => handleChange("slip_check_receiver", e.target.checked ? "true" : "false")}
+                    />
+                    <span className="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              {settings.slip_check_receiver === "true" && (
+                <>
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-row-label">เลขบัญชีหรือเบอร์พร้อมเพย์ที่ต้องตรง (Target Account)</div>
+                      <div className="settings-row-desc">
+                        ระบุเบอร์พร้อมเพย์ หรือเลขที่บัญชี 4-10 หลักท้ายที่เปิดรับเงิน
+                      </div>
+                    </div>
+                    <div style={{ minWidth: 280, maxWidth: 360, width: "100%" }}>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="เช่น 0812345678 หรือ 1234"
+                        disabled={!isSuperAdmin}
+                        value={settings.slip_receiver_account || ""}
+                        onChange={(e) => handleChange("slip_receiver_account", e.target.value)}
+                        style={{ width: "100%" }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-row-label">คำค้นหาชื่อบัญชีผู้รับ (Account Name Match)</div>
+                      <div className="settings-row-desc">
+                        ระบุชื่อหรือนามสกุลเจ้าของบัญชี (เช่น "จิรภัทร") เพื่อตรวจว่ามีคำนี้ในชื่อบัญชีปลายทาง
+                      </div>
+                    </div>
+                    <div style={{ minWidth: 280, maxWidth: 360, width: "100%" }}>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="เช่น จิรภัทร หรือ นาย..."
+                        disabled={!isSuperAdmin}
+                        value={settings.slip_receiver_name || ""}
+                        onChange={(e) => handleChange("slip_receiver_name", e.target.value)}
+                        style={{ width: "100%" }}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Row 5: Amount Limits */}
+              <div className="settings-row">
+                <div>
+                  <div className="settings-row-label">ขอบเขตยอดเงินที่อนุมัติอัตโนมัติ (Safety Limits)</div>
+                  <div className="settings-row-desc">
+                    กำหนดยอดเงินขั้นต่ำและยอดเงินสูงสุดที่อนุญาตให้อนุมัติอัตโนมัติ (ถ้ายอดสูงเกินไปจะค้างรอแอดมินดูความปลอดภัย)
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 280, maxWidth: 360, width: "100%" }}>
+                  <div style={{ flex: 1 }}>
+                    <input
+                      type="number"
+                      className="form-input"
+                      placeholder="ขั้นต่ำ (เช่น 1)"
+                      disabled={!isSuperAdmin}
+                      value={settings.slip_min_amount || "1"}
+                      onChange={(e) => handleChange("slip_min_amount", e.target.value)}
+                      style={{ width: "100%" }}
+                    />
+                  </div>
+                  <span className="text-muted text-xs">ถึง</span>
+                  <div style={{ flex: 1 }}>
+                    <input
+                      type="number"
+                      className="form-input"
+                      placeholder="สูงสุด (เช่น 10000)"
+                      disabled={!isSuperAdmin}
+                      value={settings.slip_max_amount || "10000"}
+                      onChange={(e) => handleChange("slip_max_amount", e.target.value)}
+                      style={{ width: "100%" }}
+                    />
+                  </div>
+                  <span className="text-muted text-xs">THB</span>
+                </div>
+              </div>
+
+              {/* Row 6: Auto Role Reward */}
+              <div className="settings-row">
+                <div>
+                  <div className="settings-row-label">แจกยศอัตโนมัติเมื่อชำระเงินสำเร็จ (Customer Role)</div>
+                  <div className="settings-row-desc">
+                    (ทางเลือก) เมื่อสมาชิกเติมเงินสำเร็จ บอทจะมอบยศนี้ให้ใน Discord ทันที เช่น ยศ "ลูกค้า / Verified Buyer"
+                  </div>
+                </div>
+                <div style={{ minWidth: 280, maxWidth: 360, width: "100%" }}>
+                  <CustomSelect
+                    disabled={!isSuperAdmin || loadingChannels}
+                    value={settings.slip_auto_role_id || ""}
+                    onChange={(val) => handleChange("slip_auto_role_id", val)}
+                    placeholder="— ไม่แจกยศอัตโนมัติ —"
+                    options={[
+                      { value: "", label: "— ไม่แจกยศอัตโนมัติ —" },
+                      ...roles.map((r) => ({
+                        value: r.id,
+                        label: `@${r.name}`,
+                        sub: `ID: ${r.id}`,
+                      })),
+                    ]}
+                    style={{ width: "100%" }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* No matching search result */}
-      {searchQuery && !showChannelsCard && !showAttendanceCard && !showShopCard && !showWelcomeCard && !showWalletCard && !showTicketsCard && (
+      {searchQuery && !showChannelsCard && !showAttendanceCard && !showShopCard && !showWelcomeCard && !showWalletCard && !showTicketsCard && !showAutoSlipCard && (
         <div className="card" style={{ padding: "40px 20px", textAlign: "center" }}>
           <div style={{ fontSize: 32, marginBottom: 8 }}>🔍</div>
           <div style={{ fontWeight: 600, color: "var(--text-primary)", marginBottom: 4 }}>ไม่พบการตั้งค่าที่ตรงกับ "{searchQuery}"</div>
-          <p className="text-muted text-xs">ลองค้นหาด้วยคำอื่น เช่น "ตอกบัตร", "พร้อมเพย์", "ยศ", "แจ้งเตือน"</p>
+          <p className="text-muted text-xs">ลองค้นหาด้วยคำอื่น เช่น "ตอกบัตร", "พร้อมเพย์", "ยศ", "แจ้งเตือน", "สลิป"</p>
         </div>
       )}
 

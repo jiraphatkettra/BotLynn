@@ -25,11 +25,14 @@ export async function GET(req: Request) {
       { discordId: { contains: search } },
       { ticketId: { contains: search, mode: "insensitive" } },
       { note: { contains: search, mode: "insensitive" } },
+      { transRef: { contains: search, mode: "insensitive" } },
+      { senderName: { contains: search, mode: "insensitive" } },
+      { receiverName: { contains: search, mode: "insensitive" } },
     ];
   }
 
   try {
-    const [slips, statsData] = await Promise.all([
+    const [slips, statsData, autoVerifiedCount] = await Promise.all([
       prisma.slip.findMany({
         where,
         orderBy: { createdAt: "desc" },
@@ -50,6 +53,9 @@ export async function GET(req: Request) {
         _count: { id: true },
         _sum: { amount: true },
       }),
+      prisma.slip.count({
+        where: { isAutoVerified: true },
+      }),
     ]);
 
     const stats = {
@@ -57,6 +63,7 @@ export async function GET(req: Request) {
       pending: 0,
       approved: 0,
       rejected: 0,
+      autoVerified: autoVerifiedCount,
       totalApprovedAmount: 0,
     };
 
