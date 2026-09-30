@@ -673,9 +673,15 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Drawer (Categorized Layout) */}
+      {/* Mobile Backdrop & Drawer */}
       {mobileMenuOpen && (
-        <div className="apple-mobile-drawer">
+        <>
+          <div
+            className="apple-mobile-backdrop"
+            onClick={() => setMobileMenuOpen(false)}
+            aria-hidden="true"
+          />
+          <div className="apple-mobile-drawer">
           <div className="apple-mobile-drawer-content">
             {/* Section 1: Overview */}
             <div className="apple-mobile-category-block">
@@ -793,6 +799,7 @@ export default function Navbar() {
             </button>
           </div>
         </div>
+        </>
       )}
     </nav>
   );

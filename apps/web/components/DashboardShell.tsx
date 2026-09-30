@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import CommandPalette from "@/components/CommandPalette";
 import NavigationProgress from "@/components/NavigationProgress";
 import CyberBackground from "@/components/CyberBackground";
+import MobileBottomNav from "@/components/MobileBottomNav";
 
 export default function DashboardShell({
   children,
@@ -24,6 +25,9 @@ export default function DashboardShell({
 
       {/* Main Page Content */}
       <main className="main-content">{children}</main>
+
+      {/* Mobile Sticky Bottom Navigation Dock (Phones & Small Tablets) */}
+      <MobileBottomNav />
 
       {/* Global Apple-style Spotlight Command Palette (⌘K / Ctrl+K) */}
       <CommandPalette />
