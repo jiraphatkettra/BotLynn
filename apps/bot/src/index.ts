@@ -11,7 +11,10 @@ import http from "node:http";
 import { config } from "dotenv";
 import { resolve } from "path";
 
-// Load .env from root
+// Load .env from multiple possible locations
+config();
+config({ path: resolve(process.cwd(), ".env") });
+config({ path: resolve(process.cwd(), "../.env") });
 config({ path: resolve(process.cwd(), "../../.env") });
 
 import { prisma } from "@lynnbot/database";
