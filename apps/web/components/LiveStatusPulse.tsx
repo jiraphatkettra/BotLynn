@@ -62,6 +62,7 @@ export default function LiveStatusPulse() {
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         style={{ opacity: 0.85 }}
+        className="live-status-ecg"
       >
         <path
           d="M0 8 H10 L13 2 L17 14 L21 6 L24 10 L27 8 H40"
@@ -75,6 +76,7 @@ export default function LiveStatusPulse() {
 
       {/* Ping text */}
       <span
+        className="live-status-text"
         style={{
           fontSize: "11px",
           fontWeight: 600,

@@ -1024,33 +1024,26 @@ button, input, select, textarea, optgroup, option {
   .apple-navbar-links {
     display: none;
   }
-  .apple-mobile-menu-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
 }
 
-@media (max-width: 640px) {
-  .apple-navbar-container {
-    padding: 0 10px;
-    gap: 6px;
+/* Remove duplicate search and 3-line hamburger menu on mobile (served by Mobile Bottom Nav) */
+@media (max-width: 768px) {
+  .apple-navbar {
+    height: 56px !important;
   }
-  .apple-nav-search-text,
-  .apple-nav-kbd {
-    display: none !important;
+  .apple-navbar-container {
+    padding: 0 14px !important;
+    height: 56px !important;
+    gap: 8px !important;
   }
   .apple-nav-search-btn {
-    padding: 8px !important;
-    border-radius: 50% !important;
-    width: 34px !important;
-    height: 34px !important;
-    min-width: 34px !important;
-    justify-content: center !important;
+    display: none !important;
   }
-  .apple-bot-status .ecg-line-sweep,
-  .apple-bot-status svg,
-  .apple-bot-status span:last-child {
+  .apple-mobile-menu-btn {
+    display: none !important;
+  }
+  .live-status-ecg,
+  .live-status-text {
     display: none !important;
   }
   .apple-bot-status {
@@ -3478,6 +3471,8 @@ button, a, input, select, textarea {
   margin: 0 0 16px;
   max-width: 960px;
   text-shadow: 0 2px 20px rgba(0, 0, 0, 0.6);
+  text-align: center;
+  width: 100%;
 }
 
 @media (max-width: 640px) {
@@ -3495,6 +3490,10 @@ button, a, input, select, textarea {
   max-width: 760px;
   margin: 0 auto 28px;
   font-weight: 400;
+  text-align: center;
+  width: 100%;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 @media (max-width: 640px) {
@@ -3502,7 +3501,7 @@ button, a, input, select, textarea {
     font-size: 12.5px !important;
     line-height: 1.55 !important;
     margin-bottom: 18px !important;
-    padding: 0 4px !important;
+    padding: 0 6px !important;
   }
 }
 
@@ -3516,16 +3515,61 @@ button, a, input, select, textarea {
   width: 100%;
 }
 
+.btn-hero-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 26px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #0a84ff 0%, #0066cc 100%);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 4px 18px rgba(10, 132, 255, 0.4);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-hero-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(10, 132, 255, 0.55);
+}
+
+.btn-hero-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  backdrop-filter: blur(12px);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-hero-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
 @media (max-width: 640px) {
   .dashboard-hero-cta {
     margin-bottom: 20px !important;
     gap: 8px !important;
+    padding: 0 4px !important;
   }
   .dashboard-hero-cta a {
-    flex: 1 1 135px !important;
-    max-width: 165px !important;
-    padding: 10px 14px !important;
-    font-size: 13px !important;
+    flex: 1 1 130px !important;
+    max-width: 160px !important;
+    padding: 9px 12px !important;
+    font-size: 12.5px !important;
     justify-content: center !important;
     text-align: center !important;
   }
@@ -3540,6 +3584,7 @@ button, a, input, select, textarea {
   max-width: 760px;
 }
 
+.dashboard-hero-metric-card,
 .dashboard-hero-metric-inner {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -3553,6 +3598,37 @@ button, a, input, select, textarea {
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
   height: 100%;
   width: 100%;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.dashboard-hero-metric-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  opacity: 0.85;
+}
+
+.dashboard-hero-metric-card.metric-cyan::before {
+  background: linear-gradient(90deg, transparent, #0a84ff, transparent);
+}
+
+.dashboard-hero-metric-card.metric-gold::before {
+  background: linear-gradient(90deg, transparent, #ffd60a, transparent);
+}
+.dashboard-hero-metric-card.metric-gold .dashboard-hero-metric-val {
+  color: #ffd60a;
+}
+
+.dashboard-hero-metric-card.metric-green::before {
+  background: linear-gradient(90deg, transparent, #30d158, transparent);
+}
+.dashboard-hero-metric-card.metric-green .dashboard-hero-metric-val {
+  color: #30d158;
 }
 
 .dashboard-hero-metric-val {
@@ -3576,20 +3652,28 @@ button, a, input, select, textarea {
     grid-template-columns: repeat(3, 1fr) !important;
     gap: 6px !important;
     width: 100% !important;
+    max-width: 100% !important;
   }
+  .dashboard-hero-metric-card,
   .dashboard-hero-metric-inner {
     padding: 10px 4px !important;
     border-radius: 14px !important;
+    min-width: 0 !important;
   }
   .dashboard-hero-metric-val {
-    font-size: 17px !important;
+    font-size: 16px !important;
     margin-bottom: 2px !important;
   }
   .dashboard-hero-metric-lbl {
-    font-size: 9.5px !important;
+    font-size: 9px !important;
     line-height: 1.2 !important;
     text-align: center !important;
     white-space: normal !important;
+    word-break: break-word;
+  }
+  .cyber-perspective-grid {
+    left: 0 !important;
+    width: 100% !important;
   }
 }
 

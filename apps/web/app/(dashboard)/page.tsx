@@ -127,20 +127,7 @@ export default async function DashboardPage() {
           <div className="dashboard-hero-cta">
             <a
               href="#systems-showcase"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "10px",
-                padding: "13px 28px",
-                borderRadius: "9999px",
-                background: "#0A84FF",
-                color: "#ffffff",
-                fontSize: "14.5px",
-                fontWeight: 600,
-                textDecoration: "none",
-                boxShadow: "0 6px 24px -2px rgba(10, 132, 255, 0.5)",
-                transition: "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease",
-              }}
+              className="btn-hero-primary"
             >
               <span>สำรวจระบบทั้งหมด</span>
               <span>→</span>
@@ -148,21 +135,7 @@ export default async function DashboardPage() {
 
             <Link
               href="/settings"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "13px 24px",
-                borderRadius: "9999px",
-                background: "rgba(255, 255, 255, 0.05)",
-                border: "1px solid rgba(255, 255, 255, 0.12)",
-                color: "#ffffff",
-                fontSize: "14.5px",
-                fontWeight: 500,
-                textDecoration: "none",
-                backdropFilter: "blur(12px)",
-                transition: "all 0.2s ease",
-              }}
+              className="btn-hero-secondary"
             >
               <span>เกี่ยวกับระบบ</span>
             </Link>
@@ -177,7 +150,7 @@ export default async function DashboardPage() {
                 justifyContent: "center",
                 gap: "10px",
                 flexWrap: "wrap",
-                marginBottom: "32px",
+                marginBottom: "28px",
               }}
             >
               {data.pendingSlipsCount > 0 && (
@@ -225,43 +198,37 @@ export default async function DashboardPage() {
             </div>
           )}
 
-          {/* Centered Metric Summary Cards with 3D Tilt & Laser Border Beams */}
+          {/* Centered Metric Summary Cards - Perfectly Balanced & Responsive */}
           <div className="dashboard-hero-metrics">
             {/* Card 1 - Admins */}
-            <TiltCard beamColor="#00F0FF" style={{ borderRadius: "18px", width: "100%" }}>
-              <div className="dashboard-hero-metric-inner">
-                <div className="dashboard-hero-metric-val">
-                  {data.totalAdmins}
-                </div>
-                <div className="dashboard-hero-metric-lbl">
-                  ทีมงานในระบบ
-                </div>
+            <div className="dashboard-hero-metric-card metric-cyan">
+              <div className="dashboard-hero-metric-val">
+                {data.totalAdmins}
               </div>
-            </TiltCard>
+              <div className="dashboard-hero-metric-lbl">
+                ทีมงานในระบบ
+              </div>
+            </div>
 
             {/* Card 2 - Weekly Revenue */}
-            <TiltCard beamColor="#FFD700" style={{ borderRadius: "18px", width: "100%" }}>
-              <div className="dashboard-hero-metric-inner">
-                <div className="dashboard-hero-metric-val">
-                  ฿{formatCurrency(data.weeklyRevenue)}
-                </div>
-                <div className="dashboard-hero-metric-lbl">
-                  ยอดขายยศ (7 วัน)
-                </div>
+            <div className="dashboard-hero-metric-card metric-gold">
+              <div className="dashboard-hero-metric-val">
+                ฿{formatCurrency(data.weeklyRevenue)}
               </div>
-            </TiltCard>
+              <div className="dashboard-hero-metric-lbl">
+                ยอดขายยศ (7 วัน)
+              </div>
+            </div>
 
             {/* Card 3 - Status */}
-            <TiltCard beamColor="#30D158" style={{ borderRadius: "18px", width: "100%" }}>
-              <div className="dashboard-hero-metric-inner">
-                <div className="dashboard-hero-metric-val" style={{ color: "#30d158" }}>
-                  100%
-                </div>
-                <div className="dashboard-hero-metric-lbl">
-                  สถานะระบบออนไลน์
-                </div>
+            <div className="dashboard-hero-metric-card metric-green">
+              <div className="dashboard-hero-metric-val" style={{ color: "#30d158" }}>
+                100%
               </div>
-            </TiltCard>
+              <div className="dashboard-hero-metric-lbl">
+                สถานะระบบออนไลน์
+              </div>
+            </div>
           </div>
         </div>
       </section>

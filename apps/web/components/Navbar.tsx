@@ -335,6 +335,23 @@ export default function Navbar() {
     };
   }, []);
 
+  // Listen for mobile bottom nav drawer trigger
+  useEffect(() => {
+    const handleToggleDrawer = () => setMobileMenuOpen((prev) => !prev);
+    const handleOpenDrawer = () => setMobileMenuOpen(true);
+    const handleCloseDrawer = () => setMobileMenuOpen(false);
+
+    window.addEventListener("toggle-mobile-drawer", handleToggleDrawer);
+    window.addEventListener("open-mobile-drawer", handleOpenDrawer);
+    window.addEventListener("close-mobile-drawer", handleCloseDrawer);
+
+    return () => {
+      window.removeEventListener("toggle-mobile-drawer", handleToggleDrawer);
+      window.removeEventListener("open-mobile-drawer", handleOpenDrawer);
+      window.removeEventListener("close-mobile-drawer", handleCloseDrawer);
+    };
+  }, []);
+
   function handleOpenSearch() {
     window.dispatchEvent(new CustomEvent("open-command-palette"));
   }
@@ -649,27 +666,6 @@ export default function Navbar() {
               </div>
             )}
           </div>
-
-          {/* Mobile Menu Hamburger Button */}
-          <button
-            type="button"
-            className="apple-mobile-menu-btn"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="เปิดเมนู"
-          >
-            {mobileMenuOpen ? (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            ) : (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="4" y1="12" x2="20" y2="12" />
-                <line x1="4" y1="6" x2="20" y2="6" />
-                <line x1="4" y1="18" x2="20" y2="18" />
-              </svg>
-            )}
-          </button>
         </div>
       </div>
 
@@ -682,6 +678,46 @@ export default function Navbar() {
             aria-hidden="true"
           />
           <div className="apple-mobile-drawer">
+            {/* Drawer Top Header with Dismiss Button */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                paddingBottom: "14px",
+                marginBottom: "16px",
+                borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontSize: "14px", fontWeight: 600, color: "#ffffff" }}>
+                  เมนูนำทางทั้งหมด
+                </span>
+                <span style={{ fontSize: "10px", padding: "1px 6px", borderRadius: "4px", background: "rgba(10, 132, 255, 0.2)", color: "#2997ff", fontWeight: 600 }}>
+                  LynnBot
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                style={{
+                  background: "rgba(255, 255, 255, 0.08)",
+                  border: "none",
+                  borderRadius: "50%",
+                  width: "28px",
+                  height: "28px",
+                  color: "#ffffff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "12px",
+                  cursor: "pointer",
+                }}
+                aria-label="ปิดเมนู"
+              >
+                ✕
+              </button>
+            </div>
           <div className="apple-mobile-drawer-content">
             {/* Section 1: Overview */}
             <div className="apple-mobile-category-block">

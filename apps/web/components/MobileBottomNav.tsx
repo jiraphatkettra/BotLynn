@@ -46,10 +46,7 @@ export default function MobileBottomNav() {
   };
 
   const handleOpenMobileMenu = () => {
-    const btn = document.querySelector(".apple-mobile-menu-btn") as HTMLButtonElement | null;
-    if (btn) {
-      btn.click();
-    }
+    window.dispatchEvent(new CustomEvent("toggle-mobile-drawer"));
   };
 
   return (
