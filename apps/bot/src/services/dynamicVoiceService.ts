@@ -353,55 +353,85 @@ async function processSingleZoneDynamicVoice(
   const emptyChannels = voiceChannels.filter((v) => v.memberCount === 0);
   const totalChannels = voiceChannels.length;
 
-  // EXPANSION LOGIC:
-  // If the number of empty rooms is less than spareChannels (e.g. 0 empty rooms left)
+  // BATCH EXPANSION LOGIC:
+  // If the number of empty rooms is less than spareChannels (e.g. 0 empty rooms left / set is full)
   if (emptyChannels.length < spareChannels) {
     const highestNum =
       voiceChannels.length > 0
         ? Math.max(...voiceChannels.map((v) => v.roomNumber))
         : 0;
-    const nextNumber = highestNum + 1;
 
-    // Determine new channel name
-    const newName = buildVoiceChannelName(
-      zoneName,
-      nextNumber,
-      emojis,
-      false,
-      blockSize
-    );
+    const lastChannelOfZone = voiceChannels[voiceChannels.length - 1];
+    const basePos = lastChannelOfZone ? lastChannelOfZone.channel.position : undefined;
 
     console.log(
-      `🎙️ [Dynamic Voice] High occupancy for '${zoneName}' in '${category.name}' (${emptyChannels.length} empty). Expanding with room ${nextNumber} (Limit: ${effectiveUserLimit})...`
+      `🎙️ [Dynamic Voice] Batch-expanding ${blockSize} rooms for '${zoneName}' in '${category.name}' (Rooms ${highestNum + 1} to ${highestNum + blockSize}, Limit: ${effectiveUserLimit})...`
     );
 
-    await category.guild.channels.create({
-      name: newName,
-      type: ChannelType.GuildVoice,
-      parent: category.id,
-      userLimit: effectiveUserLimit,
-      reason: `[LynnBot Dynamic Voice] Auto-expanded room ${nextNumber} for ${zoneName}`,
-    });
+    // Create the entire block (e.g. 3 rooms: 04, 05, 06 or 5 rooms: 06, 07, 08, 09, 10) sequentially
+    for (let step = 1; step <= blockSize; step++) {
+      const roomNum = highestNum + step;
+      const isEnd = step === blockSize;
+      const newName = buildVoiceChannelName(
+        zoneName,
+        roomNum,
+        emojis,
+        isEnd,
+        blockSize
+      );
+
+      await category.guild.channels.create({
+        name: newName,
+        type: ChannelType.GuildVoice,
+        parent: category.id,
+        userLimit: effectiveUserLimit,
+        position: basePos !== undefined ? basePos + step : undefined,
+        reason: `[LynnBot Dynamic Voice] Batch-expanded room ${roomNum} for ${zoneName}`,
+      });
+    }
 
     return;
   }
 
-  // PRUNING LOGIC:
-  // If we have surplus channels above minChannels AND more empty channels than needed
-  if (totalChannels > minChannels && emptyChannels.length > spareChannels) {
-    const prunableChannels = emptyChannels
-      .filter((v) => v.roomNumber > minChannels)
-      .sort((a, b) => b.roomNumber - a.roomNumber); // highest number first
+  // BATCH PRUNING LOGIC:
+  // If we have surplus channels above minChannels
+  if (totalChannels > minChannels) {
+    const surplusChannels = voiceChannels.filter((v) => v.roomNumber > minChannels);
 
-    if (prunableChannels.length > 0) {
-      const toDelete = prunableChannels[0];
-      console.log(
-        `🎙️ [Dynamic Voice] Room ${toDelete.roomNumber} (${zoneName}) in '${category.name}' is empty and surplus. Pruning...`
+    if (surplusChannels.length >= blockSize) {
+      // Find the highest batch block (e.g. rooms 04-06 or rooms 06-10)
+      const highestNum = Math.max(...surplusChannels.map((v) => v.roomNumber));
+      const blockStart = highestNum - blockSize + 1;
+      const blockChannels = surplusChannels.filter(
+        (v) => v.roomNumber >= blockStart && v.roomNumber <= highestNum
       );
 
-      await toDelete.channel.delete(
-        `[LynnBot Dynamic Voice] Auto-pruning empty surplus room ${toDelete.roomNumber} (${zoneName})`
-      );
+      // Check if every single room in this highest surplus block is empty
+      const isBlockCompletelyEmpty =
+        blockChannels.length === blockSize &&
+        blockChannels.every((v) => v.memberCount === 0);
+
+      // Check if lower remaining channels have at least 1 empty room (so we don't prune while lower rooms are still 100% full)
+      const lowerChannels = voiceChannels.filter((v) => v.roomNumber < blockStart);
+      const hasEmptyInLower = lowerChannels.some((v) => v.memberCount === 0);
+
+      if (isBlockCompletelyEmpty && hasEmptyInLower) {
+        console.log(
+          `🎙️ [Dynamic Voice] Entire surplus block [Rooms ${blockStart} to ${highestNum}] for '${zoneName}' is empty. Pruning whole block...`
+        );
+
+        // Delete from highest number downwards (e.g. 06 -> 05 -> 04)
+        const toDeleteSorted = [...blockChannels].sort((a, b) => b.roomNumber - a.roomNumber);
+        for (const chInfo of toDeleteSorted) {
+          await chInfo.channel
+            .delete(
+              `[LynnBot Dynamic Voice] Batch-pruning empty surplus block room ${chInfo.roomNumber} (${zoneName})`
+            )
+            .catch((err) =>
+              console.error(`Error deleting channel ${chInfo.roomNumber}:`, err)
+            );
+        }
+      }
     }
   }
 }
