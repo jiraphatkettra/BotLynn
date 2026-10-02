@@ -70,6 +70,15 @@ const COMMAND_ITEMS: CommandItem[] = [
     description: "จัดการสมาชิกทีมงาน, สิทธิ์ และซิงค์ยศ",
   },
   {
+    id: "rules",
+    title: "กฎทีมงานและระเบียบปฏิบัติ",
+    category: "หน้าการทำงาน",
+    icon: "⚖️",
+    href: "/rules",
+    keywords: ["rules", "กฎ", "ระเบียบ", "กฎแอดมิน", "จรรยาบรรณ", "บทลงโทษ", "753bc"],
+    description: "คู่มือระเบียบ จริยธรรม และตารางระดับโทษทีมงาน",
+  },
+  {
     id: "permissions",
     title: "ตารางสิทธิ์การใช้งาน",
     category: "หน้าการทำงาน",
