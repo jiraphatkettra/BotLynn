@@ -36,6 +36,7 @@ import {
 } from "./commands/wallet.js";
 import { leaveCommand } from "./commands/leave.js";
 import { panelCommand } from "./commands/panel.js";
+import { dynamicVoiceCommand } from "./commands/dynamicVoice.js";
 
 // Import events
 import { handleReady } from "./events/ready.js";
@@ -80,6 +81,7 @@ const commandList: BotCommand[] = [
   giveBalanceCommand,
   leaveCommand,
   panelCommand,
+  dynamicVoiceCommand,
 ];
 
 for (const command of commandList) {

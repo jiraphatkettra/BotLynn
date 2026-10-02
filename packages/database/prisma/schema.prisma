@@ -476,3 +476,27 @@ enum FinanceType {
   EXPENSE
 }
 
+// ==========================================
+// DYNAMIC VOICE CHANNEL AUTOMATION
+// ==========================================
+
+model DynamicVoiceConfig {
+  id             String   @id @default(cuid())
+  guildId        String
+  categoryId     String   @unique // Category Discord channel ID
+  categoryName   String?  // e.g. "Gaming Zone" / "Living Zone"
+  zoneName       String   // e.g. "เล่นเกม" หรือ "พูดคุย"
+  userLimit      Int      @default(5) // e.g. 5 for Gaming, 10 for Living
+  minChannels    Int      @default(5) // default 5 rooms minimum
+  spareChannels  Int      @default(1) // maintain at least 1 empty room
+  emojis         String   @default("🎮") // comma separated emojis e.g. "🥪,🥐,🥓,🥨,🍿,🍑,🍎,🍓,🍈,🍋"
+  blockGroupSize Int      @default(5) // blocks of 5 for ╭ ┆ ╰
+  isEnabled      Boolean  @default(true)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([guildId])
+  @@map("dynamic_voice_configs")
+}
+

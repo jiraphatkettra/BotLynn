@@ -1,4 +1,5 @@
 import Header from "@/components/Header";
+import DynamicVoiceManager from "@/components/DynamicVoiceManager";
 import { prisma } from "@lynnbot/database";
 import { formatDuration, getDiscordAvatarUrl, formatRelativeTime, formatDateTime } from "@/lib/utils";
 
@@ -183,6 +184,9 @@ export default async function VoiceStatsPage() {
             </div>
           </div>
         )}
+
+        {/* Dynamic Voice Automation Management */}
+        <DynamicVoiceManager />
 
         {/* Stat Cards */}
         <div className="stats-grid stagger">

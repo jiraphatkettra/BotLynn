@@ -1,5 +1,6 @@
 import { type VoiceState } from "discord.js";
 import { prisma } from "@lynnbot/database";
+import { handleDynamicVoiceState } from "../services/dynamicVoiceService.js";
 
 export async function handleVoiceStateUpdate(
   oldState: VoiceState,
@@ -11,6 +12,14 @@ export async function handleVoiceStateUpdate(
   const discordId = member.user.id;
   const now = new Date();
 
+  // 1. Process Dynamic Voice Pool Automation (Auto-expansion & Pruning)
+  try {
+    await handleDynamicVoiceState(oldState, newState);
+  } catch (dynamicErr) {
+    console.error("❌ Error in handleDynamicVoiceState:", dynamicErr);
+  }
+
+  // 2. Track Voice Session for Attendance & Stats
   try {
     // Case 1: Joined a voice channel
     if (!oldState.channelId && newState.channelId) {
@@ -97,7 +106,7 @@ export async function handleVoiceStateUpdate(
           discordId,
           username: member.user.username,
           displayName: member.displayName || member.user.username,
-          role: "ADMIN",
+          role: "MEMBER",
         },
       });
 
@@ -142,3 +151,4 @@ export async function handleVoiceStateUpdate(
     console.error("❌ Error in handleVoiceStateUpdate:", err);
   }
 }
+

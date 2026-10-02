@@ -1,0 +1,335 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@lynnbot/database";
+
+export const dynamic = "force-dynamic";
+
+// Default food emojis for Living / Talk zone
+const DEFAULT_TALK_EMOJIS = [
+  "🥪", "🥐", "🥓", "🥨", "🍿",
+  "🍑", "🍎", "🍓", "🍈", "🍋",
+  "🍇", "🍉", "🍊", "🍩", "🍰",
+];
+
+function buildVoiceChannelName(
+  zoneName: string,
+  index: number,
+  emojis: string[],
+  isBlockEnd: boolean = false
+): string {
+  const padNum = String(index).padStart(2, "0");
+  const posInBlock = ((index - 1) % 5) + 1;
+  let branch = "┆";
+  if (posInBlock === 1) {
+    branch = "╭";
+  } else if (posInBlock === 5 || isBlockEnd) {
+    branch = "╰";
+  }
+  const emoji = emojis.length > 0 ? emojis[(index - 1) % emojis.length] : "🎮";
+  return `${branch} ㆍ ${zoneName}ㆍ${padNum} ㆍ ${emoji} ⁺`;
+}
+
+async function seedDiscordVoiceChannels(
+  categoryId: string,
+  zoneName: string,
+  emojis: string,
+  userLimit: number,
+  minChannels: number
+): Promise<number> {
+  const token = process.env.DISCORD_TOKEN;
+  const guildId = process.env.DISCORD_GUILD_ID;
+  if (!token || !guildId || !categoryId) return 0;
+
+  try {
+    const res = await fetch(`https://discord.com/api/v10/guilds/${guildId}/channels`, {
+      headers: { Authorization: `Bot ${token}` },
+    });
+    if (!res.ok) return 0;
+
+    const allChannels = await res.json();
+    const existingVoice = allChannels.filter(
+      (c: any) => c.type === 2 && c.parent_id === categoryId
+    );
+
+    const existingNums = new Set(
+      existingVoice
+        .map((c: any) => {
+          const m = c.name.match(/ㆍ\s*(\d{1,3})\s*ㆍ/);
+          return m ? parseInt(m[1], 10) : null;
+        })
+        .filter(Boolean)
+    );
+
+    const emojiList = emojis.split(",").map((e: string) => e.trim()).filter(Boolean);
+    const minRooms = Number(minChannels) || 5;
+    let createdCount = 0;
+
+    for (let i = 1; i <= minRooms; i++) {
+      if (!existingNums.has(i)) {
+        const name = buildVoiceChannelName(zoneName, i, emojiList, i === minRooms);
+        const createRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/channels`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bot ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            type: 2, // GUILD_VOICE
+            parent_id: categoryId,
+            user_limit: Number(userLimit) || 0,
+          }),
+        });
+        if (createRes.ok) createdCount++;
+      }
+    }
+    return createdCount;
+  } catch (err) {
+    console.error("Error seeding Discord channels:", err);
+    return 0;
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const configs = await prisma.dynamicVoiceConfig.findMany({
+      orderBy: { createdAt: "asc" },
+    });
+
+    // Attempt to fetch categories from Discord API if configured
+    let categories: Array<{ id: string; name: string }> = [];
+    const token = process.env.DISCORD_TOKEN;
+    const guildId = process.env.DISCORD_GUILD_ID;
+
+    if (token && guildId) {
+      try {
+        const res = await fetch(
+          `https://discord.com/api/v10/guilds/${guildId}/channels`,
+          {
+            headers: { Authorization: `Bot ${token}` },
+            next: { revalidate: 30 },
+          }
+        );
+        if (res.ok) {
+          const channels = await res.json();
+          // Type 4 is GUILD_CATEGORY
+          categories = channels
+            .filter((c: any) => c.type === 4)
+            .map((c: any) => ({
+              id: c.id,
+              name: c.name,
+            }))
+            .sort((a: any, b: any) => a.name.localeCompare(b.name));
+        }
+      } catch (err) {
+        console.error("Failed to fetch Discord categories:", err);
+      }
+    }
+
+    return NextResponse.json({
+      configs,
+      categories,
+      defaultTalkEmojis: DEFAULT_TALK_EMOJIS,
+    });
+  } catch (error) {
+    console.error("Error in GET /api/voice/dynamic:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const role = (session.user as any)?.role;
+    if (!["OWNER", "MANAGER", "ADMIN"].includes(role)) {
+      return NextResponse.json(
+        { error: "เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถตั้งค่าได้" },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json();
+
+    // Check if this is a sync action
+    if (body.action === "sync" && body.id) {
+      const config = await prisma.dynamicVoiceConfig.findUnique({
+        where: { id: body.id },
+      });
+      if (!config) {
+        return NextResponse.json({ error: "Config not found" }, { status: 404 });
+      }
+
+      const created = await seedDiscordVoiceChannels(
+        config.categoryId,
+        config.zoneName,
+        config.emojis,
+        config.userLimit,
+        config.minChannels
+      );
+
+      return NextResponse.json({
+        success: true,
+        message: `ซิงค์สำเร็จ! สร้างห้องเพิ่มเติม ${created} ห้อง`,
+      });
+    }
+
+    const {
+      categoryId,
+      categoryName,
+      zoneName,
+      userLimit = 5,
+      minChannels = 5,
+      spareChannels = 1,
+      emojis = "🎮",
+      isEnabled = true,
+      autoSeed = true,
+    } = body;
+
+    if (!categoryId || !zoneName) {
+      return NextResponse.json(
+        { error: "กรุณาระบุหมวดหมู่ (Category ID) และชื่อโซน (Zone Name)" },
+        { status: 400 }
+      );
+    }
+
+    const guildId = process.env.DISCORD_GUILD_ID || "guild_default";
+
+    const config = await prisma.dynamicVoiceConfig.upsert({
+      where: { categoryId },
+      update: {
+        categoryName: categoryName || undefined,
+        zoneName,
+        userLimit: Number(userLimit) || 0,
+        minChannels: Number(minChannels) || 5,
+        spareChannels: Number(spareChannels) || 1,
+        emojis,
+        isEnabled: isEnabled !== undefined ? Boolean(isEnabled) : true,
+      },
+      create: {
+        guildId,
+        categoryId,
+        categoryName: categoryName || null,
+        zoneName,
+        userLimit: Number(userLimit) || 0,
+        minChannels: Number(minChannels) || 5,
+        spareChannels: Number(spareChannels) || 1,
+        emojis,
+        isEnabled: isEnabled !== undefined ? Boolean(isEnabled) : true,
+      },
+    });
+
+    // Auto-seed rooms in Discord
+    if (autoSeed) {
+      await seedDiscordVoiceChannels(
+        categoryId,
+        zoneName,
+        emojis,
+        Number(userLimit) || 0,
+        Number(minChannels) || 5
+      );
+    }
+
+    return NextResponse.json({ success: true, config });
+  } catch (error) {
+    console.error("Error in POST /api/voice/dynamic:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const role = (session.user as any)?.role;
+    if (!["OWNER", "MANAGER", "ADMIN"].includes(role)) {
+      return NextResponse.json(
+        { error: "เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถตั้งค่าได้" },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json();
+    const { id, isEnabled, userLimit, minChannels, spareChannels, zoneName, emojis, categoryName } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: "Missing config ID" }, { status: 400 });
+    }
+
+    const updateData: any = {};
+    if (isEnabled !== undefined) updateData.isEnabled = Boolean(isEnabled);
+    if (userLimit !== undefined) updateData.userLimit = Number(userLimit);
+    if (minChannels !== undefined) updateData.minChannels = Number(minChannels);
+    if (spareChannels !== undefined) updateData.spareChannels = Number(spareChannels);
+    if (zoneName !== undefined) updateData.zoneName = zoneName;
+    if (emojis !== undefined) updateData.emojis = emojis;
+    if (categoryName !== undefined) updateData.categoryName = categoryName;
+
+    const updated = await prisma.dynamicVoiceConfig.update({
+      where: { id },
+      data: updateData,
+    });
+
+    return NextResponse.json({ success: true, config: updated });
+  } catch (error) {
+    console.error("Error in PUT /api/voice/dynamic:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const role = (session.user as any)?.role;
+    if (!["OWNER", "MANAGER", "ADMIN"].includes(role)) {
+      return NextResponse.json(
+        { error: "เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถลบได้" },
+        { status: 403 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "Missing config ID" }, { status: 400 });
+    }
+
+    await prisma.dynamicVoiceConfig.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error in DELETE /api/voice/dynamic:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
