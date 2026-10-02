@@ -10,9 +10,10 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Allow login page, Next.js assets, public images/logos, and public API routes
+  // Allow login page, public rules portal, Next.js assets, public images/logos, and public API routes
   if (
     pathname.startsWith("/login") ||
+    pathname.startsWith("/rules") ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/bot") ||
     pathname.startsWith("/_next") ||
