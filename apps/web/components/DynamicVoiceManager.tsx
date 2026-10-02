@@ -25,7 +25,7 @@ interface DiscordCategory {
 }
 
 const COMMON_EMOJIS = [
-  "🎮", "🥪", "🥐", "🥓", "🥨", "🍿",
+  "🛌", "🎮", "🥪", "🥐", "🥓", "🥨", "🍿",
   "🍑", "🍎", "🍓", "🍈", "🍋", "🍇",
   "🍉", "🍊", "🍩", "🍰", "🎧", "🎬", "💬"
 ];
@@ -43,15 +43,17 @@ export default function DynamicVoiceManager() {
   const [editingConfig, setEditingConfig] = useState<DynamicVoiceConfig | null>(null);
 
   const [syncingId, setSyncingId] = useState<string | null>(null);
+  const [creatingSleep, setCreatingSleep] = useState(false);
 
   // Form State
   const [categoryId, setCategoryId] = useState("");
   const [categoryName, setCategoryName] = useState("");
-  const [zoneName, setZoneName] = useState("เล่นเกม");
+  const [zoneName, setZoneName] = useState("นอนรวม");
   const [userLimit, setUserLimit] = useState(5);
-  const [minChannels, setMinChannels] = useState(5);
+  const [minChannels, setMinChannels] = useState(3);
   const [spareChannels, setSpareChannels] = useState(1);
-  const [emojis, setEmojis] = useState("🎮");
+  const [emojis, setEmojis] = useState("🛌");
+  const [blockGroupSize, setBlockGroupSize] = useState(3);
   const [isEnabled, setIsEnabled] = useState(true);
   const [autoSeed, setAutoSeed] = useState(true);
 
@@ -80,12 +82,14 @@ export default function DynamicVoiceManager() {
     setEditingConfig(null);
     setCategoryId(categories.length > 0 ? categories[0].id : "");
     setCategoryName(categories.length > 0 ? categories[0].name : "");
-    setZoneName("เล่นเกม");
+    setZoneName("นอนรวม");
     setUserLimit(5);
-    setMinChannels(5);
+    setMinChannels(3);
     setSpareChannels(1);
-    setEmojis("🎮");
+    setEmojis("🛌");
+    setBlockGroupSize(3);
     setIsEnabled(true);
+    setAutoSeed(true);
     setModalOpen(true);
   };
 
@@ -98,23 +102,83 @@ export default function DynamicVoiceManager() {
     setMinChannels(cfg.minChannels);
     setSpareChannels(cfg.spareChannels);
     setEmojis(cfg.emojis);
+    setBlockGroupSize(cfg.blockGroupSize || (cfg.minChannels <= 3 ? 3 : 5));
     setIsEnabled(cfg.isEnabled);
     setModalOpen(true);
   };
 
-  const applyPreset = (preset: "GAMING" | "LIVING") => {
-    if (preset === "GAMING") {
+  const applyPreset = (preset: "SLEEP_GROUP" | "SLEEP_DUO" | "SLEEP_SOLO" | "GAMING" | "LIVING") => {
+    if (preset === "SLEEP_GROUP") {
+      setZoneName("นอนรวม");
+      setUserLimit(5);
+      setMinChannels(3);
+      setSpareChannels(1);
+      setEmojis("🛌");
+      setBlockGroupSize(3);
+    } else if (preset === "SLEEP_DUO") {
+      setZoneName("นอนคู่");
+      setUserLimit(5);
+      setMinChannels(3);
+      setSpareChannels(1);
+      setEmojis("🛌");
+      setBlockGroupSize(3);
+    } else if (preset === "SLEEP_SOLO") {
+      setZoneName("นอนเดี่ยว");
+      setUserLimit(5);
+      setMinChannels(3);
+      setSpareChannels(1);
+      setEmojis("🛌");
+      setBlockGroupSize(3);
+    } else if (preset === "GAMING") {
       setZoneName("เล่นเกม");
       setUserLimit(5);
       setMinChannels(5);
       setSpareChannels(1);
       setEmojis("🎮");
-    } else {
+      setBlockGroupSize(5);
+    } else if (preset === "LIVING") {
       setZoneName("พูดคุย");
       setUserLimit(10);
       setMinChannels(5);
       setSpareChannels(1);
       setEmojis("🥪, 🥐, 🥓, 🥨, 🍿, 🍑, 🍎, 🍓, 🍈, 🍋");
+      setBlockGroupSize(5);
+    }
+  };
+
+  const handleCreateSleepingZone = async () => {
+    const defaultCat = categories.length > 0 ? categories[0].id : "";
+    const catChoice = prompt(
+      "กรุณาระบุ Discord Category ID สำหรับสร้างโซนห้องนอน (Dreamland 3-in-1):",
+      defaultCat
+    );
+    if (!catChoice?.trim()) return;
+
+    try {
+      setCreatingSleep(true);
+      const catObj = categories.find((c) => c.id === catChoice.trim());
+      const res = await fetch("/api/voice/dynamic", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "create-sleeping-zone",
+          categoryId: catChoice.trim(),
+          categoryName: catObj?.name || "Dreamland",
+          userLimit: 5,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || "เปิดใช้งานโซนห้องนอนสำเร็จ!");
+        await loadData();
+      } else {
+        alert(data.error || "เกิดข้อผิดพลาดในการสร้างโซนห้องนอน");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+    } finally {
+      setCreatingSleep(false);
     }
   };
 
@@ -189,9 +253,10 @@ export default function DynamicVoiceManager() {
         categoryName: categoryName || selectedCat?.name || "Voice Category",
         zoneName,
         userLimit: Number(userLimit) || 0,
-        minChannels: Number(minChannels) || 5,
+        minChannels: Number(minChannels) || 3,
         spareChannels: Number(spareChannels) || 1,
         emojis,
+        blockGroupSize: Number(blockGroupSize) || (Number(minChannels) <= 3 ? 3 : 5),
         isEnabled,
         autoSeed,
       };
@@ -231,22 +296,6 @@ export default function DynamicVoiceManager() {
     }
   };
 
-  // Helper preview generator for room tree lines
-  const generatePreviewLines = (zone: string, userCount: number, emojiListStr: string) => {
-    const emojiList = emojiListStr.split(",").map((s) => s.trim()).filter(Boolean);
-    const getEmoji = (idx: number) =>
-      emojiList.length > 0 ? emojiList[(idx - 1) % emojiList.length] : "🎮";
-
-    return [
-      { name: `╭ ㆍ ${zone}ㆍ01 ㆍ ${getEmoji(1)} ⁺`, limit: userCount, status: "เต็ม (5/5)" },
-      { name: `┆ ㆍ ${zone}ㆍ02 ㆍ ${getEmoji(2)} ⁺`, limit: userCount, status: "เต็ม (5/5)" },
-      { name: `┆ ㆍ ${zone}ㆍ03 ㆍ ${getEmoji(3)} ⁺`, limit: userCount, status: "เต็ม (5/5)" },
-      { name: `┆ ㆍ ${zone}ㆍ04 ㆍ ${getEmoji(4)} ⁺`, limit: userCount, status: "เต็ม (5/5)" },
-      { name: `╰ ㆍ ${zone}ㆍ05 ㆍ ${getEmoji(5)} ⁺`, limit: userCount, status: "คนเริ่มเข้า (4/5)" },
-      { name: `╭ ㆍ ${zone}ㆍ06 ㆍ ${getEmoji(6)} ⁺`, limit: userCount, status: "⚡ บอทแตกห้องใหม่อัตโนมัติ! (0/5)", highlight: true },
-    ];
-  };
-
   return (
     <div className="card mb-24 animate-scale-in" style={{ borderTop: "3px solid var(--accent)" }}>
       <div className="card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
@@ -261,7 +310,27 @@ export default function DynamicVoiceManager() {
         </div>
 
         {isAdmin && (
-          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+            <button
+              onClick={handleCreateSleepingZone}
+              disabled={creatingSleep}
+              className="btn"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "8px 16px",
+                fontWeight: 600,
+                fontSize: "13px",
+                borderRadius: "var(--radius-pill)",
+                background: "rgba(139, 92, 246, 0.15)",
+                color: "var(--primary-300)",
+                border: "1px solid rgba(139, 92, 246, 0.35)",
+              }}
+            >
+              <span>🛏️</span> {creatingSleep ? "กำลังเสกห้อง..." : "เสกโซนห้องนอน 3-in-1 (Dreamland)"}
+            </button>
+
             <button
               onClick={openCreateModal}
               className="btn btn-primary"
@@ -291,7 +360,7 @@ export default function DynamicVoiceManager() {
             padding: "16px 20px",
             marginBottom: "20px",
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
             gap: "20px",
             alignItems: "center",
           }}
@@ -299,7 +368,7 @@ export default function DynamicVoiceManager() {
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
               <span className="badge badge-accent" style={{ fontSize: "11px", fontWeight: 700 }}>
-                💡 หลักการทำงานแบบอัตโนมัติ
+                💡 รองรับทั้ง Gaming Zone & โซนห้องนอน (Dreamland)
               </span>
               <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
                 Slash Command: <code style={{ color: "var(--accent)", background: "rgba(41, 151, 255, 0.1)", padding: "2px 6px", borderRadius: "4px" }}>/dynamic-voice setup</code>
@@ -307,24 +376,24 @@ export default function DynamicVoiceManager() {
             </div>
             <ul style={{ paddingLeft: "18px", color: "var(--text-secondary)", fontSize: "13px", lineHeight: "1.7" }}>
               <li>
-                <strong style={{ color: "var(--text-primary)" }}>โครงสร้างกิ่งไม้สวยงาม:</strong> รักษารูปทรง <code>╭ ┆ ┆ ┆ ╰</code> เป็นบล็อกละ 5 ห้อง พร้อมเลข 2 หลัก <code>01, 02..</code>
+                <strong style={{ color: "var(--text-primary)" }}>โซนห้องนอน (Dreamland 3-in-1):</strong> รองรับ 3 โซนย่อยในหมวดเดียว (<code>นอนรวม</code>, <code>นอนคู่</code>, <code>นอนเดี่ยว</code>) พร้อม Emoji <code>🛌 ⁺</code>
               </li>
               <li>
-                <strong style={{ color: "var(--text-primary)" }}>ห้องขั้นต่ำ 5 ห้อง:</strong> เซิร์ฟเวอร์จะคงห้อง 01 - 05 ไว้ตลอดเวลา ไม่ต้องสร้างมือ
+                <strong style={{ color: "var(--text-primary)" }}>กิ่งไม้ 3 ท่อนพอดีเป๊ะ:</strong> บล็อกละ 3 ห้อง <code>╭</code> (01) <code>┆</code> (02) <code>╰</code> (03)
               </li>
               <li>
-                <strong style={{ color: "var(--text-primary)" }}>แตกห้องอัตโนมัติ:</strong> เมื่อห้องว่างเหลือน้อยกว่าที่กำหนด บอทจะงอกห้อง 06, 07.. ให้อัตโนมัติ
+                <strong style={{ color: "var(--text-primary)" }}>แตกห้องแยกอิสระ:</strong> หากนอนรวมเต็ม บอทจะแตกเฉพาะ <code>นอนรวมㆍ 04</code> ให้ ไม่กระทบนอนคู่หรือนอนเดี่ยว
               </li>
               <li>
-                <strong style={{ color: "var(--text-primary)" }}>ยุบห้องอัตโนมัติ:</strong> เมื่อสมาชิกแยกย้ายและห้องว่างเกิน บอทจะลบห้องส่วนเกินคืนรูปทรง 5 ห้องเดิมทันที
+                <strong style={{ color: "var(--text-primary)" }}>ยุบคืนรูปเดิม:</strong> เมื่อสมาชิกตื่นแยกย้าย บอทจะลบห้องส่วนเกินคืนรูปทรง 3 ห้องเดิมทันที
               </li>
             </ul>
           </div>
 
-          {/* Mini Visual Tree Example */}
+          {/* Mini Visual Tree Example matching the screenshot */}
           <div
             style={{
-              background: "#050508",
+              background: "#08080b",
               border: "1px solid rgba(255, 255, 255, 0.08)",
               borderRadius: "var(--radius-md)",
               padding: "12px 16px",
@@ -333,28 +402,36 @@ export default function DynamicVoiceManager() {
             }}
           >
             <div style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "8px", fontWeight: 600, display: "flex", justifyContent: "space-between" }}>
-              <span>ตัวอย่างการแตกห้องในหมวดหมู่</span>
-              <span style={{ color: "var(--success)" }}>🟢 LIVE SIMULATION</span>
+              <span>╭ 💤 ── Dreamland ── 💤</span>
+              <span style={{ color: "var(--primary-300)" }}>🛏️ SLEEPING PATTERN</span>
             </div>
-            {generatePreviewLines("เล่นเกม", 5, "🎮").map((line, idx) => (
+
+            {[
+              { name: "╭ ㆍ นอนรวมㆍ 01 ㆍ 🛌 ⁺", limit: "00 / 05" },
+              { name: "┆ ㆍ นอนรวมㆍ 02 ㆍ 🛌 ⁺", limit: "00 / 05" },
+              { name: "╰ ㆍ นอนรวมㆍ 03 ㆍ 🛌 ⁺", limit: "00 / 05" },
+              { name: "╭ ㆍ นอนคู่ㆍ 01 ㆍ 🛌 ⁺", limit: "00 / 05" },
+              { name: "┆ ㆍ นอนคู่ㆍ 02 ㆍ 🛌 ⁺", limit: "00 / 05" },
+              { name: "╰ ㆍ นอนคู่ㆍ 03 ㆍ 🛌 ⁺", limit: "00 / 05" },
+              { name: "╭ ㆍ นอนเดี่ยวㆍ 01 ㆍ 🛌 ⁺", limit: "00 / 05" },
+              { name: "┆ ㆍ นอนเดี่ยวㆍ 02 ㆍ 🛌 ⁺", limit: "00 / 05" },
+              { name: "╰ ㆍ นอนเดี่ยวㆍ 03 ㆍ 🛌 ⁺", limit: "00 / 05" },
+            ].map((line, idx) => (
               <div
                 key={idx}
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  padding: "4px 6px",
+                  padding: "3px 6px",
                   borderRadius: "4px",
-                  background: line.highlight ? "rgba(48, 209, 88, 0.12)" : "transparent",
-                  border: line.highlight ? "1px solid rgba(48, 209, 88, 0.3)" : "none",
-                  marginBottom: "2px",
+                  marginBottom: idx % 3 === 2 ? "6px" : "1px",
+                  borderBottom: idx % 3 === 2 && idx < 8 ? "1px dashed rgba(255,255,255,0.06)" : "none",
                 }}
               >
-                <span style={{ color: line.highlight ? "var(--success)" : "var(--text-primary)" }}>
-                  {line.name}
-                </span>
-                <span style={{ fontSize: "11px", color: line.highlight ? "var(--success)" : "var(--text-muted)" }}>
-                  {line.status}
+                <span style={{ color: "var(--text-primary)" }}>{line.name}</span>
+                <span style={{ fontSize: "11px", color: "var(--text-muted)", background: "rgba(255,255,255,0.04)", padding: "1px 6px", borderRadius: "4px" }}>
+                  {line.limit}
                 </span>
               </div>
             ))}
@@ -381,12 +458,17 @@ export default function DynamicVoiceManager() {
               ยังไม่มีการตั้งค่าหมวดหมู่ Dynamic Voice
             </div>
             <div style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "16px", maxWidth: "500px", margin: "0 auto 16px" }}>
-              กดปุ่มด้านล่างเพื่อเริ่มเปิดใช้งานระบบกับหมวดหมู่ใน Discord หรือใช้คำสั่ง <code>/dynamic-voice setup</code> ในห้องแชทได้ทันที
+              กดปุ่มด้านล่างเพื่อเริ่มเปิดใช้งานระบบกับหมวดหมู่ใน Discord หรือใช้คำสั่ง <code>/dynamic-voice setup</code> ใน Discord ได้ทันที
             </div>
             {isAdmin && (
-              <button onClick={openCreateModal} className="btn btn-primary" style={{ padding: "8px 20px" }}>
-                + เพิ่มการตั้งค่าหมวดหมู่แรก
-              </button>
+              <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
+                <button onClick={handleCreateSleepingZone} className="btn" style={{ padding: "8px 20px", background: "rgba(139, 92, 246, 0.15)", color: "var(--primary-300)" }}>
+                  🛏️ เสกโซนห้องนอน 3-in-1 (Dreamland)
+                </button>
+                <button onClick={openCreateModal} className="btn btn-primary" style={{ padding: "8px 20px" }}>
+                  + เพิ่มโซนห้องเสียง
+                </button>
+              </div>
             )}
           </div>
         ) : (
@@ -415,11 +497,11 @@ export default function DynamicVoiceManager() {
                         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                           <span style={{ fontSize: "18px" }}>{emojiChips[0] || "🎙️"}</span>
                           <h4 style={{ fontWeight: 700, fontSize: "16px", color: "var(--text-primary)" }}>
-                            {cfg.categoryName || "Discord Category"}
+                            {cfg.categoryName || "Discord Category"} • <span style={{ color: "var(--accent)" }}>{cfg.zoneName}</span>
                           </h4>
                         </div>
                         <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>
-                          ID: <code style={{ fontSize: "11px" }}>{cfg.categoryId}</code>
+                          Category ID: <code style={{ fontSize: "11px" }}>{cfg.categoryId}</code>
                         </div>
                       </div>
 
@@ -453,13 +535,7 @@ export default function DynamicVoiceManager() {
                       }}
                     >
                       <div>
-                        <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>ชื่อคำนำโซน</div>
-                        <div style={{ fontWeight: 700, fontSize: "14px", color: "var(--text-primary)" }}>
-                          {cfg.zoneName}
-                        </div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>จำกัดต่อห้อง</div>
+                        <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>จำกัดคนต่อห้อง</div>
                         <div style={{ fontWeight: 700, fontSize: "14px", color: "var(--accent)" }}>
                           {cfg.userLimit > 0 ? `${cfg.userLimit} คน` : "ไม่จำกัด"}
                         </div>
@@ -470,12 +546,18 @@ export default function DynamicVoiceManager() {
                           {cfg.minChannels} ห้อง
                         </div>
                       </div>
+                      <div>
+                        <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>บล็อกกิ่งไม้</div>
+                        <div style={{ fontWeight: 700, fontSize: "14px", color: "var(--primary-300)" }}>
+                          {cfg.blockGroupSize || 5} ห้อง/ชุด
+                        </div>
+                      </div>
                     </div>
 
                     {/* Emoji Sequence */}
                     <div style={{ marginBottom: "6px" }}>
                       <div style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "4px" }}>
-                        ชุด Emoji ประจำห้อง (วนซ้ำตามลำดับ):
+                        Emoji ประจำห้อง:
                       </div>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
                         {emojiChips.slice(0, 10).map((em, idx) => (
@@ -492,11 +574,6 @@ export default function DynamicVoiceManager() {
                             {em}
                           </span>
                         ))}
-                        {emojiChips.length > 10 && (
-                          <span style={{ fontSize: "11px", color: "var(--text-muted)", alignSelf: "center" }}>
-                            +{emojiChips.length - 10} รายการ
-                          </span>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -533,7 +610,7 @@ export default function DynamicVoiceManager() {
                           onClick={() => handleSync(cfg)}
                           disabled={syncingId === cfg.id}
                           className="btn"
-                          title="ตรวจเช็กและสร้างห้องเริ่มต้น 01-05 ให้ครบชุดใน Discord"
+                          title="ตรวจเช็กและสร้างห้องเริ่มต้นให้ครบชุดใน Discord"
                           style={{
                             fontSize: "12px",
                             padding: "5px 12px",
@@ -543,7 +620,7 @@ export default function DynamicVoiceManager() {
                             borderRadius: "var(--radius-sm)",
                           }}
                         >
-                          {syncingId === cfg.id ? "กำลังซิงค์..." : "⚡ ซิงค์ห้องชุด"}
+                          {syncingId === cfg.id ? "กำลังซิงค์..." : "⚡ ซิงค์ชุดห้อง"}
                         </button>
 
                         <button
@@ -607,7 +684,7 @@ export default function DynamicVoiceManager() {
               border: "1px solid var(--border-default)",
               borderRadius: "var(--radius-xl)",
               width: "100%",
-              maxWidth: "540px",
+              maxWidth: "560px",
               padding: "24px 28px",
               boxShadow: "0 20px 40px rgba(0, 0, 0, 0.6)",
               maxHeight: "90vh",
@@ -637,37 +714,85 @@ export default function DynamicVoiceManager() {
               <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "6px", fontWeight: 600 }}>
                 เลือกพรีเซ็ตสำเร็จรูป (Quick Presets):
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "8px" }}>
+                <button
+                  type="button"
+                  onClick={() => applyPreset("SLEEP_GROUP")}
+                  style={{
+                    padding: "8px 10px",
+                    background: zoneName === "นอนรวม" ? "rgba(139, 92, 246, 0.2)" : "rgba(255, 255, 255, 0.03)",
+                    border: `1px solid ${zoneName === "นอนรวม" ? "var(--primary-400)" : "var(--border-subtle)"}`,
+                    borderRadius: "var(--radius-md)",
+                    textAlign: "left",
+                    cursor: "pointer",
+                  }}
+                >
+                  <div style={{ fontWeight: 700, fontSize: "12px", color: "var(--text-primary)" }}>🛌 นอนรวม</div>
+                  <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>3 ห้อง • 5 คน • 🛌</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => applyPreset("SLEEP_DUO")}
+                  style={{
+                    padding: "8px 10px",
+                    background: zoneName === "นอนคู่" ? "rgba(139, 92, 246, 0.2)" : "rgba(255, 255, 255, 0.03)",
+                    border: `1px solid ${zoneName === "นอนคู่" ? "var(--primary-400)" : "var(--border-subtle)"}`,
+                    borderRadius: "var(--radius-md)",
+                    textAlign: "left",
+                    cursor: "pointer",
+                  }}
+                >
+                  <div style={{ fontWeight: 700, fontSize: "12px", color: "var(--text-primary)" }}>🛌 นอนคู่</div>
+                  <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>3 ห้อง • 5 คน • 🛌</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => applyPreset("SLEEP_SOLO")}
+                  style={{
+                    padding: "8px 10px",
+                    background: zoneName === "นอนเดี่ยว" ? "rgba(139, 92, 246, 0.2)" : "rgba(255, 255, 255, 0.03)",
+                    border: `1px solid ${zoneName === "นอนเดี่ยว" ? "var(--primary-400)" : "var(--border-subtle)"}`,
+                    borderRadius: "var(--radius-md)",
+                    textAlign: "left",
+                    cursor: "pointer",
+                  }}
+                >
+                  <div style={{ fontWeight: 700, fontSize: "12px", color: "var(--text-primary)" }}>🛌 นอนเดี่ยว</div>
+                  <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>3 ห้อง • 5 คน • 🛌</div>
+                </button>
+
                 <button
                   type="button"
                   onClick={() => applyPreset("GAMING")}
                   style={{
-                    padding: "10px 12px",
-                    background: zoneName === "เล่นเกม" ? "rgba(41, 151, 255, 0.15)" : "rgba(255, 255, 255, 0.03)",
+                    padding: "8px 10px",
+                    background: zoneName === "เล่นเกม" ? "rgba(41, 151, 255, 0.2)" : "rgba(255, 255, 255, 0.03)",
                     border: `1px solid ${zoneName === "เล่นเกม" ? "var(--accent)" : "var(--border-subtle)"}`,
                     borderRadius: "var(--radius-md)",
                     textAlign: "left",
                     cursor: "pointer",
                   }}
                 >
-                  <div style={{ fontWeight: 700, fontSize: "13px", color: "var(--text-primary)" }}>🎮 Gaming Zone</div>
-                  <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>เล่นเกม • จำกัด 5 คน • 🎮</div>
+                  <div style={{ fontWeight: 700, fontSize: "12px", color: "var(--text-primary)" }}>🎮 เล่นเกม</div>
+                  <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>5 ห้อง • 5 คน • 🎮</div>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => applyPreset("LIVING")}
                   style={{
-                    padding: "10px 12px",
-                    background: zoneName === "พูดคุย" ? "rgba(48, 209, 88, 0.15)" : "rgba(255, 255, 255, 0.03)",
+                    padding: "8px 10px",
+                    background: zoneName === "พูดคุย" ? "rgba(48, 209, 88, 0.2)" : "rgba(255, 255, 255, 0.03)",
                     border: `1px solid ${zoneName === "พูดคุย" ? "var(--success)" : "var(--border-subtle)"}`,
                     borderRadius: "var(--radius-md)",
                     textAlign: "left",
                     cursor: "pointer",
                   }}
                 >
-                  <div style={{ fontWeight: 700, fontSize: "13px", color: "var(--text-primary)" }}>☕ Living Zone</div>
-                  <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>พูดคุย • จำกัด 10 คน • ผลไม้/ขนม</div>
+                  <div style={{ fontWeight: 700, fontSize: "12px", color: "var(--text-primary)" }}>☕ พูดคุย</div>
+                  <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>5 ห้อง • 10 คน • ผลไม้</div>
                 </button>
               </div>
             </div>
@@ -734,7 +859,7 @@ export default function DynamicVoiceManager() {
                   type="text"
                   value={categoryName}
                   onChange={(e) => setCategoryName(e.target.value)}
-                  placeholder="เช่น Gaming Zone, Living Zone"
+                  placeholder="เช่น Dreamland, Gaming Zone"
                   style={{
                     width: "100%",
                     padding: "10px 14px",
@@ -757,7 +882,7 @@ export default function DynamicVoiceManager() {
                     type="text"
                     value={zoneName}
                     onChange={(e) => setZoneName(e.target.value)}
-                    placeholder="เช่น เล่นเกม, พูดคุย"
+                    placeholder="เช่น นอนรวม, นอนคู่, นอนเดี่ยว"
                     required
                     style={{
                       width: "100%",
@@ -794,7 +919,7 @@ export default function DynamicVoiceManager() {
                 </div>
               </div>
 
-              {/* Min Channels & Spare Channels */}
+              {/* Min Channels & Block Group Size */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "6px" }}>
@@ -805,7 +930,12 @@ export default function DynamicVoiceManager() {
                     min="2"
                     max="20"
                     value={minChannels}
-                    onChange={(e) => setMinChannels(Number(e.target.value))}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setMinChannels(val);
+                      if (val <= 3) setBlockGroupSize(3);
+                      else setBlockGroupSize(5);
+                    }}
                     style={{
                       width: "100%",
                       padding: "10px 14px",
@@ -820,14 +950,11 @@ export default function DynamicVoiceManager() {
 
                 <div>
                   <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "6px" }}>
-                    ห้องว่างสำรอง (ต่ำกว่านี้จะแตกห้อง)
+                    ขนาดบล็อกกิ่งไม้ (╭ ┆ ╰)
                   </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="5"
-                    value={spareChannels}
-                    onChange={(e) => setSpareChannels(Number(e.target.value))}
+                  <select
+                    value={blockGroupSize}
+                    onChange={(e) => setBlockGroupSize(Number(e.target.value))}
                     style={{
                       width: "100%",
                       padding: "10px 14px",
@@ -837,20 +964,23 @@ export default function DynamicVoiceManager() {
                       color: "var(--text-primary)",
                       fontSize: "13px",
                     }}
-                  />
+                  >
+                    <option value={3}>บล็อกละ 3 ห้อง (ชุดห้องนอน)</option>
+                    <option value={5}>บล็อกละ 5 ห้อง (ชุดเกม / ทั่วไป)</option>
+                  </select>
                 </div>
               </div>
 
               {/* Emoji Sequence */}
               <div>
                 <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "6px" }}>
-                  Emoji ท้ายชื่อห้อง (คั่นด้วยจุลภาค <code>,</code>)
+                  Emoji ท้ายชื่อห้อง (เช่น 🛌 หรือ 🎮)
                 </label>
                 <input
                   type="text"
                   value={emojis}
                   onChange={(e) => setEmojis(e.target.value)}
-                  placeholder="เช่น 🎮 หรือ 🥪, 🥐, 🥓, 🥨, 🍿"
+                  placeholder="เช่น 🛌 หรือ 🎮"
                   style={{
                     width: "100%",
                     padding: "10px 14px",

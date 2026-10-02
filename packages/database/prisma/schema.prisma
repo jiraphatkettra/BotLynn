@@ -483,20 +483,22 @@ enum FinanceType {
 model DynamicVoiceConfig {
   id             String   @id @default(cuid())
   guildId        String
-  categoryId     String   @unique // Category Discord channel ID
-  categoryName   String?  // e.g. "Gaming Zone" / "Living Zone"
-  zoneName       String   // e.g. "เล่นเกม" หรือ "พูดคุย"
-  userLimit      Int      @default(5) // e.g. 5 for Gaming, 10 for Living
-  minChannels    Int      @default(5) // default 5 rooms minimum
+  categoryId     String   // Category Discord channel ID
+  categoryName   String?  // e.g. "Gaming Zone" / "Living Zone" / "Dreamland"
+  zoneName       String   // e.g. "เล่นเกม" หรือ "พูดคุย" หรือ "นอนรวม"
+  userLimit      Int      @default(5) // e.g. 5 for Gaming, 10 for Living, 1-5 for Sleep
+  minChannels    Int      @default(5) // default 5 rooms minimum (or 3 for sleeping sub-zones)
   spareChannels  Int      @default(1) // maintain at least 1 empty room
-  emojis         String   @default("🎮") // comma separated emojis e.g. "🥪,🥐,🥓,🥨,🍿,🍑,🍎,🍓,🍈,🍋"
-  blockGroupSize Int      @default(5) // blocks of 5 for ╭ ┆ ╰
+  emojis         String   @default("🎮") // comma separated emojis e.g. "🛌" or "🥪,🥐,🥓"
+  blockGroupSize Int      @default(5) // blocks of 3 or 5 for ╭ ┆ ╰
   isEnabled      Boolean  @default(true)
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  @@unique([categoryId, zoneName])
   @@index([guildId])
+  @@index([categoryId])
   @@map("dynamic_voice_configs")
 }
 

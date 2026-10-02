@@ -16,18 +16,19 @@ function buildVoiceChannelName(
   zoneName: string,
   index: number,
   emojis: string[],
-  isBlockEnd: boolean = false
+  isBlockEnd: boolean = false,
+  blockGroupSize: number = 5
 ): string {
   const padNum = String(index).padStart(2, "0");
-  const posInBlock = ((index - 1) % 5) + 1;
+  const posInBlock = ((index - 1) % blockGroupSize) + 1;
   let branch = "┆";
   if (posInBlock === 1) {
     branch = "╭";
-  } else if (posInBlock === 5 || isBlockEnd) {
+  } else if (posInBlock === blockGroupSize || isBlockEnd) {
     branch = "╰";
   }
   const emoji = emojis.length > 0 ? emojis[(index - 1) % emojis.length] : "🎮";
-  return `${branch} ㆍ ${zoneName}ㆍ${padNum} ㆍ ${emoji} ⁺`;
+  return `${branch} ㆍ ${zoneName}ㆍ ${padNum} ㆍ ${emoji} ⁺`;
 }
 
 async function seedDiscordVoiceChannels(
@@ -35,7 +36,8 @@ async function seedDiscordVoiceChannels(
   zoneName: string,
   emojis: string,
   userLimit: number,
-  minChannels: number
+  minChannels: number,
+  blockGroupSize: number = 5
 ): Promise<number> {
   const token = process.env.DISCORD_TOKEN;
   const guildId = process.env.DISCORD_GUILD_ID;
@@ -49,7 +51,7 @@ async function seedDiscordVoiceChannels(
 
     const allChannels = await res.json();
     const existingVoice = allChannels.filter(
-      (c: any) => c.type === 2 && c.parent_id === categoryId
+      (c: any) => c.type === 2 && c.parent_id === categoryId && c.name.includes(zoneName)
     );
 
     const existingNums = new Set(
@@ -62,12 +64,18 @@ async function seedDiscordVoiceChannels(
     );
 
     const emojiList = emojis.split(",").map((e: string) => e.trim()).filter(Boolean);
-    const minRooms = Number(minChannels) || 5;
+    const minRooms = Number(minChannels) || 3;
     let createdCount = 0;
 
     for (let i = 1; i <= minRooms; i++) {
       if (!existingNums.has(i)) {
-        const name = buildVoiceChannelName(zoneName, i, emojiList, i === minRooms);
+        const name = buildVoiceChannelName(
+          zoneName,
+          i,
+          emojiList,
+          i === minRooms,
+          blockGroupSize
+        );
         const createRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/channels`, {
           method: "POST",
           headers: {
@@ -99,7 +107,7 @@ export async function GET(request: NextRequest) {
     }
 
     const configs = await prisma.dynamicVoiceConfig.findMany({
-      orderBy: { createdAt: "asc" },
+      orderBy: [{ categoryId: "asc" }, { createdAt: "asc" }],
     });
 
     // Attempt to fetch categories from Discord API if configured
@@ -162,8 +170,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    const guildId = process.env.DISCORD_GUILD_ID || "guild_default";
 
-    // Check if this is a sync action
+    // Action A: Manual Sync for a single config
     if (body.action === "sync" && body.id) {
       const config = await prisma.dynamicVoiceConfig.findUnique({
         where: { id: body.id },
@@ -177,15 +186,80 @@ export async function POST(request: NextRequest) {
         config.zoneName,
         config.emojis,
         config.userLimit,
-        config.minChannels
+        config.minChannels,
+        config.blockGroupSize
       );
 
       return NextResponse.json({
         success: true,
-        message: `ซิงค์สำเร็จ! สร้างห้องเพิ่มเติม ${created} ห้อง`,
+        message: `ซิงค์สำเร็จ! ตรวจสอบและสร้างห้องเพิ่มเติม ${created} ห้องสำหรับโซน ${config.zoneName}`,
       });
     }
 
+    // Action B: 1-Click Sleeping Zone 3-in-1 (นอนรวม + นอนคู่ + นอนเดี่ยว)
+    if (body.action === "create-sleeping-zone") {
+      const { categoryId, categoryName, userLimit = 5 } = body;
+      if (!categoryId) {
+        return NextResponse.json({ error: "กรุณาระบุหมวดหมู่ Discord" }, { status: 400 });
+      }
+
+      const sleepZones = [
+        { name: "นอนรวม", limit: 5 },
+        { name: "นอนคู่", limit: 2 },
+        { name: "นอนเดี่ยว", limit: 1 },
+      ];
+      let totalCreated = 0;
+
+      for (const sz of sleepZones) {
+        await prisma.dynamicVoiceConfig.upsert({
+          where: {
+            categoryId_zoneName: {
+              categoryId,
+              zoneName: sz.name,
+            },
+          },
+          update: {
+            categoryName: categoryName || undefined,
+            userLimit: sz.limit,
+            minChannels: 3,
+            spareChannels: 1,
+            emojis: "🛌",
+            blockGroupSize: 3,
+            isEnabled: true,
+          },
+          create: {
+            guildId,
+            categoryId,
+            categoryName: categoryName || "Sleeping Zone",
+            zoneName: sz.name,
+            userLimit: sz.limit,
+            minChannels: 3,
+            spareChannels: 1,
+            emojis: "🛌",
+            blockGroupSize: 3,
+            isEnabled: true,
+          },
+        });
+
+        // Seed 3 rooms for this sub-zone
+        const created = await seedDiscordVoiceChannels(
+          categoryId,
+          sz.name,
+          "🛌",
+          sz.limit,
+          3,
+          3
+        );
+        totalCreated += created;
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `เปิดใช้งานโซนห้องนอนสำเร็จ! เสกห้องครบชุด 3 ประเภท (รวมสร้าง ${totalCreated} ห้องใน Discord)`,
+      });
+    }
+
+    // Action C: Standard Single Zone Creation/Update
     const {
       categoryId,
       categoryName,
@@ -194,6 +268,7 @@ export async function POST(request: NextRequest) {
       minChannels = 5,
       spareChannels = 1,
       emojis = "🎮",
+      blockGroupSize,
       isEnabled = true,
       autoSeed = true,
     } = body;
@@ -205,10 +280,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const guildId = process.env.DISCORD_GUILD_ID || "guild_default";
+    const calculatedBlockSize =
+      Number(blockGroupSize) || (Number(minChannels) <= 3 ? 3 : 5);
 
     const config = await prisma.dynamicVoiceConfig.upsert({
-      where: { categoryId },
+      where: {
+        categoryId_zoneName: {
+          categoryId,
+          zoneName,
+        },
+      },
       update: {
         categoryName: categoryName || undefined,
         zoneName,
@@ -216,6 +297,7 @@ export async function POST(request: NextRequest) {
         minChannels: Number(minChannels) || 5,
         spareChannels: Number(spareChannels) || 1,
         emojis,
+        blockGroupSize: calculatedBlockSize,
         isEnabled: isEnabled !== undefined ? Boolean(isEnabled) : true,
       },
       create: {
@@ -227,6 +309,7 @@ export async function POST(request: NextRequest) {
         minChannels: Number(minChannels) || 5,
         spareChannels: Number(spareChannels) || 1,
         emojis,
+        blockGroupSize: calculatedBlockSize,
         isEnabled: isEnabled !== undefined ? Boolean(isEnabled) : true,
       },
     });
@@ -238,7 +321,8 @@ export async function POST(request: NextRequest) {
         zoneName,
         emojis,
         Number(userLimit) || 0,
-        Number(minChannels) || 5
+        Number(minChannels) || 5,
+        calculatedBlockSize
       );
     }
 
@@ -268,7 +352,17 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { id, isEnabled, userLimit, minChannels, spareChannels, zoneName, emojis, categoryName } = body;
+    const {
+      id,
+      isEnabled,
+      userLimit,
+      minChannels,
+      spareChannels,
+      zoneName,
+      emojis,
+      categoryName,
+      blockGroupSize,
+    } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Missing config ID" }, { status: 400 });
@@ -282,6 +376,7 @@ export async function PUT(request: NextRequest) {
     if (zoneName !== undefined) updateData.zoneName = zoneName;
     if (emojis !== undefined) updateData.emojis = emojis;
     if (categoryName !== undefined) updateData.categoryName = categoryName;
+    if (blockGroupSize !== undefined) updateData.blockGroupSize = Number(blockGroupSize);
 
     const updated = await prisma.dynamicVoiceConfig.update({
       where: { id },

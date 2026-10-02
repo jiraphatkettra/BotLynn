@@ -7,7 +7,7 @@ import {
 } from "discord.js";
 import { prisma } from "@lynnbot/database";
 
-// Default Food & Fruit emoji sequence for Living/Talk zone (matches user's photo!)
+// Default Food & Fruit emoji sequence for Living/Talk zone
 export const DEFAULT_TALK_EMOJIS = [
   "🥪", "🥐", "🥓", "🥨", "🍿",
   "🍑", "🍎", "🍓", "🍈", "🍋",
@@ -15,34 +15,38 @@ export const DEFAULT_TALK_EMOJIS = [
 ];
 
 export const DEFAULT_GAME_EMOJI = "🎮";
+export const DEFAULT_SLEEP_EMOJI = "🛌";
 
 // In-memory mutex locks to prevent race conditions during voice channel creation/deletion
 const categoryLocks = new Set<string>();
 
 /**
  * Build voice channel name matching the exact aesthetic tree pattern:
- * e.g. ╭ ㆍ เล่นเกมㆍ01 ㆍ 🎮 ⁺
- *      ┆ ㆍ เล่นเกมㆍ02 ㆍ 🎮 ⁺
- *      ╰ ㆍ เล่นเกมㆍ05 ㆍ 🎮 ⁺
- *      ╭ ㆍ พูดคุยㆍ06 ㆍ 🍑 ⁺
+ * e.g. ╭ ㆍ นอนรวมㆍ 01 ㆍ 🛌 ⁺
+ *      ┆ ㆍ นอนรวมㆍ 02 ㆍ 🛌 ⁺
+ *      ╰ ㆍ นอนรวมㆍ 03 ㆍ 🛌 ⁺
+ *
+ *      ╭ ㆍ เล่นเกมㆍ 01 ㆍ 🎮 ⁺
+ *      ╰ ㆍ เล่นเกมㆍ 05 ㆍ 🎮 ⁺
  */
 export function buildVoiceChannelName(
   zoneName: string,
   index: number,
   emojis: string[],
-  isBlockEnd: boolean = false
+  isBlockEnd: boolean = false,
+  blockGroupSize: number = 5
 ): string {
   const padNum = String(index).padStart(2, "0");
 
-  // Determine tree branch character based on blocks of 5
-  // Pos 1 in block (1, 6, 11...): ╭
-  // Pos 5 in block (5, 10, 15...) or last of current set: ╰
+  // Determine tree branch character based on blocks (e.g. blocks of 3 for Sleeping, 5 for Gaming)
+  // Pos 1 in block (1, 4, 7... or 1, 6, 11...): ╭
+  // Last in block (3, 6, 9... or 5, 10, 15...) or isBlockEnd: ╰
   // Others: ┆
-  const posInBlock = ((index - 1) % 5) + 1;
+  const posInBlock = ((index - 1) % blockGroupSize) + 1;
   let branch = "┆";
   if (posInBlock === 1) {
     branch = "╭";
-  } else if (posInBlock === 5 || isBlockEnd) {
+  } else if (posInBlock === blockGroupSize || isBlockEnd) {
     branch = "╰";
   }
 
@@ -52,7 +56,7 @@ export function buildVoiceChannelName(
       ? emojis[(index - 1) % emojis.length]
       : DEFAULT_GAME_EMOJI;
 
-  return `${branch} ㆍ ${zoneName}ㆍ${padNum} ㆍ ${emoji} ⁺`;
+  return `${branch} ㆍ ${zoneName}ㆍ ${padNum} ㆍ ${emoji} ⁺`;
 }
 
 /**
@@ -95,7 +99,7 @@ export async function handleDynamicVoiceState(
 }
 
 /**
- * Process a specific category for expansion or pruning.
+ * Process a specific category for expansion or pruning across all its configured sub-zones.
  */
 export async function processCategoryDynamicVoice(
   guild: Guild,
@@ -109,22 +113,69 @@ export async function processCategoryDynamicVoice(
   categoryLocks.add(categoryId);
 
   try {
-    // 1. Fetch config from database
-    let config = await prisma.dynamicVoiceConfig.findUnique({
-      where: { categoryId },
-    });
-
     const category = guild.channels.cache.get(categoryId) as CategoryChannel;
     if (!category || category.type !== ChannelType.GuildCategory) {
       return;
     }
 
-    // Smart Auto-detection if not in DB:
-    if (!config) {
+    let configs = await prisma.dynamicVoiceConfig.findMany({
+      where: { categoryId },
+    });
+
+    // 1. Smart Auto-detection if not yet registered in DB:
+    if (configs.length === 0) {
       const catName = category.name.toLowerCase();
-      if (catName.includes("gaming") || catName.includes("เกม")) {
-        config = await prisma.dynamicVoiceConfig.create({
-          data: {
+
+      // Case A: Sleeping Zone (Dreamland / ห้องนอน)
+      if (
+        catName.includes("dreamland") ||
+        catName.includes("นอน") ||
+        catName.includes("sleep")
+      ) {
+        const sleepZones = [
+          { name: "นอนรวม", limit: 5 },
+          { name: "นอนคู่", limit: 2 },
+          { name: "นอนเดี่ยว", limit: 1 },
+        ];
+        for (const z of sleepZones) {
+          await prisma.dynamicVoiceConfig.upsert({
+            where: {
+              categoryId_zoneName: {
+                categoryId,
+                zoneName: z.name,
+              },
+            },
+            update: {
+              userLimit: z.limit,
+            },
+            create: {
+              guildId: guild.id,
+              categoryId,
+              categoryName: category.name,
+              zoneName: z.name,
+              userLimit: z.limit,
+              minChannels: 3,
+              spareChannels: 1,
+              emojis: "🛌",
+              blockGroupSize: 3,
+              isEnabled: true,
+            },
+          });
+        }
+        console.log(`🎙️ [Dynamic Voice] Auto-registered 3-in-1 Sleeping Zone: ${category.name}`);
+        await seedDynamicVoiceChannels(guild, categoryId);
+      }
+      // Case B: Gaming Zone
+      else if (catName.includes("gaming") || catName.includes("เกม")) {
+        await prisma.dynamicVoiceConfig.upsert({
+          where: {
+            categoryId_zoneName: {
+              categoryId,
+              zoneName: "เล่นเกม",
+            },
+          },
+          update: {},
+          create: {
             guildId: guild.id,
             categoryId,
             categoryName: category.name,
@@ -133,17 +184,28 @@ export async function processCategoryDynamicVoice(
             minChannels: 5,
             spareChannels: 1,
             emojis: "🎮",
+            blockGroupSize: 5,
+            isEnabled: true,
           },
         });
         console.log(`🎙️ [Dynamic Voice] Auto-registered Gaming Zone: ${category.name}`);
         await seedDynamicVoiceChannels(guild, categoryId);
-      } else if (
+      }
+      // Case C: Living / Talk Zone
+      else if (
         catName.includes("living") ||
         catName.includes("talk") ||
         catName.includes("พูดคุย")
       ) {
-        config = await prisma.dynamicVoiceConfig.create({
-          data: {
+        await prisma.dynamicVoiceConfig.upsert({
+          where: {
+            categoryId_zoneName: {
+              categoryId,
+              zoneName: "พูดคุย",
+            },
+          },
+          update: {},
+          create: {
             guildId: guild.id,
             categoryId,
             categoryName: category.name,
@@ -152,120 +214,76 @@ export async function processCategoryDynamicVoice(
             minChannels: 5,
             spareChannels: 1,
             emojis: DEFAULT_TALK_EMOJIS.join(","),
+            blockGroupSize: 5,
+            isEnabled: true,
           },
         });
         console.log(`🎙️ [Dynamic Voice] Auto-registered Living Zone: ${category.name}`);
         await seedDynamicVoiceChannels(guild, categoryId);
-      } else {
-        // Check if any voice channel in this category matches the aesthetic pattern
-        const sampleVoice = category.children.cache.find(
+      }
+      // Case D: Scan any existing aesthetic voice channels
+      else {
+        const existingVoiceChannels = category.children.cache.filter(
           (ch): ch is VoiceChannel =>
             ch.type === ChannelType.GuildVoice &&
             /ㆍ\s*(\d{1,3})\s*ㆍ/.test(ch.name)
         );
 
-        if (sampleVoice) {
-          const match = sampleVoice.name.match(
+        const detectedZones = new Map<string, { emoji: string; limit: number; count: number }>();
+        for (const [, ch] of existingVoiceChannels) {
+          const match = ch.name.match(
             /[╭┆╰]?\s*ㆍ\s*([^ㆍ]+)ㆍ\s*(\d{1,3})\s*ㆍ\s*([^\s⁺]+)\s*⁺?/
           );
-          const detectedZone = match?.[1]?.trim() || category.name.replace(/zone/i, "").trim();
-          const detectedEmoji = match?.[3]?.trim() || "🎙️";
-          const detectedLimit = sampleVoice.userLimit || 5;
+          if (match && match[1]) {
+            const zName = match[1].trim();
+            if (!detectedZones.has(zName)) {
+              detectedZones.set(zName, {
+                emoji: match[3]?.trim() || "🎙️",
+                limit: ch.userLimit || 5,
+                count: 1,
+              });
+            } else {
+              detectedZones.get(zName)!.count++;
+            }
+          }
+        }
 
-          config = await prisma.dynamicVoiceConfig.create({
-            data: {
+        for (const [zName, info] of detectedZones.entries()) {
+          const blockSize = info.count <= 3 ? 3 : 5;
+          await prisma.dynamicVoiceConfig.upsert({
+            where: {
+              categoryId_zoneName: {
+                categoryId,
+                zoneName: zName,
+              },
+            },
+            update: {},
+            create: {
               guildId: guild.id,
               categoryId,
               categoryName: category.name,
-              zoneName: detectedZone,
-              userLimit: detectedLimit,
-              minChannels: 5,
+              zoneName: zName,
+              userLimit: info.limit,
+              minChannels: info.count >= 3 ? info.count : 3,
               spareChannels: 1,
-              emojis: detectedEmoji,
+              emojis: info.emoji,
+              blockGroupSize: blockSize,
+              isEnabled: true,
             },
           });
-          console.log(
-            `🎙️ [Dynamic Voice] Auto-captured pattern for new zone '${category.name}': Zone='${detectedZone}', Emoji='${detectedEmoji}', Limit=${detectedLimit}`
-          );
-          await seedDynamicVoiceChannels(guild, categoryId);
+          console.log(`🎙️ [Dynamic Voice] Auto-captured zone '${zName}' in '${category.name}'`);
         }
       }
-    }
 
-    if (!config || !config.isEnabled) {
-      return;
-    }
-
-    const emojis = config.emojis.split(",").map((e) => e.trim()).filter(Boolean);
-    const minChannels = config.minChannels || 5;
-    const spareChannels = config.spareChannels || 1;
-    const zoneName = config.zoneName || "ห้อง";
-
-    // 2. Find all voice channels belonging to this category
-    const voiceChannels = category.children.cache
-      .filter(
-        (ch): ch is VoiceChannel =>
-          ch.type === ChannelType.GuildVoice && ch.name.includes(zoneName)
-      )
-      .map((ch) => ({
-        channel: ch,
-        roomNumber: extractRoomNumber(ch.name) || 0,
-        memberCount: ch.members.size,
-      }))
-      .sort((a, b) => a.roomNumber - b.roomNumber);
-
-    const emptyChannels = voiceChannels.filter((v) => v.memberCount === 0);
-    const totalChannels = voiceChannels.length;
-
-    // 3. EXPANSION LOGIC:
-    // If the number of empty rooms is less than spareChannels (e.g. 0 empty rooms left)
-    if (emptyChannels.length < spareChannels) {
-      const highestNum =
-        voiceChannels.length > 0
-          ? Math.max(...voiceChannels.map((v) => v.roomNumber))
-          : 0;
-      const nextNumber = highestNum + 1;
-
-      // Determine new channel name
-      const newName = buildVoiceChannelName(
-        zoneName,
-        nextNumber,
-        emojis,
-        false
-      );
-
-      console.log(
-        `🎙️ [Dynamic Voice] High occupancy in '${category.name}' (${emptyChannels.length} empty). Expanding with room ${nextNumber}...`
-      );
-
-      await category.guild.channels.create({
-        name: newName,
-        type: ChannelType.GuildVoice,
-        parent: category.id,
-        userLimit: config.userLimit,
-        reason: `[LynnBot Dynamic Voice] Auto-expanded room ${nextNumber} for ${zoneName}`,
+      configs = await prisma.dynamicVoiceConfig.findMany({
+        where: { categoryId },
       });
-
-      return;
     }
 
-    // 4. PRUNING LOGIC:
-    // If we have surplus channels above minChannels AND more empty channels than needed
-    if (totalChannels > minChannels && emptyChannels.length > spareChannels) {
-      // Find empty channels that have a room number greater than minChannels
-      const prunableChannels = emptyChannels
-        .filter((v) => v.roomNumber > minChannels)
-        .sort((a, b) => b.roomNumber - a.roomNumber); // highest number first
-
-      if (prunableChannels.length > 0) {
-        const toDelete = prunableChannels[0];
-        console.log(
-          `🎙️ [Dynamic Voice] Room ${toDelete.roomNumber} in '${category.name}' is empty and surplus. Pruning...`
-        );
-
-        await toDelete.channel.delete(
-          `[LynnBot Dynamic Voice] Auto-pruning empty surplus room ${toDelete.roomNumber}`
-        );
+    // 2. Process each configured sub-zone independently
+    for (const config of configs) {
+      if (config.isEnabled) {
+        await processSingleZoneDynamicVoice(category, config);
       }
     }
   } catch (error) {
@@ -279,49 +297,173 @@ export async function processCategoryDynamicVoice(
 }
 
 /**
- * Seed or verify initial minimum channels for a zone
+ * Process a single sub-zone (e.g. "นอนรวม", "นอนคู่", "นอนเดี่ยว", "เล่นเกม") within a category.
+ */
+async function processSingleZoneDynamicVoice(
+  category: CategoryChannel,
+  config: {
+    zoneName: string;
+    userLimit: number;
+    minChannels: number;
+    spareChannels: number;
+    emojis: string;
+    blockGroupSize: number;
+  }
+) {
+  const emojis = config.emojis.split(",").map((e) => e.trim()).filter(Boolean);
+  const minChannels = config.minChannels || 3;
+  const spareChannels = config.spareChannels || 1;
+  const zoneName = config.zoneName;
+  const blockSize = config.blockGroupSize || minChannels;
+
+  // Find all voice channels belonging to this sub-zone
+  const voiceChannels = category.children.cache
+    .filter(
+      (ch): ch is VoiceChannel =>
+        ch.type === ChannelType.GuildVoice && ch.name.includes(zoneName)
+    )
+    .map((ch) => ({
+      channel: ch,
+      roomNumber: extractRoomNumber(ch.name) || 0,
+      memberCount: ch.members.size,
+      userLimit: ch.userLimit,
+    }))
+    .sort((a, b) => a.roomNumber - b.roomNumber);
+
+  // Inherit userLimit directly from Discord channels so manual changes in Discord are respected!
+  const effectiveUserLimit =
+    voiceChannels.length > 0 && voiceChannels[0].userLimit > 0
+      ? voiceChannels[0].userLimit
+      : config.userLimit;
+
+  // Sync back to database if admin adjusted limit in Discord
+  if (
+    voiceChannels.length > 0 &&
+    voiceChannels[0].userLimit !== config.userLimit &&
+    (config as any).id
+  ) {
+    prisma.dynamicVoiceConfig
+      .update({
+        where: { id: (config as any).id },
+        data: { userLimit: voiceChannels[0].userLimit },
+      })
+      .catch(() => {});
+  }
+
+  const emptyChannels = voiceChannels.filter((v) => v.memberCount === 0);
+  const totalChannels = voiceChannels.length;
+
+  // EXPANSION LOGIC:
+  // If the number of empty rooms is less than spareChannels (e.g. 0 empty rooms left)
+  if (emptyChannels.length < spareChannels) {
+    const highestNum =
+      voiceChannels.length > 0
+        ? Math.max(...voiceChannels.map((v) => v.roomNumber))
+        : 0;
+    const nextNumber = highestNum + 1;
+
+    // Determine new channel name
+    const newName = buildVoiceChannelName(
+      zoneName,
+      nextNumber,
+      emojis,
+      false,
+      blockSize
+    );
+
+    console.log(
+      `🎙️ [Dynamic Voice] High occupancy for '${zoneName}' in '${category.name}' (${emptyChannels.length} empty). Expanding with room ${nextNumber} (Limit: ${effectiveUserLimit})...`
+    );
+
+    await category.guild.channels.create({
+      name: newName,
+      type: ChannelType.GuildVoice,
+      parent: category.id,
+      userLimit: effectiveUserLimit,
+      reason: `[LynnBot Dynamic Voice] Auto-expanded room ${nextNumber} for ${zoneName}`,
+    });
+
+    return;
+  }
+
+  // PRUNING LOGIC:
+  // If we have surplus channels above minChannels AND more empty channels than needed
+  if (totalChannels > minChannels && emptyChannels.length > spareChannels) {
+    const prunableChannels = emptyChannels
+      .filter((v) => v.roomNumber > minChannels)
+      .sort((a, b) => b.roomNumber - a.roomNumber); // highest number first
+
+    if (prunableChannels.length > 0) {
+      const toDelete = prunableChannels[0];
+      console.log(
+        `🎙️ [Dynamic Voice] Room ${toDelete.roomNumber} (${zoneName}) in '${category.name}' is empty and surplus. Pruning...`
+      );
+
+      await toDelete.channel.delete(
+        `[LynnBot Dynamic Voice] Auto-pruning empty surplus room ${toDelete.roomNumber} (${zoneName})`
+      );
+    }
+  }
+}
+
+/**
+ * Seed or verify initial minimum channels for a zone or all zones in a category
  */
 export async function seedDynamicVoiceChannels(
   guild: Guild,
-  categoryId: string
+  categoryId: string,
+  targetZoneName?: string
 ) {
-  const config = await prisma.dynamicVoiceConfig.findUnique({
-    where: { categoryId },
+  const configs = await prisma.dynamicVoiceConfig.findMany({
+    where: {
+      categoryId,
+      ...(targetZoneName ? { zoneName: targetZoneName } : {}),
+    },
   });
-  if (!config) return;
+  if (configs.length === 0) return;
 
   const category = guild.channels.cache.get(categoryId) as CategoryChannel;
   if (!category || category.type !== ChannelType.GuildCategory) return;
 
-  const emojis = config.emojis.split(",").map((e) => e.trim()).filter(Boolean);
-  const minChannels = config.minChannels || 5;
-  const zoneName = config.zoneName;
+  for (const config of configs) {
+    const emojis = config.emojis.split(",").map((e) => e.trim()).filter(Boolean);
+    const minChannels = config.minChannels || 3;
+    const zoneName = config.zoneName;
+    const blockSize = config.blockGroupSize || minChannels;
 
-  const existingVoice = category.children.cache.filter(
-    (ch) => ch.type === ChannelType.GuildVoice && ch.name.includes(zoneName)
-  );
-
-  if (existingVoice.size < minChannels) {
-    const existingNumbers = new Set(
-      existingVoice.map((ch) => extractRoomNumber(ch.name)).filter(Boolean)
+    const existingVoice = category.children.cache.filter(
+      (ch) => ch.type === ChannelType.GuildVoice && ch.name.includes(zoneName)
     );
 
-    for (let i = 1; i <= minChannels; i++) {
-      if (!existingNumbers.has(i)) {
-        const name = buildVoiceChannelName(
-          zoneName,
-          i,
-          emojis,
-          i === minChannels
-        );
-        console.log(`🎙️ [Dynamic Voice] Seeding missing room ${i}: ${name}`);
-        await category.guild.channels.create({
-          name,
-          type: ChannelType.GuildVoice,
-          parent: category.id,
-          userLimit: config.userLimit,
-          reason: `[LynnBot Dynamic Voice] Initial room setup ${i}`,
-        });
+    const existingSample = existingVoice.first() as VoiceChannel | undefined;
+    const effectiveLimit =
+      existingSample && existingSample.userLimit > 0
+        ? existingSample.userLimit
+        : config.userLimit;
+
+    if (existingVoice.size < minChannels) {
+      const existingNumbers = new Set(
+        existingVoice.map((ch) => extractRoomNumber(ch.name)).filter(Boolean)
+      );
+
+      for (let i = 1; i <= minChannels; i++) {
+        if (!existingNumbers.has(i)) {
+          const name = buildVoiceChannelName(
+            zoneName,
+            i,
+            emojis,
+            i === minChannels,
+            blockSize
+          );
+          console.log(`🎙️ [Dynamic Voice] Seeding missing room ${i} for ${zoneName}: ${name}`);
+          await category.guild.channels.create({
+            name,
+            type: ChannelType.GuildVoice,
+            parent: category.id,
+            userLimit: effectiveLimit,
+            reason: `[LynnBot Dynamic Voice] Initial room setup ${i} for ${zoneName}`,
+          });
+        }
       }
     }
   }
