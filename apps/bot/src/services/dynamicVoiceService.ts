@@ -461,6 +461,9 @@ async function processSingleZoneDynamicVoice(
       });
     }
 
+    // Automatically enforce contiguous 01, 02, 03, 04, 05, 06... ordering across sub-zones
+    await enforceCategoryChannelOrder(category);
+
     return;
   }
 
@@ -502,6 +505,9 @@ async function processSingleZoneDynamicVoice(
               console.error(`Error deleting channel ${chInfo.roomNumber}:`, err)
             );
         }
+
+        // Re-align channel positions after pruning
+        await enforceCategoryChannelOrder(category);
       }
     }
   }
@@ -576,5 +582,83 @@ export async function seedDynamicVoiceChannels(
         }
       }
     }
+  }
+
+  // Ensure all seeded channels are in proper sequence (01, 02, 03...)
+  await enforceCategoryChannelOrder(category);
+}
+
+/**
+ * Automatically enforce strict, contiguous ascending order (01, 02, 03, 04, 05...)
+ * within each sub-zone and keep sub-zones in their intended sequence (e.g. นอนรวม -> นอนคู่ -> นอนเดี่ยว).
+ */
+export async function enforceCategoryChannelOrder(category: CategoryChannel) {
+  try {
+    // Refresh guild channel cache to include all newly created or deleted channels
+    await category.guild.channels.fetch();
+
+    const children = category.children.cache;
+    if (children.size === 0) return;
+
+    const textChannels = children
+      .filter((c) => c.type === ChannelType.GuildText || c.type === ChannelType.GuildAnnouncement)
+      .sort((a, b) => a.position - b.position);
+
+    const voiceChannels = children
+      .filter((c): c is VoiceChannel => c.type === ChannelType.GuildVoice)
+      .toJSON();
+
+    if (voiceChannels.length === 0) return;
+
+    // Query registered configs for sub-zone hierarchy (or default sleep sequence)
+    const configs = await prisma.dynamicVoiceConfig.findMany({
+      where: { categoryId: category.id },
+      orderBy: { createdAt: "asc" },
+    });
+
+    const defaultZoneOrder = ["นอนรวม", "นอนคู่", "นอนเดี่ยว"];
+    const zoneOrder = configs.length > 0 ? configs.map((c) => c.zoneName) : defaultZoneOrder;
+
+    voiceChannels.sort((a, b) => {
+      const zoneIndexA = zoneOrder.findIndex((z) => a.name.includes(z));
+      const zoneIndexB = zoneOrder.findIndex((z) => b.name.includes(z));
+
+      if (zoneIndexA !== -1 && zoneIndexB !== -1 && zoneIndexA !== zoneIndexB) {
+        return zoneIndexA - zoneIndexB;
+      }
+      if (zoneIndexA !== -1 && zoneIndexB === -1) return -1;
+      if (zoneIndexA === -1 && zoneIndexB !== -1) return 1;
+
+      // Same zone: sort strictly by room number 01, 02, 03, 04...
+      const numA = extractRoomNumber(a.name) ?? 999;
+      const numB = extractRoomNumber(b.name) ?? 999;
+      return numA - numB;
+    });
+
+    const allOrdered = [...textChannels.values(), ...voiceChannels];
+
+    // Find the minimum position among channels in this category
+    const minPos = Math.min(...children.map((c) => c.position));
+
+    const currentOrder = children.toJSON().sort((a, b) => a.position - b.position);
+    const isAlreadyOrdered =
+      currentOrder.length === allOrdered.length &&
+      currentOrder.every((ch, i) => ch.id === allOrdered[i].id);
+
+    if (isAlreadyOrdered) {
+      return;
+    }
+
+    const updates = allOrdered.map((ch, idx) => ({
+      channel: ch.id,
+      position: minPos + idx,
+    }));
+
+    await category.guild.channels.setPositions(updates);
+    console.log(
+      `🎙️ [Dynamic Voice] Enforced channel ordering in '${category.name}' (${allOrdered.length} channels ordered)`
+    );
+  } catch (err) {
+    console.error(`❌ [Dynamic Voice] Failed to enforce channel order in '${category.name}':`, err);
   }
 }

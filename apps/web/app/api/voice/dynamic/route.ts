@@ -161,10 +161,76 @@ async function seedDiscordVoiceChannels(
         if (createRes.ok) createdCount++;
       }
     }
+
+    // Enforce sequential 01, 02, 03... ordering in category
+    await enforceDiscordCategoryOrder(categoryId);
+
     return createdCount;
   } catch (err) {
     console.error("Error seeding Discord channels:", err);
     return 0;
+  }
+}
+
+async function enforceDiscordCategoryOrder(categoryId: string): Promise<void> {
+  const token = process.env.DISCORD_TOKEN;
+  const guildId = process.env.DISCORD_GUILD_ID;
+  if (!token || !guildId || !categoryId) return;
+
+  try {
+    const res = await fetch(`https://discord.com/api/v10/guilds/${guildId}/channels`, {
+      headers: { Authorization: `Bot ${token}` },
+    });
+    if (!res.ok) return;
+
+    const allChannels = await res.json();
+    const children = allChannels.filter((c: any) => c.parent_id === categoryId);
+    if (children.length === 0) return;
+
+    const textChs = children.filter((c: any) => c.type === 0 || c.type === 5).sort((a: any, b: any) => a.position - b.position);
+    const voiceChs = children.filter((c: any) => c.type === 2);
+    if (voiceChs.length === 0) return;
+
+    const configs = await prisma.dynamicVoiceConfig.findMany({
+      where: { categoryId },
+      orderBy: { createdAt: "asc" },
+    });
+    const defaultZoneOrder = ["นอนรวม", "นอนคู่", "นอนเดี่ยว"];
+    const zoneOrder = configs.length > 0 ? configs.map((c) => c.zoneName) : defaultZoneOrder;
+
+    voiceChs.sort((a: any, b: any) => {
+      const zoneIndexA = zoneOrder.findIndex((z) => a.name.includes(z));
+      const zoneIndexB = zoneOrder.findIndex((z) => b.name.includes(z));
+
+      if (zoneIndexA !== -1 && zoneIndexB !== -1 && zoneIndexA !== zoneIndexB) {
+        return zoneIndexA - zoneIndexB;
+      }
+      if (zoneIndexA !== -1 && zoneIndexB === -1) return -1;
+      if (zoneIndexA === -1 && zoneIndexB !== -1) return 1;
+
+      const numA = extractRoomNumber(a.name) ?? 999;
+      const numB = extractRoomNumber(b.name) ?? 999;
+      return numA - numB;
+    });
+
+    const ordered = [...textChs, ...voiceChs];
+    const minPos = Math.min(...children.map((c: any) => c.position));
+
+    const updates = ordered.map((ch, idx) => ({
+      id: ch.id,
+      position: minPos + idx,
+    }));
+
+    await fetch(`https://discord.com/api/v10/guilds/${guildId}/channels`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bot ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(updates),
+    });
+  } catch (err) {
+    console.error("Error enforcing Discord category order:", err);
   }
 }
 

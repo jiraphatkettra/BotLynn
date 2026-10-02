@@ -9,6 +9,7 @@ import { prisma } from "@lynnbot/database";
 import type { BotCommand } from "../index.js";
 import {
   seedDynamicVoiceChannels,
+  enforceCategoryChannelOrder,
   DEFAULT_TALK_EMOJIS,
   DEFAULT_GAME_EMOJI,
   DEFAULT_SLEEP_EMOJI,
@@ -214,9 +215,10 @@ export const dynamicVoiceCommand: BotCommand = {
       }
 
       await seedDynamicVoiceChannels(guild, category.id);
+      await enforceCategoryChannelOrder(category);
 
       await interaction.editReply({
-        content: `✅ ซิงค์และตรวจสอบห้องเริ่มต้นในหมวดหมู่ **${category.name}** (${configs.length} โซน) เรียบร้อยแล้ว!`,
+        content: `✅ ซิงค์ ตรวจสอบห้อง และจัดเรียงลำดับห้องในหมวดหมู่ **${category.name}** (${configs.length} โซน) เรียบร้อยแล้ว!`,
       });
       return;
     }
