@@ -52,6 +52,15 @@ const COMMAND_ITEMS: CommandItem[] = [
     description: "ตรวจสอบและอนุมัติสลิปโอนเงินจากสมาชิก",
   },
   {
+    id: "finance",
+    title: "บัญชีรายรับ-รายจ่าย",
+    category: "หน้าการทำงาน",
+    icon: "💰",
+    href: "/finance",
+    keywords: ["finance", "income", "expense", "รายรับ", "รายจ่าย", "เงิน", "บัญชี", "งบประมาณ", "กำไร", "ขาดทุน", "cashflow"],
+    description: "บันทึกรายรับ-รายจ่ายแมนนวล สรุปงบประมาณและกำไรขาดทุน",
+  },
+  {
     id: "tickets",
     title: "ระบบทิกเก็ตและช่วยเหลือ",
     category: "หน้าการทำงาน",

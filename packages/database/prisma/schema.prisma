@@ -192,6 +192,7 @@ enum LogCategory {
   ANNOUNCEMENT
   LEAVE
   SLIP
+  FINANCE
 }
 
 // ==========================================
@@ -440,5 +441,38 @@ enum SlipStatus {
   PENDING   // รอตรวจสอบ
   APPROVED  // อนุมัติแล้ว
   REJECTED  // ปฏิเสธ
+}
+
+// ==========================================
+// MANUAL FINANCE & CASHFLOW (INCOME / EXPENSE)
+// ==========================================
+
+model FinanceRecord {
+  id            String        @id @default(cuid())
+  type          FinanceType   // INCOME (รายรับ) หรือ EXPENSE (รายจ่าย)
+  title         String        // ชื่อรายการ เช่น "ค่าต่ออายุเซิร์ฟเวอร์", "รายได้สปอนเซอร์กิจกรรม"
+  description   String?       @db.Text // รายละเอียดเพิ่มเติม
+  amount        Float         // จำนวนเงิน (THB)
+  category      String        @default("OTHER") // SERVER, SALARY, ACTIVITY, DONATION, ROLE_SALE, OTHER
+  date          DateTime      @default(now()) // วันที่ทำรายการ
+  recordedById  String?       // Discord ID or User ID ของแอดมิน
+  recordedBy    String        // ชื่อผู้บันทึกรายการ
+  paymentMethod String?       // ช่องทางชำระ เช่น "โอนเงินผ่านธนาคาร", "TrueMoney Wallet", "PromptPay", "เงินสด"
+  reference     String?       // เลขที่อ้างอิง หรือเลขบิล
+  attachmentUrl String?       @db.Text // ลิงก์รูปภาพสลิป/ใบเสร็จ
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([type])
+  @@index([category])
+  @@index([date])
+  @@index([createdAt])
+  @@map("finance_records")
+}
+
+enum FinanceType {
+  INCOME
+  EXPENSE
 }
 

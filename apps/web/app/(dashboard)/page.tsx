@@ -22,6 +22,7 @@ async function getDashboardData() {
     recentLogs,
     pendingSlipsCount,
     openTicketsCount,
+    financeRecordsCount,
   ] = await Promise.all([
     prisma.user.count({
       where: {
@@ -59,6 +60,7 @@ async function getDashboardData() {
     }),
     prisma.slip.count({ where: { status: "PENDING" } }),
     prisma.ticket.count({ where: { status: { in: ["OPEN", "CLAIMED"] } } }),
+    prisma.financeRecord.count(),
   ]);
 
   return {
@@ -71,6 +73,7 @@ async function getDashboardData() {
     recentLogs,
     pendingSlipsCount,
     openTicketsCount,
+    financeRecordsCount,
   };
 }
 
@@ -381,6 +384,50 @@ export default async function DashboardPage() {
                 }}
               >
                 เปิดระบบตรวจสลิป →
+              </Link>
+            </div>
+          </div>
+
+          {/* Card: Finance & Cashflow */}
+          <div className="dashboard-capability-card">
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+                <span style={{ fontSize: "28px" }}>💰</span>
+                <span
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    padding: "3px 10px",
+                    borderRadius: "9999px",
+                    background: "rgba(48, 209, 88, 0.12)",
+                    color: "#30d158",
+                    border: "1px solid rgba(48, 209, 88, 0.25)",
+                  }}
+                >
+                  บัญชีรายรับ-รายจ่าย
+                </span>
+              </div>
+              <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#ffffff", margin: "0 0 10px" }}>
+                ระบบบัญชี & งบเซิร์ฟเวอร์
+              </h3>
+              <p style={{ fontSize: "13.5px", color: "rgba(255, 255, 255, 0.6)", lineHeight: 1.65, margin: 0 }}>
+                บันทึกรายรับและรายจ่ายแบบกำหนดเอง ระบุประเภท หมวดหมู่ เลขบิล และแนบหลักฐาน พร้อมคำนวณกำไรขาดทุนสุทธิอัตโนมัติ
+              </p>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "16px", borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}>
+              <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.4)" }}>
+                บันทึกแล้ว {data.financeRecordsCount} รายการ
+              </span>
+              <Link
+                href="/finance"
+                style={{
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  color: "#0A84FF",
+                  textDecoration: "none",
+                }}
+              >
+                จัดการรายรับ-รายจ่าย →
               </Link>
             </div>
           </div>

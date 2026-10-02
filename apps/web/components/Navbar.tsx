@@ -32,6 +32,7 @@ interface DirectNavItem {
 }
 
 // 1. Overview direct links
+// 1. Overview direct links
 const DASHBOARD_NAV: DirectNavItem = {
   href: "/",
   label: "แดชบอร์ด",
@@ -45,28 +46,15 @@ const DASHBOARD_NAV: DirectNavItem = {
   ),
 };
 
-const ANNOUNCEMENT_NAV: DirectNavItem = {
-  href: "/announcements",
-  label: "ประกาศ",
-  icon: (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-      <line x1="9" y1="10" x2="15" y2="10" />
-      <line x1="12" y1="7" x2="12" y2="13" />
-    </svg>
-  ),
-};
-
 // 2. Nav Categories (Dropdowns)
-const SERVICES_CATEGORY: NavCategory = {
-  id: "services",
-  label: "บริการ",
+// 2.1 Finance Category (Slips, Cashflow/Accounting, Shop)
+const FINANCE_CATEGORY: NavCategory = {
+  id: "finance",
+  label: "การเงิน",
   icon: (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7" />
-      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-      <path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4" />
-      <path d="M2 7h20" />
+      <rect width="20" height="14" x="2" y="5" rx="2" />
+      <line x1="2" x2="22" y1="10" y2="10" />
     </svg>
   ),
   items: [
@@ -85,6 +73,17 @@ const SERVICES_CATEGORY: NavCategory = {
       ),
     },
     {
+      href: "/finance",
+      label: "รายรับ-รายจ่าย",
+      desc: "บันทึกบัญชีแมนนวล & งบเซิร์ฟเวอร์",
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="12" y1="1" x2="12" y2="23" />
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+        </svg>
+      ),
+    },
+    {
       href: "/shop",
       label: "ร้านค้ายศ",
       desc: "จัดการแพ็กเกจยศ & ประวัติสั่งซื้อ",
@@ -96,6 +95,21 @@ const SERVICES_CATEGORY: NavCategory = {
         </svg>
       ),
     },
+  ],
+};
+
+// 2.2 Services & Community Category (Tickets, Announcements, Voice)
+const SERVICES_CATEGORY: NavCategory = {
+  id: "services",
+  label: "บริการ & ชุมชน",
+  icon: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      <line x1="9" y1="10" x2="15" y2="10" />
+      <line x1="12" y1="7" x2="12" y2="13" />
+    </svg>
+  ),
+  items: [
     {
       href: "/tickets",
       label: "ทิกเก็ตช่วยเหลือ",
@@ -109,9 +123,34 @@ const SERVICES_CATEGORY: NavCategory = {
         </svg>
       ),
     },
+    {
+      href: "/announcements",
+      label: "ประกาศข่าวสาร",
+      desc: "สร้างและส่งประกาศเข้าห้อง Discord",
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          <line x1="9" y1="10" x2="15" y2="10" />
+          <line x1="12" y1="7" x2="12" y2="13" />
+        </svg>
+      ),
+    },
+    {
+      href: "/voice",
+      label: "สถิติห้องเสียง",
+      desc: "ดูสถิติการเข้าห้อง Voice ของสมาชิก",
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+          <line x1="12" x2="12" y1="19" y2="22" />
+        </svg>
+      ),
+    },
   ],
 };
 
+// 2.3 Team Category (Attendance, Leaves, Admins, Permissions, Rules)
 const TEAM_CATEGORY: NavCategory = {
   id: "team",
   label: "ทีมงาน",
@@ -151,18 +190,6 @@ const TEAM_CATEGORY: NavCategory = {
       ),
     },
     {
-      href: "/voice",
-      label: "สถิติห้องเสียง",
-      desc: "ดูสถิติการเข้าห้อง Voice ของสมาชิก",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-          <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-          <line x1="12" x2="12" y1="19" y2="22" />
-        </svg>
-      ),
-    },
-    {
       href: "/admins",
       label: "รายชื่อทีมงาน",
       desc: "จัดการข้อมูลและตำแหน่งผู้ดูแลระบบ",
@@ -171,17 +198,6 @@ const TEAM_CATEGORY: NavCategory = {
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
           <circle cx="9" cy="7" r="4" />
           <polyline points="16 11 18 13 22 9" />
-        </svg>
-      ),
-    },
-    {
-      href: "/rules",
-      label: "กฎทีมงาน",
-      desc: "ระเบียบปฏิบัติและจรรยาบรรณทีมงาน",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-          <path d="m9 12 2 2 4-4" />
         </svg>
       ),
     },
@@ -196,9 +212,21 @@ const TEAM_CATEGORY: NavCategory = {
         </svg>
       ),
     },
+    {
+      href: "/rules",
+      label: "กฎทีมงาน",
+      desc: "ระเบียบปฏิบัติและจรรยาบรรณทีมงาน",
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          <path d="m9 12 2 2 4-4" />
+        </svg>
+      ),
+    },
   ],
 };
 
+// 2.4 System Category (Settings, Backups, Logs, Bot Status)
 const SYSTEM_CATEGORY: NavCategory = {
   id: "system",
   label: "จัดการระบบ",
@@ -511,26 +539,14 @@ export default function Navbar() {
             <span>{DASHBOARD_NAV.label}</span>
           </Link>
 
-          {/* 2. Services Dropdown (Slips, Shop, Tickets) */}
+          {/* 2. Finance Dropdown (Slips, Cashflow/Finance, Shop) */}
+          {renderCategoryDropdown(FINANCE_CATEGORY)}
+
+          {/* 3. Services & Community Dropdown (Tickets, Announcements, Voice) */}
           {renderCategoryDropdown(SERVICES_CATEGORY)}
 
-          {/* 3. Team Dropdown (Attendance, Admins, Permissions) */}
+          {/* 4. Team Dropdown (Attendance, Leaves, Admins, Permissions, Rules) */}
           {renderCategoryDropdown(TEAM_CATEGORY)}
-
-          {/* 4. Announcements (Direct Link) */}
-          <Link
-            href={ANNOUNCEMENT_NAV.href}
-            prefetch={true}
-            onMouseEnter={() => {
-              try {
-                router.prefetch(ANNOUNCEMENT_NAV.href);
-              } catch {}
-            }}
-            className={`apple-nav-link ${isItemActive(ANNOUNCEMENT_NAV.href) ? "active" : ""}`}
-          >
-            <span className="apple-nav-link-icon">{ANNOUNCEMENT_NAV.icon}</span>
-            <span>{ANNOUNCEMENT_NAV.label}</span>
-          </Link>
 
           {/* 5. System Dropdown (Settings, Backups, Logs, Bot Status) */}
           {renderCategoryDropdown(SYSTEM_CATEGORY)}
@@ -732,10 +748,26 @@ export default function Navbar() {
           <div className="apple-mobile-drawer-content">
             {/* Section 1: Overview */}
             <div className="apple-mobile-category-block">
-              <div className="apple-mobile-section-label">ภาพรวม & ข่าวสาร</div>
+              <div className="apple-mobile-section-label">ภาพรวมหลัก</div>
               <div className="apple-mobile-nav-grid">
-                {[DASHBOARD_NAV, ANNOUNCEMENT_NAV].map((item) => {
+                <Link
+                  href={DASHBOARD_NAV.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`apple-mobile-nav-item ${isItemActive(DASHBOARD_NAV.href) ? "active" : ""}`}
+                >
+                  <span className="apple-mobile-icon">{DASHBOARD_NAV.icon}</span>
+                  <span>{DASHBOARD_NAV.label}</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Section 2: Finance */}
+            <div className="apple-mobile-category-block">
+              <div className="apple-mobile-section-label">การเงิน & ธุรกรรม</div>
+              <div className="apple-mobile-nav-grid">
+                {FINANCE_CATEGORY.items.map((item) => {
                   const isActive = isItemActive(item.href);
+                  const badgeCount = item.badgeKey ? badges[item.badgeKey] : 0;
                   return (
                     <Link
                       key={item.href}
@@ -745,15 +777,26 @@ export default function Navbar() {
                     >
                       <span className="apple-mobile-icon">{item.icon}</span>
                       <span>{item.label}</span>
+                      {badgeCount > 0 && (
+                        <span
+                          className="apple-mobile-badge"
+                          style={{
+                            backgroundColor: item.badgeColor || "#ff9f0a",
+                            color: "#000",
+                          }}
+                        >
+                          {badgeCount}
+                        </span>
+                      )}
                     </Link>
                   );
                 })}
               </div>
             </div>
 
-            {/* Section 2: Services */}
+            {/* Section 3: Services & Community */}
             <div className="apple-mobile-category-block">
-              <div className="apple-mobile-section-label">บริการ & ร้านค้า</div>
+              <div className="apple-mobile-section-label">บริการ & ชุมชน</div>
               <div className="apple-mobile-nav-grid">
                 {SERVICES_CATEGORY.items.map((item) => {
                   const isActive = isItemActive(item.href);
@@ -772,7 +815,7 @@ export default function Navbar() {
                           className="apple-mobile-badge"
                           style={{
                             backgroundColor: item.badgeColor || "#2997ff",
-                            color: item.badgeColor === "#ff9f0a" ? "#000" : "#fff",
+                            color: "#fff",
                           }}
                         >
                           {badgeCount}
@@ -784,7 +827,7 @@ export default function Navbar() {
               </div>
             </div>
 
-            {/* Section 3: Team */}
+            {/* Section 4: Team */}
             <div className="apple-mobile-category-block">
               <div className="apple-mobile-section-label">ทีมงาน & บุคลากร</div>
               <div className="apple-mobile-nav-grid">
@@ -805,7 +848,7 @@ export default function Navbar() {
               </div>
             </div>
 
-            {/* Section 4: System */}
+            {/* Section 5: System */}
             <div className="apple-mobile-category-block">
               <div className="apple-mobile-section-label">ระบบ & จัดการ</div>
               <div className="apple-mobile-nav-grid">
