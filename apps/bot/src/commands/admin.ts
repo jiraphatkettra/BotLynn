@@ -54,7 +54,10 @@ export const adminCommand: BotCommand = {
 
     if (subcommand === "list") {
       const admins = await prisma.user.findMany({
-        where: { isActive: true },
+        where: {
+          isActive: true,
+          role: { in: ["OWNER", "MANAGER", "ADMIN", "MODERATOR"] },
+        },
         orderBy: { role: "asc" },
         include: {
           _count: { select: { attendances: true, transactions: true } },

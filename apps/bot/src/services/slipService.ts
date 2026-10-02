@@ -35,7 +35,7 @@ async function ensureUser(discordUser: DiscordUser) {
       username: discordUser.username,
       displayName: discordUser.displayName || discordUser.username,
       avatar: discordUser.avatar,
-      role: "ADMIN",
+      role: "MEMBER",
     },
   });
 }
@@ -92,6 +92,9 @@ export async function recordIncomingSlip({
     if (r2Result) {
       imageUrl = r2Result.url;
       r2Key = r2Result.key;
+      console.log(`☁️ [R2] Successfully uploaded slip to Cloudflare R2: ${r2Result.url}`);
+    } else {
+      console.warn(`⚠️ [R2] Failed to upload slip to Cloudflare R2! Falling back to Discord attachment URL (Link may expire if ticket is closed).`);
     }
   }
 

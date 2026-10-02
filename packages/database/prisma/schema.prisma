@@ -19,7 +19,7 @@ model User {
   displayName String?
   avatar      String?
   email       String?
-  role        UserRole @default(ADMIN)
+  role        UserRole @default(MEMBER)
   isActive    Boolean  @default(true)
   balance     Float    @default(0)
   createdAt   DateTime @default(now())
@@ -45,6 +45,7 @@ enum UserRole {
   MANAGER
   ADMIN
   MODERATOR
+  MEMBER
 }
 
 model Account {

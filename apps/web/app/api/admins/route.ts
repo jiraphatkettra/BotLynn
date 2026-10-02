@@ -9,6 +9,9 @@ import { getDiscordAvatarUrl, isRootOwner } from "@/lib/utils";
 export async function GET() {
   try {
     const admins = await prisma.user.findMany({
+      where: {
+        role: { in: ["OWNER", "MANAGER", "ADMIN", "MODERATOR"] },
+      },
       orderBy: { createdAt: "desc" },
       include: {
         permissions: true,

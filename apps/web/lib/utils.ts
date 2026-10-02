@@ -85,6 +85,7 @@ export function getRoleInfo(role: UserRole | string): {
     ADMIN: { label: "Admin", color: "#60a5fa", className: "admin" },
     MODERATOR: { label: "Moderator", color: "#34d399", className: "moderator" },
     STAFF: { label: "Staff", color: "#34d399", className: "moderator" },
+    MEMBER: { label: "Member", color: "#9ca3af", className: "member" },
   };
   return roles[role] || { label: String(role || "Member"), color: "#9ca3af", className: "member" };
 }
@@ -109,6 +110,7 @@ export function hasPermission(
     MANAGER: 3,
     ADMIN: 2,
     MODERATOR: 1,
+    MEMBER: 0,
   };
   return hierarchy[userRole] >= hierarchy[requiredRole];
 }

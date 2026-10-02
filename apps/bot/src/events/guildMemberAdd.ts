@@ -5,23 +5,6 @@ export async function handleGuildMemberAdd(member: GuildMember) {
   if (member.user.bot) return;
 
   try {
-    // Upsert member into database
-    await prisma.user.upsert({
-      where: { discordId: member.id },
-      update: {
-        username: member.user.username,
-        displayName: member.displayName || member.user.username,
-        avatar: member.user.displayAvatarURL(),
-      },
-      create: {
-        discordId: member.id,
-        username: member.user.username,
-        displayName: member.displayName || member.user.username,
-        avatar: member.user.displayAvatarURL(),
-        role: "ADMIN", // default role enum
-      },
-    });
-
     // Fetch settings from DB
     const settings = await prisma.setting.findMany({
       where: {

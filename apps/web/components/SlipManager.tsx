@@ -79,6 +79,7 @@ export default function SlipManager() {
   const [isLaserScanning, setIsLaserScanning] = useState(true);
   const [showApprovalCelebration, setShowApprovalCelebration] = useState<{ id: string; amount: number; user: string } | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
   // Tab Title Badge
   useEffect(() => {
@@ -487,18 +488,43 @@ export default function SlipManager() {
                           onClick={() => setPreviewSlip(slip)}
                           title="คลิกเพื่อดูรูปภาพสลิปขนาดเต็ม"
                         >
-                          <img
-                            src={slip.imageUrl}
-                            alt="Slip"
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                              transition: "transform 0.2s",
-                            }}
-                            onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.08)")}
-                            onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
-                          />
+                          {imageErrors[slip.id] ? (
+                            <div
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                background: "rgba(255, 69, 58, 0.1)",
+                                color: "#ff453a",
+                                padding: "4px",
+                                textAlign: "center",
+                              }}
+                            >
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="8" x2="12" y2="12" />
+                                <line x1="12" y1="16" x2="12.01" y2="16" />
+                              </svg>
+                              <span style={{ fontSize: "9px", marginTop: "3px", fontWeight: 600, lineHeight: 1.1 }}>ภาพหมดอายุ</span>
+                            </div>
+                          ) : (
+                            <img
+                              src={slip.imageUrl}
+                              alt="Slip"
+                              onError={() => setImageErrors((prev) => ({ ...prev, [slip.id]: true }))}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                                transition: "transform 0.2s",
+                              }}
+                              onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.08)")}
+                              onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                            />
+                          )}
                           <div
                             style={{
                               position: "absolute",
@@ -573,9 +599,13 @@ export default function SlipManager() {
                         ) : (
                           <span style={{ color: "var(--text-muted)", fontSize: "12px" }}>ส่งตรง</span>
                         )}
-                        {slip.r2Key && (
-                          <div style={{ fontSize: "10px", color: "#2997ff", marginTop: "3px" }}>
+                        {slip.r2Key ? (
+                          <div style={{ fontSize: "10px", color: "#30d158", marginTop: "3px" }}>
                             ☁️ Cloudflare R2
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: "10px", color: "#ff9f0a", marginTop: "3px" }} title="ภาพถูกบันทึกผ่านลิงก์ Discord ชั่วคราว">
+                            ⚡ Discord Link
                           </div>
                         )}
                       </td>
@@ -795,48 +825,100 @@ export default function SlipManager() {
                 background: "rgba(0,0,0,0.75)",
               }}
             >
-              <div style={{ position: "relative", display: "inline-block", maxWidth: "100%", maxHeight: "65vh" }}>
-                <img
-                  src={previewSlip.imageUrl}
-                  alt="Full Slip Preview"
-                  style={{
-                    maxWidth: "100%",
-                    maxHeight: "65vh",
-                    objectFit: "contain",
-                    borderRadius: "12px",
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
-                    display: "block",
-                  }}
-                />
-
-                {/* Laser Scanning Beam */}
-                {isLaserScanning && (
-                  <>
-                    <div className="slip-laser-scanner" />
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "10px",
-                        right: "10px",
-                        background: "rgba(10, 15, 25, 0.85)",
-                        border: "1px solid rgba(0, 240, 255, 0.45)",
-                        borderRadius: "6px",
-                        padding: "4px 8px",
-                        fontSize: "10px",
-                        fontWeight: 600,
-                        color: "#00f0ff",
-                        fontFamily: "var(--font-mono, monospace)",
-                        letterSpacing: "0.06em",
-                        boxShadow: "0 0 10px rgba(0, 240, 255, 0.3)",
-                        pointerEvents: "none",
-                        zIndex: 11,
-                      }}
-                    >
-                      AI SCANNING // OCR ACTIVE
+              {imageErrors[previewSlip.id] ? (
+                <div style={{ textAlign: "center", padding: "40px 20px", color: "var(--text-muted)", maxWidth: 500 }}>
+                  <div style={{ fontSize: "44px", marginBottom: "16px" }}>⚠️</div>
+                  <h4 style={{ color: "#fff", fontSize: "17px", fontWeight: 600, marginBottom: "8px" }}>
+                    ไฟล์ภาพสลิปหมดอายุหรือถูกลบจาก Discord
+                  </h4>
+                  <p style={{ fontSize: "13px", lineHeight: "1.6", color: "var(--text-secondary)", marginBottom: "20px" }}>
+                    สลิปนี้ถูกส่งผ่านห้องทิกเก็ตใน Discord ก่อนการเชื่อมต่อ Cloudflare R2 จะทำงานสมบูรณ์ เมื่อห้องทิกเก็ตถูกปิดลง ลิงก์ Discord ชั่วคราวจะถูกลบออกจาก CDN ถาวร
+                  </p>
+                  <div
+                    style={{
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: "12px",
+                      padding: "16px",
+                      textAlign: "left",
+                      fontSize: "12px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "8px",
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ color: "var(--text-muted)" }}>ช่องทางที่มา:</span>
+                      <span style={{ color: "#fff", fontWeight: 500 }}>{previewSlip.ticketId ? `#${previewSlip.ticketId}` : "ส่งตรง"}</span>
                     </div>
-                  </>
-                )}
-              </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ color: "var(--text-muted)" }}>วันที่ส่ง:</span>
+                      <span style={{ color: "#fff" }}>{formatDate(previewSlip.createdAt)}</span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ color: "var(--text-muted)" }}>สถานะ:</span>
+                      <span style={{ color: previewSlip.status === "APPROVED" ? "#30d158" : previewSlip.status === "REJECTED" ? "#ff453a" : "#ff9f0a", fontWeight: 600 }}>
+                        {previewSlip.status === "APPROVED" ? "อนุมัติแล้ว" : previewSlip.status === "REJECTED" ? "ปฏิเสธแล้ว" : "รอตรวจสอบ"}
+                      </span>
+                    </div>
+                    {previewSlip.amount && (
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ color: "var(--text-muted)" }}>ยอดเงิน:</span>
+                        <span style={{ color: "#30d158", fontWeight: 700 }}>{formatCurrency(previewSlip.amount)}</span>
+                      </div>
+                    )}
+                    {previewSlip.note && (
+                      <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "8px", color: "var(--text-muted)" }}>
+                        หมายเหตุ: {previewSlip.note}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ position: "relative", display: "inline-block", maxWidth: "100%", maxHeight: "65vh" }}>
+                  <img
+                    src={previewSlip.imageUrl}
+                    alt="Full Slip Preview"
+                    onError={() => setImageErrors((prev) => ({ ...prev, [previewSlip.id]: true }))}
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: "65vh",
+                      objectFit: "contain",
+                      borderRadius: "12px",
+                      boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
+                      display: "block",
+                    }}
+                  />
+
+                  {/* Laser Scanning Beam */}
+                  {isLaserScanning && (
+                    <>
+                      <div className="slip-laser-scanner" />
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "10px",
+                          right: "10px",
+                          background: "rgba(10, 15, 25, 0.85)",
+                          border: "1px solid rgba(0, 240, 255, 0.45)",
+                          borderRadius: "6px",
+                          padding: "4px 8px",
+                          fontSize: "10px",
+                          fontWeight: 600,
+                          color: "#00f0ff",
+                          fontFamily: "var(--font-mono, monospace)",
+                          letterSpacing: "0.06em",
+                          boxShadow: "0 0 10px rgba(0, 240, 255, 0.3)",
+                          pointerEvents: "none",
+                          zIndex: 11,
+                        }}
+                      >
+                        AI SCANNING // OCR ACTIVE
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Footer Actions */}

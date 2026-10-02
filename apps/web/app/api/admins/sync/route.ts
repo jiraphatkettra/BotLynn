@@ -154,13 +154,21 @@ export async function POST(request: NextRequest) {
           discordId: {
             notIn: [ROOT_OWNER_DISCORD_ID, ...syncedDiscordIds],
           },
+          role: { not: "MEMBER" },
         },
       });
 
       for (const a of allCurrentAdmins) {
         if (isRootOwner(a.discordId)) continue;
-        await prisma.user.delete({ where: { id: a.id } });
-        removedCount++;
+        try {
+          await prisma.user.update({
+            where: { id: a.id },
+            data: { role: "MEMBER" },
+          });
+          removedCount++;
+        } catch (err) {
+          console.error(`Failed to demote unmatched user ${a.id}:`, err);
+        }
       }
     }
 
@@ -170,12 +178,15 @@ export async function POST(request: NextRequest) {
         userId: currentUserId,
         action: "ซิงค์แอดมินตามยศ Discord",
         category: "ADMIN",
-        details: `ซิงค์ทีมงานจาก Discord พบ ${syncedDiscordIds.length} คน (เพิ่มใหม่: ${addedCount}, อัปเดต: ${updatedCount}, ลบออก: ${removedCount})`,
+        details: `ซิงค์ทีมงานจาก Discord พบ ${syncedDiscordIds.length} คน (เพิ่มใหม่: ${addedCount}, อัปเดต: ${updatedCount}, ปรับเป็นสมาชิกทั่วไป: ${removedCount})`,
       },
     });
 
     // 4. Return updated admin list
     const updatedAdmins = await prisma.user.findMany({
+      where: {
+        role: { in: ["OWNER", "MANAGER", "ADMIN", "MODERATOR"] },
+      },
       orderBy: { createdAt: "desc" },
       include: {
         permissions: true,

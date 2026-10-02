@@ -23,7 +23,12 @@ async function getDashboardData() {
     pendingSlipsCount,
     openTicketsCount,
   ] = await Promise.all([
-    prisma.user.count({ where: { isActive: true } }),
+    prisma.user.count({
+      where: {
+        isActive: true,
+        role: { in: ["OWNER", "MANAGER", "ADMIN", "MODERATOR"] },
+      },
+    }),
     prisma.attendance.count({
       where: { clockIn: { gte: todayStart } },
     }),

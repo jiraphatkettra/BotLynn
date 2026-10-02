@@ -43,7 +43,7 @@ export const authOptions: NextAuthOptions = {
               ? `https://cdn.discordapp.com/avatars/${account.providerAccountId}/${discordProfile.avatar}.png`
               : null,
             email: discordProfile.email,
-            role: isRoot ? "OWNER" : "ADMIN",
+            role: isRoot ? "OWNER" : "MEMBER",
             isActive: true,
           },
         });

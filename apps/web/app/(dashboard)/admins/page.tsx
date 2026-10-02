@@ -8,6 +8,9 @@ import { isRootOwner } from "@/lib/utils";
 
 async function getAdminsData() {
   const admins = await prisma.user.findMany({
+    where: {
+      role: { in: ["OWNER", "MANAGER", "ADMIN", "MODERATOR"] },
+    },
     orderBy: { createdAt: "desc" },
     include: {
       permissions: true,

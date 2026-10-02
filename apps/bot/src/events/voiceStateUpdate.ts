@@ -27,7 +27,7 @@ export async function handleVoiceStateUpdate(
           username: member.user.username,
           displayName: member.displayName || member.user.username,
           avatar: member.user.displayAvatarURL(),
-          role: "ADMIN",
+          role: "MEMBER",
         },
       });
 
