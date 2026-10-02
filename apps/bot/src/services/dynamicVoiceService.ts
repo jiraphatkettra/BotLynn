@@ -7,27 +7,84 @@ import {
 } from "discord.js";
 import { prisma } from "@lynnbot/database";
 
-// Default Food & Fruit emoji sequence for Living/Talk zone
+// Default Food & Fruit emoji sequence for Living/Talk zone (30 unique non-repeating food items)
 export const DEFAULT_TALK_EMOJIS = [
   "🥪", "🥐", "🥓", "🥨", "🍿",
-  "🍑", "🍎", "🍓", "🍈", "🍋",
+  "🍑", "🍎", "🍓", "🍋‍🟩", "🍋",
   "🍇", "🍉", "🍊", "🍩", "🍰",
+  "🍔", "🍟", "🍕", "🌮", "🍜",
+  "🍣", "🥞", "🍦", "🍫", "🍪",
+  "🍮", "🧇", "🍡", "🧋", "☕",
 ];
 
 export const DEFAULT_GAME_EMOJI = "🎮";
-export const DEFAULT_SLEEP_EMOJI = "🛌";
+export const DEFAULT_SLEEP_EMOJI = "🛏️";
 
 // In-memory mutex locks to prevent race conditions during voice channel creation/deletion
 const categoryLocks = new Set<string>();
 
 /**
- * Build voice channel name matching the exact aesthetic tree pattern:
- * e.g. ╭ ㆍ นอนรวมㆍ 01 ㆍ 🛌 ⁺
- *      ┆ ㆍ นอนรวมㆍ 02 ㆍ 🛌 ⁺
- *      ╰ ㆍ นอนรวมㆍ 03 ㆍ 🛌 ⁺
- *
- *      ╭ ㆍ เล่นเกมㆍ 01 ㆍ 🎮 ⁺
- *      ╰ ㆍ เล่นเกมㆍ 05 ㆍ 🎮 ⁺
+ * Parse an existing Discord channel name into structural components:
+ * branch, prefix text, room number, delimiter before emoji, raw emoji, and suffix.
+ */
+export function parseSampleChannelName(sampleName: string) {
+  const m = sampleName.match(
+    /^([╭┆╰│├└\s]*)(.*?)(\d{1,3})(\s*[^a-zA-Z0-9\s\p{Emoji}]*?\s*)(\p{Extended_Pictographic}(?:(?:\u200D|\uFE0F|\uFE0E)?[\p{Extended_Pictographic}\u{E0020}-\u{E007E}])*?)(.*)$/u
+  );
+  if (!m) return null;
+  const variationMatch = m[6].match(/^[\uFE0F\uFE0E]+/);
+  const variation = variationMatch ? variationMatch[0] : "";
+  return {
+    branch: m[1],
+    prefix: m[2],
+    numStr: m[3],
+    numLength: m[3].length,
+    numSep: m[4],
+    rawEmoji: m[5] + variation,
+    suffix: m[6].slice(variation.length),
+  };
+}
+
+/**
+ * Build a new voice channel name by directly copying the exact spacing,
+ * dots, and separators of a preceding sample channel in the same zone.
+ */
+export function buildVoiceChannelNameFromSample(
+  sampleName: string,
+  index: number,
+  emojis: string[],
+  isBlockEnd: boolean = false,
+  blockSize: number = 5
+): string {
+  const parsed = parseSampleChannelName(sampleName);
+  const padNum = String(index).padStart(parsed ? parsed.numLength : 2, "0");
+
+  const posInBlock = ((index - 1) % blockSize) + 1;
+  let branch = "┆";
+  if (posInBlock === 1) {
+    branch = "╭";
+  } else if (posInBlock === blockSize || isBlockEnd) {
+    branch = "╰";
+  }
+
+  if (!parsed) {
+    const emoji =
+      emojis.length > 0
+        ? emojis[(index - 1) % emojis.length]
+        : DEFAULT_GAME_EMOJI;
+    return `${branch}﹒${sampleName}· ${padNum}﹒${emoji} ⁺`;
+  }
+
+  const emoji =
+    emojis.length > 0
+      ? emojis[(index - 1) % emojis.length]
+      : parsed.rawEmoji;
+
+  return `${branch}${parsed.prefix}${padNum}${parsed.numSep}${emoji}${parsed.suffix}`;
+}
+
+/**
+ * Standard fallback channel name generator when no existing channels exist to clone from.
  */
 export function buildVoiceChannelName(
   zoneName: string,
@@ -37,11 +94,6 @@ export function buildVoiceChannelName(
   blockGroupSize: number = 5
 ): string {
   const padNum = String(index).padStart(2, "0");
-
-  // Determine tree branch character based on blocks (e.g. blocks of 3 for Sleeping, 5 for Gaming)
-  // Pos 1 in block (1, 4, 7... or 1, 6, 11...): ╭
-  // Last in block (3, 6, 9... or 5, 10, 15...) or isBlockEnd: ╰
-  // Others: ┆
   const posInBlock = ((index - 1) % blockGroupSize) + 1;
   let branch = "┆";
   if (posInBlock === 1) {
@@ -50,20 +102,21 @@ export function buildVoiceChannelName(
     branch = "╰";
   }
 
-  // Pick emoji (if list provided, cycle through; otherwise use single emoji)
   const emoji =
     emojis.length > 0
       ? emojis[(index - 1) % emojis.length]
       : DEFAULT_GAME_EMOJI;
 
-  return `${branch} ㆍ ${zoneName}ㆍ ${padNum} ㆍ ${emoji} ⁺`;
+  return `${branch}﹒${zoneName}· ${padNum}﹒${emoji} ⁺`;
 }
 
 /**
- * Parse room number from channel name
+ * Robustly extract room number from channel name across any separator format (ㆍ, ·, •, ﹒, ., -, etc.)
  */
 export function extractRoomNumber(channelName: string): number | null {
-  const match = channelName.match(/ㆍ\s*(\d{1,3})\s*ㆍ/);
+  const match =
+    channelName.match(/[ㆍ·•﹒\.\-\s](\d{1,3})[ㆍ·•﹒\.\-\s]/) ||
+    channelName.match(/(\d{1,3})/);
   if (match && match[1]) {
     return parseInt(match[1], 10);
   }
@@ -197,6 +250,12 @@ export async function processCategoryDynamicVoice(
         catName.includes("talk") ||
         catName.includes("พูดคุย")
       ) {
+        const existingVoice = category.children.cache.filter(
+          (ch): ch is VoiceChannel =>
+            ch.type === ChannelType.GuildVoice && ch.name.includes("พูดคุย")
+        );
+        const initialMin = Math.max(existingVoice.size, 10);
+
         await prisma.dynamicVoiceConfig.upsert({
           where: {
             categoryId_zoneName: {
@@ -204,21 +263,23 @@ export async function processCategoryDynamicVoice(
               zoneName: "พูดคุย",
             },
           },
-          update: {},
+          update: {
+            minChannels: initialMin,
+          },
           create: {
             guildId: guild.id,
             categoryId,
             categoryName: category.name,
             zoneName: "พูดคุย",
             userLimit: 10,
-            minChannels: 5,
+            minChannels: initialMin,
             spareChannels: 1,
             emojis: DEFAULT_TALK_EMOJIS.join(","),
             blockGroupSize: 5,
             isEnabled: true,
           },
         });
-        console.log(`🎙️ [Dynamic Voice] Auto-registered Living Zone: ${category.name}`);
+        console.log(`🎙️ [Dynamic Voice] Auto-registered Living Zone: ${category.name} (minChannels: ${initialMin})`);
         await seedDynamicVoiceChannels(guild, categoryId);
       }
       // Case D: Scan any existing aesthetic voice channels
@@ -226,24 +287,24 @@ export async function processCategoryDynamicVoice(
         const existingVoiceChannels = category.children.cache.filter(
           (ch): ch is VoiceChannel =>
             ch.type === ChannelType.GuildVoice &&
-            /ㆍ\s*(\d{1,3})\s*ㆍ/.test(ch.name)
+            extractRoomNumber(ch.name) !== null
         );
 
         const detectedZones = new Map<string, { emoji: string; limit: number; count: number }>();
         for (const [, ch] of existingVoiceChannels) {
-          const match = ch.name.match(
-            /[╭┆╰]?\s*ㆍ\s*([^ㆍ]+)ㆍ\s*(\d{1,3})\s*ㆍ\s*([^\s⁺]+)\s*⁺?/
-          );
-          if (match && match[1]) {
-            const zName = match[1].trim();
-            if (!detectedZones.has(zName)) {
-              detectedZones.set(zName, {
-                emoji: match[3]?.trim() || "🎙️",
-                limit: ch.userLimit || 5,
-                count: 1,
-              });
-            } else {
-              detectedZones.get(zName)!.count++;
+          const parsed = parseSampleChannelName(ch.name);
+          if (parsed) {
+            const cleanZone = parsed.prefix.replace(/^[ㆍ·•﹒\.\-\s]+|[ㆍ·•﹒\.\-\s]+$/g, "").trim();
+            if (cleanZone) {
+              if (!detectedZones.has(cleanZone)) {
+                detectedZones.set(cleanZone, {
+                  emoji: parsed.rawEmoji || "🎙️",
+                  limit: ch.userLimit || 5,
+                  count: 1,
+                });
+              } else {
+                detectedZones.get(cleanZone)!.count++;
+              }
             }
           }
         }
@@ -363,22 +424,32 @@ async function processSingleZoneDynamicVoice(
 
     const lastChannelOfZone = voiceChannels[voiceChannels.length - 1];
     const basePos = lastChannelOfZone ? lastChannelOfZone.channel.position : undefined;
+    const sampleChannel = lastChannelOfZone ? lastChannelOfZone.channel : null;
+    const sampleName = sampleChannel ? sampleChannel.name : null;
 
     console.log(
       `🎙️ [Dynamic Voice] Batch-expanding ${blockSize} rooms for '${zoneName}' in '${category.name}' (Rooms ${highestNum + 1} to ${highestNum + blockSize}, Limit: ${effectiveUserLimit})...`
     );
 
-    // Create the entire block (e.g. 3 rooms: 04, 05, 06 or 5 rooms: 06, 07, 08, 09, 10) sequentially
+    // Create the entire block (e.g. 3 rooms: 04, 05, 06 or 5 rooms: 11, 12, 13, 14, 15) sequentially
     for (let step = 1; step <= blockSize; step++) {
       const roomNum = highestNum + step;
       const isEnd = step === blockSize;
-      const newName = buildVoiceChannelName(
-        zoneName,
-        roomNum,
-        emojis,
-        isEnd,
-        blockSize
-      );
+      const newName = sampleName
+        ? buildVoiceChannelNameFromSample(
+            sampleName,
+            roomNum,
+            emojis,
+            isEnd,
+            blockSize
+          )
+        : buildVoiceChannelName(
+            zoneName,
+            roomNum,
+            emojis,
+            isEnd,
+            blockSize
+          );
 
       await category.guild.channels.create({
         name: newName,
@@ -470,6 +541,7 @@ export async function seedDynamicVoiceChannels(
       existingSample && existingSample.userLimit > 0
         ? existingSample.userLimit
         : config.userLimit;
+    const sampleName = existingSample?.name;
 
     if (existingVoice.size < minChannels) {
       const existingNumbers = new Set(
@@ -478,13 +550,21 @@ export async function seedDynamicVoiceChannels(
 
       for (let i = 1; i <= minChannels; i++) {
         if (!existingNumbers.has(i)) {
-          const name = buildVoiceChannelName(
-            zoneName,
-            i,
-            emojis,
-            i === minChannels,
-            blockSize
-          );
+          const name = sampleName
+            ? buildVoiceChannelNameFromSample(
+                sampleName,
+                i,
+                emojis,
+                i === minChannels,
+                blockSize
+              )
+            : buildVoiceChannelName(
+                zoneName,
+                i,
+                emojis,
+                i === minChannels,
+                blockSize
+              );
           console.log(`🎙️ [Dynamic Voice] Seeding missing room ${i} for ${zoneName}: ${name}`);
           await category.guild.channels.create({
             name,

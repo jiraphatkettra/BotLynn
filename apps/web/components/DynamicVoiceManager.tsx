@@ -25,9 +25,11 @@ interface DiscordCategory {
 }
 
 const COMMON_EMOJIS = [
-  "🛌", "🎮", "🥪", "🥐", "🥓", "🥨", "🍿",
-  "🍑", "🍎", "🍓", "🍈", "🍋", "🍇",
-  "🍉", "🍊", "🍩", "🍰", "🎧", "🎬", "💬"
+  "🛏️", "🎮", "🥪", "🥐", "🥓", "🥨", "🍿",
+  "🍑", "🍎", "🍓", "🍋‍🟩", "🍋", "🍇",
+  "🍉", "🍊", "🍩", "🍰", "🍔", "🍟", "🍕",
+  "🌮", "🍜", "🍣", "🥞", "🍦", "🍫", "🍪",
+  "🍮", "🧇", "🍡", "🧋", "☕"
 ];
 
 export default function DynamicVoiceManager() {
@@ -139,9 +141,9 @@ export default function DynamicVoiceManager() {
     } else if (preset === "LIVING") {
       setZoneName("พูดคุย");
       setUserLimit(10);
-      setMinChannels(5);
+      setMinChannels(10);
       setSpareChannels(1);
-      setEmojis("🥪, 🥐, 🥓, 🥨, 🍿, 🍑, 🍎, 🍓, 🍈, 🍋");
+      setEmojis("🥪, 🥐, 🥓, 🥨, 🍿, 🍑, 🍎, 🍓, 🍋‍🟩, 🍋, 🍇, 🍉, 🍊, 🍩, 🍰");
       setBlockGroupSize(5);
     }
   };

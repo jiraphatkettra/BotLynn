@@ -5,12 +5,64 @@ import { prisma } from "@lynnbot/database";
 
 export const dynamic = "force-dynamic";
 
-// Default food emojis for Living / Talk zone
+// Default Food & Fruit emoji sequence for Living/Talk zone (30 unique non-repeating food items)
 const DEFAULT_TALK_EMOJIS = [
   "🥪", "🥐", "🥓", "🥨", "🍿",
-  "🍑", "🍎", "🍓", "🍈", "🍋",
+  "🍑", "🍎", "🍓", "🍋‍🟩", "🍋",
   "🍇", "🍉", "🍊", "🍩", "🍰",
+  "🍔", "🍟", "🍕", "🌮", "🍜",
+  "🍣", "🥞", "🍦", "🍫", "🍪",
+  "🍮", "🧇", "🍡", "🧋", "☕",
 ];
+
+function parseSampleChannelName(sampleName: string) {
+  const m = sampleName.match(
+    /^([╭┆╰│├└\s]*)(.*?)(\d{1,3})(\s*[^a-zA-Z0-9\s\p{Emoji}]*?\s*)(\p{Extended_Pictographic}(?:(?:\u200D|\uFE0F|\uFE0E)?[\p{Extended_Pictographic}\u{E0020}-\u{E007E}])*?)(.*)$/u
+  );
+  if (!m) return null;
+  const variationMatch = m[6].match(/^[\uFE0F\uFE0E]+/);
+  const variation = variationMatch ? variationMatch[0] : "";
+  return {
+    branch: m[1],
+    prefix: m[2],
+    numStr: m[3],
+    numLength: m[3].length,
+    numSep: m[4],
+    rawEmoji: m[5] + variation,
+    suffix: m[6].slice(variation.length),
+  };
+}
+
+function buildVoiceChannelNameFromSample(
+  sampleName: string,
+  index: number,
+  emojis: string[],
+  isBlockEnd: boolean = false,
+  blockSize: number = 5
+): string {
+  const parsed = parseSampleChannelName(sampleName);
+  const padNum = String(index).padStart(parsed ? parsed.numLength : 2, "0");
+
+  const posInBlock = ((index - 1) % blockSize) + 1;
+  let branch = "┆";
+  if (posInBlock === 1) {
+    branch = "╭";
+  } else if (posInBlock === blockSize || isBlockEnd) {
+    branch = "╰";
+  }
+
+  if (!parsed) {
+    const emoji = emojis.length > 0 ? emojis[(index - 1) % emojis.length] : "🎮";
+    return `${branch}﹒${sampleName}· ${padNum}﹒${emoji} ⁺`;
+  }
+
+  const emoji =
+    emojis.length > 0
+      ? emojis[(index - 1) % emojis.length]
+      : parsed.rawEmoji;
+
+  return `${branch}${parsed.prefix}${padNum}${parsed.numSep}${emoji}${parsed.suffix}`;
+}
 
 function buildVoiceChannelName(
   zoneName: string,
@@ -28,7 +80,17 @@ function buildVoiceChannelName(
     branch = "╰";
   }
   const emoji = emojis.length > 0 ? emojis[(index - 1) % emojis.length] : "🎮";
-  return `${branch} ㆍ ${zoneName}ㆍ ${padNum} ㆍ ${emoji} ⁺`;
+  return `${branch}﹒${zoneName}· ${padNum}﹒${emoji} ⁺`;
+}
+
+function extractRoomNumber(channelName: string): number | null {
+  const match =
+    channelName.match(/[ㆍ·•﹒\.\-\s](\d{1,3})[ㆍ·•﹒\.\-\s]/) ||
+    channelName.match(/(\d{1,3})/);
+  if (match && match[1]) {
+    return parseInt(match[1], 10);
+  }
+  return null;
 }
 
 async function seedDiscordVoiceChannels(
@@ -54,12 +116,11 @@ async function seedDiscordVoiceChannels(
       (c: any) => c.type === 2 && c.parent_id === categoryId && c.name.includes(zoneName)
     );
 
+    const sampleName = existingVoice.length > 0 ? existingVoice[0].name : null;
+
     const existingNums = new Set(
       existingVoice
-        .map((c: any) => {
-          const m = c.name.match(/ㆍ\s*(\d{1,3})\s*ㆍ/);
-          return m ? parseInt(m[1], 10) : null;
-        })
+        .map((c: any) => extractRoomNumber(c.name))
         .filter(Boolean)
     );
 
@@ -69,13 +130,21 @@ async function seedDiscordVoiceChannels(
 
     for (let i = 1; i <= minRooms; i++) {
       if (!existingNums.has(i)) {
-        const name = buildVoiceChannelName(
-          zoneName,
-          i,
-          emojiList,
-          i === minRooms,
-          blockGroupSize
-        );
+        const name = sampleName
+          ? buildVoiceChannelNameFromSample(
+              sampleName,
+              i,
+              emojiList,
+              i === minRooms,
+              blockGroupSize
+            )
+          : buildVoiceChannelName(
+              zoneName,
+              i,
+              emojiList,
+              i === minRooms,
+              blockGroupSize
+            );
         const createRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/channels`, {
           method: "POST",
           headers: {

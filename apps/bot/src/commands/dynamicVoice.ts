@@ -143,7 +143,7 @@ export const dynamicVoiceCommand: BotCommand = {
       const isGaming = zoneType === "GAMING";
       const zoneName = isGaming ? "เล่นเกม" : "พูดคุย";
       const userLimit = isGaming ? 5 : 10;
-      const minRooms = customMinRooms || 5;
+      const minRooms = customMinRooms || (isGaming ? 5 : 10);
       const emojis = isGaming
         ? DEFAULT_GAME_EMOJI
         : DEFAULT_TALK_EMOJIS.join(",");
