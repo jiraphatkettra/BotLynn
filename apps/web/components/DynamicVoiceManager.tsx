@@ -24,13 +24,7 @@ interface DiscordCategory {
   name: string;
 }
 
-const COMMON_EMOJIS = [
-  "🛏️", "🎮", "🥪", "🥐", "🥓", "🥨", "🍿",
-  "🍑", "🍎", "🍓", "🍋‍🟩", "🍋", "🍇",
-  "🍉", "🍊", "🍩", "🍰", "🍔", "🍟", "🍕",
-  "🌮", "🍜", "🍣", "🥞", "🍦", "🍫", "🍪",
-  "🍮", "🧇", "🍡", "🧋", "☕"
-];
+const DEFAULT_LIVING_EMOJIS = "🥪, 🥐, 🥓, 🥨, 🍿, 🍑, 🍎, 🍓, 🍋‍🟩, 🍋, 🍇, 🍉, 🍊, 🍩, 🍰";
 
 export default function DynamicVoiceManager() {
   const { data: session } = useSession();
@@ -46,20 +40,20 @@ export default function DynamicVoiceManager() {
 
   const [syncingId, setSyncingId] = useState<string | null>(null);
   const [creatingSleep, setCreatingSleep] = useState(false);
+  const [creatingLiving, setCreatingLiving] = useState(false);
 
   // Form State
   const [categoryId, setCategoryId] = useState("");
   const [categoryName, setCategoryName] = useState("");
-  const [zoneName, setZoneName] = useState("นอนรวม");
-  const [userLimit, setUserLimit] = useState(5);
-  const [minChannels, setMinChannels] = useState(3);
+  const [zoneName, setZoneName] = useState("พูดคุย");
+  const [userLimit, setUserLimit] = useState(10);
+  const [minChannels, setMinChannels] = useState(10);
   const [spareChannels, setSpareChannels] = useState(1);
-  const [emojis, setEmojis] = useState("🛌");
-  const [blockGroupSize, setBlockGroupSize] = useState(3);
+  const [emojis, setEmojis] = useState(DEFAULT_LIVING_EMOJIS);
+  const [blockGroupSize, setBlockGroupSize] = useState(5);
   const [isEnabled, setIsEnabled] = useState(true);
-  const [autoSeed, setAutoSeed] = useState(true);
+  const [autoSeed, setAutoSeed] = useState(false);
 
-  // Fetch configs
   const loadData = async () => {
     try {
       setLoading(true);
@@ -82,16 +76,17 @@ export default function DynamicVoiceManager() {
 
   const openCreateModal = () => {
     setEditingConfig(null);
-    setCategoryId(categories.length > 0 ? categories[0].id : "");
-    setCategoryName(categories.length > 0 ? categories[0].name : "");
-    setZoneName("นอนรวม");
-    setUserLimit(5);
-    setMinChannels(3);
+    const initialCat = categories.length > 0 ? categories[0] : null;
+    setCategoryId(initialCat?.id || "");
+    setCategoryName(initialCat?.name || "");
+    setZoneName("พูดคุย");
+    setUserLimit(10);
+    setMinChannels(10);
     setSpareChannels(1);
-    setEmojis("🛌");
-    setBlockGroupSize(3);
+    setEmojis(DEFAULT_LIVING_EMOJIS);
+    setBlockGroupSize(5);
     setIsEnabled(true);
-    setAutoSeed(true);
+    setAutoSeed(false);
     setModalOpen(true);
   };
 
@@ -106,52 +101,48 @@ export default function DynamicVoiceManager() {
     setEmojis(cfg.emojis);
     setBlockGroupSize(cfg.blockGroupSize || (cfg.minChannels <= 3 ? 3 : 5));
     setIsEnabled(cfg.isEnabled);
+    setAutoSeed(false);
     setModalOpen(true);
   };
 
-  const applyPreset = (preset: "SLEEP_GROUP" | "SLEEP_DUO" | "SLEEP_SOLO" | "GAMING" | "LIVING") => {
-    if (preset === "SLEEP_GROUP") {
+  const applyPreset = (preset: "LIVING" | "SLEEP_GROUP" | "SLEEP_DUO" | "SLEEP_SOLO" | "GAMING") => {
+    if (preset === "LIVING") {
+      setZoneName("พูดคุย");
+      setUserLimit(10);
+      setMinChannels(10);
+      setBlockGroupSize(5);
+      setEmojis(DEFAULT_LIVING_EMOJIS);
+    } else if (preset === "SLEEP_GROUP") {
       setZoneName("นอนรวม");
       setUserLimit(5);
       setMinChannels(3);
-      setSpareChannels(1);
-      setEmojis("🛌");
       setBlockGroupSize(3);
+      setEmojis("🛏️");
     } else if (preset === "SLEEP_DUO") {
       setZoneName("นอนคู่");
-      setUserLimit(5);
+      setUserLimit(2);
       setMinChannels(3);
-      setSpareChannels(1);
-      setEmojis("🛌");
       setBlockGroupSize(3);
+      setEmojis("🛏️");
     } else if (preset === "SLEEP_SOLO") {
       setZoneName("นอนเดี่ยว");
-      setUserLimit(5);
+      setUserLimit(1);
       setMinChannels(3);
-      setSpareChannels(1);
-      setEmojis("🛌");
       setBlockGroupSize(3);
+      setEmojis("🛏️");
     } else if (preset === "GAMING") {
       setZoneName("เล่นเกม");
       setUserLimit(5);
       setMinChannels(5);
-      setSpareChannels(1);
+      setBlockGroupSize(5);
       setEmojis("🎮");
-      setBlockGroupSize(5);
-    } else if (preset === "LIVING") {
-      setZoneName("พูดคุย");
-      setUserLimit(10);
-      setMinChannels(10);
-      setSpareChannels(1);
-      setEmojis("🥪, 🥐, 🥓, 🥨, 🍿, 🍑, 🍎, 🍓, 🍋‍🟩, 🍋, 🍇, 🍉, 🍊, 🍩, 🍰");
-      setBlockGroupSize(5);
     }
   };
 
   const handleCreateSleepingZone = async () => {
-    const defaultCat = categories.length > 0 ? categories[0].id : "";
+    const defaultCat = categories.find((c) => c.name.toLowerCase().includes("dream") || c.name.includes("นอน"))?.id || (categories.length > 0 ? categories[0].id : "");
     const catChoice = prompt(
-      "กรุณาระบุ Discord Category ID สำหรับสร้างโซนห้องนอน (Dreamland 3-in-1):",
+      "ระบุ Discord Category ID สำหรับโซนห้องนอน (Dreamland 3-in-1: นอนรวม, นอนคู่, นอนเดี่ยว):",
       defaultCat
     );
     if (!catChoice?.trim()) return;
@@ -204,8 +195,8 @@ export default function DynamicVoiceManager() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบการตั้งค่าหมวดหมู่นี้?")) return;
+  const handleDelete = async (id: string, zone: string) => {
+    if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบโซน "${zone}" ออกจากระบบ?`)) return;
     try {
       const res = await fetch(`/api/voice/dynamic?id=${id}`, {
         method: "DELETE",
@@ -228,7 +219,7 @@ export default function DynamicVoiceManager() {
       });
       const data = await res.json();
       if (res.ok) {
-        alert(data.message || "ซิงค์และตรวจสอบชุดห้องเริ่มต้นเรียบร้อยแล้ว!");
+        alert(data.message || "ซิงค์และจัดเรียงห้องเรียบร้อยแล้ว!");
       } else {
         alert(data.error || "เกิดข้อผิดพลาดในการซิงค์");
       }
@@ -258,7 +249,7 @@ export default function DynamicVoiceManager() {
         minChannels: Number(minChannels) || 3,
         spareChannels: Number(spareChannels) || 1,
         emojis,
-        blockGroupSize: Number(blockGroupSize) || (Number(minChannels) <= 3 ? 3 : 5),
+        blockGroupSize: Number(blockGroupSize) || 5,
         isEnabled,
         autoSeed,
       };
@@ -298,16 +289,42 @@ export default function DynamicVoiceManager() {
     }
   };
 
+  // Group configurations by Category for clean organization
+  const groupedConfigs = configs.reduce<Record<string, { categoryName: string; items: DynamicVoiceConfig[] }>>(
+    (acc, cfg) => {
+      const catKey = cfg.categoryId;
+      if (!acc[catKey]) {
+        acc[catKey] = {
+          categoryName: cfg.categoryName || `Category: ${cfg.categoryId}`,
+          items: [],
+        };
+      }
+      acc[catKey].items.push(cfg);
+      return acc;
+    },
+    {}
+  );
+
   return (
-    <div className="card mb-24 animate-scale-in" style={{ borderTop: "3px solid var(--accent)" }}>
-      <div className="card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
+    <div className="card mb-24" style={{ background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-lg)" }}>
+      {/* Clean Top Header */}
+      <div
+        style={{
+          padding: "20px 24px",
+          borderBottom: "1px solid var(--border-subtle)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "16px",
+        }}
+      >
         <div>
-          <h3 className="card-title" style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "18px" }}>
-            <span style={{ fontSize: "22px" }}>🎙️</span>
-            ระบบห้องเสียงไดนามิก (Auto-Expanding Voice Pool)
+          <h3 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
+            ระบบขยายและยุบห้องอัตโนมัติ (Dynamic Voice Pools)
           </h3>
-          <p className="card-subtitle" style={{ color: "var(--text-muted)", fontSize: "13px", marginTop: "4px" }}>
-            แก้ปัญหาห้องเสียงเต็มอัตโนมัติ โดยบอทจะแตกห้องใหม่ให้ทันทีเมื่อคนเริ่มเต็ม และลบห้องส่วนเกินคืนเมื่อไม่มีคนใช้งาน
+          <p style={{ fontSize: "13px", color: "var(--text-muted)", margin: "4px 0 0 0" }}>
+            แตกห้องเป็นบล็อกเมื่อห้องเต็ม และยุบคืนรูปทรงเดิมเมื่อแยกย้าย โดยระบบจะรันเลขและวนลูปอีโมจิต่อเนื่องอัตโนมัติ
           </p>
         </div>
 
@@ -316,494 +333,351 @@ export default function DynamicVoiceManager() {
             <button
               onClick={handleCreateSleepingZone}
               disabled={creatingSleep}
-              className="btn"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "8px 16px",
-                fontWeight: 600,
-                fontSize: "13px",
-                borderRadius: "var(--radius-pill)",
-                background: "rgba(139, 92, 246, 0.15)",
-                color: "var(--primary-300)",
-                border: "1px solid rgba(139, 92, 246, 0.35)",
-              }}
+              className="btn btn-secondary"
+              style={{ fontSize: "13px", fontWeight: 600, padding: "8px 16px" }}
             >
-              <span>🛏️</span> {creatingSleep ? "กำลังเสกห้อง..." : "เสกโซนห้องนอน 3-in-1 (Dreamland)"}
+              {creatingSleep ? "กำลังตั้งค่า..." : "โซนห้องนอน 3-in-1 (Dreamland)"}
             </button>
 
             <button
               onClick={openCreateModal}
               className="btn btn-primary"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "8px 16px",
-                fontWeight: 600,
-                fontSize: "13px",
-                borderRadius: "var(--radius-pill)",
-              }}
+              style={{ fontSize: "13px", fontWeight: 600, padding: "8px 16px" }}
             >
-              <span>+</span> เพิ่มโซนห้องเสียง
+              + เพิ่มโซนห้องเสียง
             </button>
           </div>
         )}
       </div>
 
-      <div className="card-body">
-        {/* Visual Live Demonstration / Architecture Box */}
-        <div
-          style={{
-            background: "rgba(255, 255, 255, 0.02)",
-            border: "1px solid var(--border-subtle)",
-            borderRadius: "var(--radius-lg)",
-            padding: "16px 20px",
-            marginBottom: "20px",
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-            gap: "20px",
-            alignItems: "center",
-          }}
-        >
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-              <span className="badge badge-accent" style={{ fontSize: "11px", fontWeight: 700 }}>
-                💡 รองรับทั้ง Gaming Zone & โซนห้องนอน (Dreamland)
-              </span>
-              <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-                Slash Command: <code style={{ color: "var(--accent)", background: "rgba(41, 151, 255, 0.1)", padding: "2px 6px", borderRadius: "4px" }}>/dynamic-voice setup</code>
-              </span>
-            </div>
-            <ul style={{ paddingLeft: "18px", color: "var(--text-secondary)", fontSize: "13px", lineHeight: "1.7" }}>
-              <li>
-                <strong style={{ color: "var(--text-primary)" }}>โซนห้องนอน (Dreamland 3-in-1):</strong> รองรับ 3 โซนย่อยในหมวดเดียว (<code>นอนรวม</code>, <code>นอนคู่</code>, <code>นอนเดี่ยว</code>) พร้อม Emoji <code>🛌 ⁺</code>
-              </li>
-              <li>
-                <strong style={{ color: "var(--text-primary)" }}>กิ่งไม้ 3 ท่อนพอดีเป๊ะ:</strong> บล็อกละ 3 ห้อง <code>╭</code> (01) <code>┆</code> (02) <code>╰</code> (03)
-              </li>
-              <li>
-                <strong style={{ color: "var(--text-primary)" }}>แตกห้องแยกอิสระ:</strong> หากนอนรวมเต็ม บอทจะแตกเฉพาะ <code>นอนรวมㆍ 04</code> ให้ ไม่กระทบนอนคู่หรือนอนเดี่ยว
-              </li>
-              <li>
-                <strong style={{ color: "var(--text-primary)" }}>ยุบคืนรูปเดิม:</strong> เมื่อสมาชิกตื่นแยกย้าย บอทจะลบห้องส่วนเกินคืนรูปทรง 3 ห้องเดิมทันที
-              </li>
-            </ul>
-          </div>
-
-          {/* Mini Visual Tree Example matching the screenshot */}
-          <div
-            style={{
-              background: "#08080b",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "var(--radius-md)",
-              padding: "12px 16px",
-              fontFamily: "var(--font-mono)",
-              fontSize: "12px",
-            }}
-          >
-            <div style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "8px", fontWeight: 600, display: "flex", justifyContent: "space-between" }}>
-              <span>╭ 💤 ── Dreamland ── 💤</span>
-              <span style={{ color: "var(--primary-300)" }}>🛏️ SLEEPING PATTERN</span>
-            </div>
-
-            {[
-              { name: "╭ ㆍ นอนรวมㆍ 01 ㆍ 🛌 ⁺", limit: "00 / 05" },
-              { name: "┆ ㆍ นอนรวมㆍ 02 ㆍ 🛌 ⁺", limit: "00 / 05" },
-              { name: "╰ ㆍ นอนรวมㆍ 03 ㆍ 🛌 ⁺", limit: "00 / 05" },
-              { name: "╭ ㆍ นอนคู่ㆍ 01 ㆍ 🛌 ⁺", limit: "00 / 05" },
-              { name: "┆ ㆍ นอนคู่ㆍ 02 ㆍ 🛌 ⁺", limit: "00 / 05" },
-              { name: "╰ ㆍ นอนคู่ㆍ 03 ㆍ 🛌 ⁺", limit: "00 / 05" },
-              { name: "╭ ㆍ นอนเดี่ยวㆍ 01 ㆍ 🛌 ⁺", limit: "00 / 05" },
-              { name: "┆ ㆍ นอนเดี่ยวㆍ 02 ㆍ 🛌 ⁺", limit: "00 / 05" },
-              { name: "╰ ㆍ นอนเดี่ยวㆍ 03 ㆍ 🛌 ⁺", limit: "00 / 05" },
-            ].map((line, idx) => (
-              <div
-                key={idx}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "3px 6px",
-                  borderRadius: "4px",
-                  marginBottom: idx % 3 === 2 ? "6px" : "1px",
-                  borderBottom: idx % 3 === 2 && idx < 8 ? "1px dashed rgba(255,255,255,0.06)" : "none",
-                }}
-              >
-                <span style={{ color: "var(--text-primary)" }}>{line.name}</span>
-                <span style={{ fontSize: "11px", color: "var(--text-muted)", background: "rgba(255,255,255,0.04)", padding: "1px 6px", borderRadius: "4px" }}>
-                  {line.limit}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Configurations List */}
+      <div style={{ padding: "24px" }}>
         {loading ? (
-          <div style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
-            กำลังโหลดข้อมูลการตั้งค่า...
+          <div style={{ textAlign: "center", padding: "48px 0", color: "var(--text-muted)", fontSize: "14px" }}>
+            กำลังโหลดข้อมูลโซนห้องเสียง...
           </div>
         ) : configs.length === 0 ? (
           <div
             style={{
               textAlign: "center",
-              padding: "36px 20px",
-              background: "rgba(255, 255, 255, 0.02)",
+              padding: "40px 20px",
+              background: "rgba(255, 255, 255, 0.01)",
               borderRadius: "var(--radius-md)",
               border: "1px dashed var(--border-subtle)",
             }}
           >
-            <div style={{ fontSize: "36px", marginBottom: "8px" }}>🎙️</div>
             <div style={{ fontWeight: 600, fontSize: "15px", color: "var(--text-primary)", marginBottom: "4px" }}>
-              ยังไม่มีการตั้งค่าหมวดหมู่ Dynamic Voice
+              ยังไม่มีการตั้งค่าโซนห้องเสียง
             </div>
-            <div style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "16px", maxWidth: "500px", margin: "0 auto 16px" }}>
-              กดปุ่มด้านล่างเพื่อเริ่มเปิดใช้งานระบบกับหมวดหมู่ใน Discord หรือใช้คำสั่ง <code>/dynamic-voice setup</code> ใน Discord ได้ทันที
+            <div style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "16px" }}>
+              กดปุ่มเพิ่มโซนห้องเสียงด้านบน หรือใช้คำสั่ง <code>/dynamic-voice setup</code> ใน Discord
             </div>
             {isAdmin && (
-              <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
-                <button onClick={handleCreateSleepingZone} className="btn" style={{ padding: "8px 20px", background: "rgba(139, 92, 246, 0.15)", color: "var(--primary-300)" }}>
-                  🛏️ เสกโซนห้องนอน 3-in-1 (Dreamland)
-                </button>
-                <button onClick={openCreateModal} className="btn btn-primary" style={{ padding: "8px 20px" }}>
-                  + เพิ่มโซนห้องเสียง
-                </button>
-              </div>
+              <button onClick={openCreateModal} className="btn btn-primary" style={{ fontSize: "13px" }}>
+                + เพิ่มโซนห้องเสียง
+              </button>
             )}
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 420px), 1fr))", gap: "16px" }}>
-            {configs.map((cfg) => {
-              const emojiChips = cfg.emojis.split(",").map((e) => e.trim()).filter(Boolean);
-              return (
+          <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+            {Object.entries(groupedConfigs).map(([catId, group]) => (
+              <div
+                key={catId}
+                style={{
+                  background: "rgba(255, 255, 255, 0.015)",
+                  border: "1px solid var(--border-subtle)",
+                  borderRadius: "var(--radius-lg)",
+                  overflow: "hidden",
+                }}
+              >
+                {/* Category Header */}
                 <div
-                  key={cfg.id}
                   style={{
+                    padding: "14px 20px",
                     background: "rgba(255, 255, 255, 0.03)",
-                    border: "1px solid var(--border-subtle)",
-                    borderRadius: "var(--radius-lg)",
-                    padding: "18px 20px",
+                    borderBottom: "1px solid var(--border-subtle)",
                     display: "flex",
-                    flexDirection: "column",
                     justifyContent: "space-between",
-                    gap: "14px",
-                    position: "relative",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: "10px",
                   }}
                 >
-                  <div>
-                    {/* Header: Name + Status */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", marginBottom: "10px" }}>
-                      <div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <span style={{ fontSize: "18px" }}>{emojiChips[0] || "🎙️"}</span>
-                          <h4 style={{ fontWeight: 700, fontSize: "16px", color: "var(--text-primary)" }}>
-                            {cfg.categoryName || "Discord Category"} • <span style={{ color: "var(--accent)" }}>{cfg.zoneName}</span>
-                          </h4>
-                        </div>
-                        <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>
-                          Category ID: <code style={{ fontSize: "11px" }}>{cfg.categoryId}</code>
-                        </div>
-                      </div>
-
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <span
-                          style={{
-                            padding: "3px 10px",
-                            borderRadius: "var(--radius-pill)",
-                            fontSize: "12px",
-                            fontWeight: 600,
-                            background: cfg.isEnabled ? "rgba(48, 209, 88, 0.15)" : "rgba(255, 69, 58, 0.15)",
-                            color: cfg.isEnabled ? "var(--success)" : "var(--danger)",
-                            border: `1px solid ${cfg.isEnabled ? "rgba(48, 209, 88, 0.3)" : "rgba(255, 69, 58, 0.3)"}`,
-                          }}
-                        >
-                          {cfg.isEnabled ? "🟢 เปิดใช้งาน" : "🔴 ปิดใช้งาน"}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Zone parameters info */}
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(3, 1fr)",
-                        gap: "8px",
-                        background: "rgba(0, 0, 0, 0.25)",
-                        padding: "10px 12px",
-                        borderRadius: "var(--radius-md)",
-                        marginBottom: "12px",
-                      }}
-                    >
-                      <div>
-                        <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>จำกัดคนต่อห้อง</div>
-                        <div style={{ fontWeight: 700, fontSize: "14px", color: "var(--accent)" }}>
-                          {cfg.userLimit > 0 ? `${cfg.userLimit} คน` : "ไม่จำกัด"}
-                        </div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>ห้องขั้นต่ำ</div>
-                        <div style={{ fontWeight: 700, fontSize: "14px", color: "var(--success)" }}>
-                          {cfg.minChannels} ห้อง
-                        </div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>บล็อกกิ่งไม้</div>
-                        <div style={{ fontWeight: 700, fontSize: "14px", color: "var(--primary-300)" }}>
-                          {cfg.blockGroupSize || 5} ห้อง/ชุด
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Emoji Sequence */}
-                    <div style={{ marginBottom: "6px" }}>
-                      <div style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "4px" }}>
-                        Emoji ประจำห้อง:
-                      </div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
-                        {emojiChips.slice(0, 10).map((em, idx) => (
-                          <span
-                            key={idx}
-                            style={{
-                              background: "rgba(255, 255, 255, 0.05)",
-                              border: "1px solid var(--border-subtle)",
-                              borderRadius: "4px",
-                              padding: "2px 6px",
-                              fontSize: "12px",
-                            }}
-                          >
-                            {em}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <span style={{ fontWeight: 700, fontSize: "14px", color: "var(--text-primary)" }}>
+                      {group.categoryName}
+                    </span>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)", fontFamily: "monospace" }}>
+                      ID: {catId}
+                    </span>
                   </div>
+                  <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                    {group.items.length} โซนย่อยในหมวดนี้
+                  </span>
+                </div>
 
-                  {/* Actions */}
-                  {isAdmin && (
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        paddingTop: "12px",
-                        borderTop: "1px solid var(--border-subtle)",
-                        marginTop: "auto",
-                      }}
-                    >
-                      <button
-                        onClick={() => handleToggle(cfg)}
-                        className="btn"
+                {/* Sub-Zones Table / Grid */}
+                <div style={{ padding: "16px 20px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))", gap: "16px" }}>
+                  {group.items.map((cfg) => {
+                    const emojiList = cfg.emojis.split(",").map((e) => e.trim()).filter(Boolean);
+                    const primaryEmoji = emojiList[0] || "";
+
+                    return (
+                      <div
+                        key={cfg.id}
                         style={{
-                          fontSize: "12px",
-                          padding: "5px 12px",
-                          background: cfg.isEnabled ? "rgba(255, 69, 58, 0.1)" : "rgba(48, 209, 88, 0.1)",
-                          color: cfg.isEnabled ? "var(--danger)" : "var(--success)",
-                          border: `1px solid ${cfg.isEnabled ? "rgba(255, 69, 58, 0.3)" : "rgba(48, 209, 88, 0.3)"}`,
-                          borderRadius: "var(--radius-sm)",
+                          background: "rgba(0, 0, 0, 0.3)",
+                          border: "1px solid var(--border-subtle)",
+                          borderRadius: "var(--radius-md)",
+                          padding: "16px",
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "space-between",
+                          gap: "14px",
                         }}
                       >
-                        {cfg.isEnabled ? "ปิดระบบชั่วคราว" : "เปิดใช้งานระบบ"}
-                      </button>
+                        <div>
+                          {/* Zone Name & Status */}
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <span style={{ fontWeight: 700, fontSize: "15px", color: "#fff" }}>
+                                {cfg.zoneName}
+                              </span>
+                              {primaryEmoji && (
+                                <span style={{ fontSize: "14px" }}>
+                                  {primaryEmoji} ⁺
+                                </span>
+                              )}
+                            </div>
 
-                      <div style={{ display: "flex", gap: "8px" }}>
-                        <button
-                          onClick={() => handleSync(cfg)}
-                          disabled={syncingId === cfg.id}
-                          className="btn"
-                          title="ตรวจเช็กและสร้างห้องเริ่มต้นให้ครบชุดใน Discord"
-                          style={{
-                            fontSize: "12px",
-                            padding: "5px 12px",
-                            background: "rgba(41, 151, 255, 0.1)",
-                            color: "var(--accent)",
-                            border: "1px solid rgba(41, 151, 255, 0.3)",
-                            borderRadius: "var(--radius-sm)",
-                          }}
-                        >
-                          {syncingId === cfg.id ? "กำลังซิงค์..." : "⚡ ซิงค์ชุดห้อง"}
-                        </button>
+                            <button
+                              onClick={() => handleToggle(cfg)}
+                              title={cfg.isEnabled ? "คลิกเพื่อปิดใช้งาน" : "คลิกเพื่อเปิดใช้งาน"}
+                              style={{
+                                cursor: "pointer",
+                                border: "none",
+                                background: cfg.isEnabled ? "rgba(48, 209, 88, 0.15)" : "rgba(255, 69, 58, 0.15)",
+                                color: cfg.isEnabled ? "var(--success)" : "var(--danger)",
+                                padding: "4px 10px",
+                                borderRadius: "var(--radius-full)",
+                                fontSize: "12px",
+                                fontWeight: 600,
+                              }}
+                            >
+                              {cfg.isEnabled ? "เปิดใช้งาน" : "ปิดชั่วคราว"}
+                            </button>
+                          </div>
 
-                        <button
-                          onClick={() => openEditModal(cfg)}
-                          className="btn"
-                          style={{
-                            fontSize: "12px",
-                            padding: "5px 12px",
-                            background: "rgba(255, 255, 255, 0.06)",
-                            border: "1px solid var(--border-subtle)",
-                            borderRadius: "var(--radius-sm)",
-                          }}
-                        >
-                          ✏️ แก้ไข
-                        </button>
-                        <button
-                          onClick={() => handleDelete(cfg.id)}
-                          className="btn"
-                          style={{
-                            fontSize: "12px",
-                            padding: "5px 10px",
-                            background: "transparent",
-                            color: "var(--danger)",
-                            borderRadius: "var(--radius-sm)",
-                          }}
-                        >
-                          🗑️
-                        </button>
+                          {/* Zone Specs Grid */}
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "repeat(3, 1fr)",
+                              gap: "8px",
+                              background: "rgba(255, 255, 255, 0.02)",
+                              border: "1px solid rgba(255, 255, 255, 0.04)",
+                              borderRadius: "var(--radius-sm)",
+                              padding: "10px",
+                              marginBottom: "12px",
+                              textAlign: "center",
+                            }}
+                          >
+                            <div>
+                              <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>ห้องฐาน</div>
+                              <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--text-primary)" }}>
+                                {cfg.minChannels} ห้อง
+                              </div>
+                            </div>
+                            <div>
+                              <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>แตกทีละ</div>
+                              <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--accent)" }}>
+                                {cfg.blockGroupSize || 5} ห้อง
+                              </div>
+                            </div>
+                            <div>
+                              <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>จำกัดคน</div>
+                              <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--text-primary)" }}>
+                                {cfg.userLimit > 0 ? `${cfg.userLimit} คน` : "ไม่จำกัด"}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Emoji Sequence Info */}
+                          <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                            <span>ลำดับอีโมจิ ({emojiList.length} รายการ - วนลูปอัตโนมัติ):</span>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "4px" }}>
+                              {emojiList.slice(0, 10).map((em, idx) => (
+                                <span
+                                  key={idx}
+                                  style={{
+                                    background: "rgba(255, 255, 255, 0.04)",
+                                    borderRadius: "3px",
+                                    padding: "1px 5px",
+                                    fontSize: "12px",
+                                  }}
+                                >
+                                  {em}
+                                </span>
+                              ))}
+                              {emojiList.length > 10 && (
+                                <span style={{ fontSize: "11px", color: "var(--text-muted)", alignSelf: "center" }}>
+                                  +{emojiList.length - 10} รายการ
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Admin Action Buttons */}
+                        {isAdmin && (
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              paddingTop: "10px",
+                              borderTop: "1px solid rgba(255, 255, 255, 0.05)",
+                              marginTop: "8px",
+                            }}
+                          >
+                            <button
+                              onClick={() => handleSync(cfg)}
+                              disabled={syncingId === cfg.id}
+                              className="btn btn-secondary"
+                              style={{ fontSize: "12px", padding: "4px 10px", fontWeight: 600 }}
+                            >
+                              {syncingId === cfg.id ? "กำลังซิงค์..." : "ซิงค์/จัดเรียง"}
+                            </button>
+
+                            <div style={{ display: "flex", gap: "6px" }}>
+                              <button
+                                onClick={() => openEditModal(cfg)}
+                                className="btn btn-secondary"
+                                style={{ fontSize: "12px", padding: "4px 10px" }}
+                              >
+                                แก้ไข
+                              </button>
+                              <button
+                                onClick={() => handleDelete(cfg.id, cfg.zoneName)}
+                                className="btn btn-secondary"
+                                style={{ fontSize: "12px", padding: "4px 10px", color: "var(--danger)" }}
+                              >
+                                ลบ
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  )}
+                    );
+                  })}
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         )}
       </div>
 
-      {/* Modal: Setup / Edit Zone Config */}
+      {/* Modal: Create / Edit Zone */}
       {modalOpen && (
         <div
           style={{
             position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
+            inset: 0,
+            zIndex: 9999,
             background: "rgba(0, 0, 0, 0.75)",
             backdropFilter: "blur(6px)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            zIndex: 1000,
-            padding: "20px",
+            padding: "16px",
           }}
-          onClick={() => setModalOpen(false)}
         >
           <div
+            className="card"
             style={{
-              background: "#121217",
-              border: "1px solid var(--border-default)",
-              borderRadius: "var(--radius-xl)",
               width: "100%",
-              maxWidth: "560px",
-              padding: "24px 28px",
-              boxShadow: "0 20px 40px rgba(0, 0, 0, 0.6)",
-              maxHeight: "90vh",
-              overflowY: "auto",
+              maxWidth: "540px",
+              background: "#101015",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: "var(--radius-lg)",
+              overflow: "hidden",
             }}
-            onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
-              <h3 style={{ fontWeight: 700, fontSize: "18px", color: "var(--text-primary)" }}>
-                {editingConfig ? "✏️ แก้ไขการตั้งค่าโซนห้องเสียง" : "➕ เพิ่มโซนห้องเสียงไดนามิกใหม่"}
-              </h3>
+            <div
+              style={{
+                padding: "16px 20px",
+                borderBottom: "1px solid var(--border-subtle)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <h4 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#fff" }}>
+                {editingConfig ? `แก้ไขโซน: ${editingConfig.zoneName}` : "เพิ่มโซนห้องเสียงใหม่"}
+              </h4>
               <button
                 onClick={() => setModalOpen(false)}
-                style={{
-                  background: "transparent",
-                  fontSize: "18px",
-                  color: "var(--text-muted)",
-                  cursor: "pointer",
-                }}
+                style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "18px" }}
               >
                 ✕
               </button>
             </div>
 
-            {/* Quick Presets */}
-            <div style={{ marginBottom: "18px" }}>
-              <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "6px", fontWeight: 600 }}>
-                เลือกพรีเซ็ตสำเร็จรูป (Quick Presets):
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "8px" }}>
-                <button
-                  type="button"
-                  onClick={() => applyPreset("SLEEP_GROUP")}
-                  style={{
-                    padding: "8px 10px",
-                    background: zoneName === "นอนรวม" ? "rgba(139, 92, 246, 0.2)" : "rgba(255, 255, 255, 0.03)",
-                    border: `1px solid ${zoneName === "นอนรวม" ? "var(--primary-400)" : "var(--border-subtle)"}`,
-                    borderRadius: "var(--radius-md)",
-                    textAlign: "left",
-                    cursor: "pointer",
-                  }}
-                >
-                  <div style={{ fontWeight: 700, fontSize: "12px", color: "var(--text-primary)" }}>🛌 นอนรวม</div>
-                  <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>3 ห้อง • 5 คน • 🛌</div>
-                </button>
+            <form onSubmit={handleSubmit} style={{ padding: "20px" }}>
+              {/* Presets Row (Only when creating) */}
+              {!editingConfig && (
+                <div style={{ marginBottom: "16px" }}>
+                  <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "6px" }}>
+                    เลือกแม่แบบเริ่มต้น (Presets):
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                    <button
+                      type="button"
+                      onClick={() => applyPreset("LIVING")}
+                      className="btn btn-secondary"
+                      style={{ fontSize: "12px", padding: "4px 10px" }}
+                    >
+                      พูดคุย (ฐาน 10 / แตก 5)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyPreset("SLEEP_GROUP")}
+                      className="btn btn-secondary"
+                      style={{ fontSize: "12px", padding: "4px 10px" }}
+                    >
+                      นอนรวม (ฐาน 3 / แตก 3)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyPreset("SLEEP_DUO")}
+                      className="btn btn-secondary"
+                      style={{ fontSize: "12px", padding: "4px 10px" }}
+                    >
+                      นอนคู่ (ฐาน 3 / แตก 3)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyPreset("SLEEP_SOLO")}
+                      className="btn btn-secondary"
+                      style={{ fontSize: "12px", padding: "4px 10px" }}
+                    >
+                      นอนเดี่ยว (ฐาน 3 / แตก 3)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyPreset("GAMING")}
+                      className="btn btn-secondary"
+                      style={{ fontSize: "12px", padding: "4px 10px" }}
+                    >
+                      เล่นเกม (ฐาน 5 / แตก 5)
+                    </button>
+                  </div>
+                </div>
+              )}
 
-                <button
-                  type="button"
-                  onClick={() => applyPreset("SLEEP_DUO")}
-                  style={{
-                    padding: "8px 10px",
-                    background: zoneName === "นอนคู่" ? "rgba(139, 92, 246, 0.2)" : "rgba(255, 255, 255, 0.03)",
-                    border: `1px solid ${zoneName === "นอนคู่" ? "var(--primary-400)" : "var(--border-subtle)"}`,
-                    borderRadius: "var(--radius-md)",
-                    textAlign: "left",
-                    cursor: "pointer",
-                  }}
-                >
-                  <div style={{ fontWeight: 700, fontSize: "12px", color: "var(--text-primary)" }}>🛌 นอนคู่</div>
-                  <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>3 ห้อง • 5 คน • 🛌</div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => applyPreset("SLEEP_SOLO")}
-                  style={{
-                    padding: "8px 10px",
-                    background: zoneName === "นอนเดี่ยว" ? "rgba(139, 92, 246, 0.2)" : "rgba(255, 255, 255, 0.03)",
-                    border: `1px solid ${zoneName === "นอนเดี่ยว" ? "var(--primary-400)" : "var(--border-subtle)"}`,
-                    borderRadius: "var(--radius-md)",
-                    textAlign: "left",
-                    cursor: "pointer",
-                  }}
-                >
-                  <div style={{ fontWeight: 700, fontSize: "12px", color: "var(--text-primary)" }}>🛌 นอนเดี่ยว</div>
-                  <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>3 ห้อง • 5 คน • 🛌</div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => applyPreset("GAMING")}
-                  style={{
-                    padding: "8px 10px",
-                    background: zoneName === "เล่นเกม" ? "rgba(41, 151, 255, 0.2)" : "rgba(255, 255, 255, 0.03)",
-                    border: `1px solid ${zoneName === "เล่นเกม" ? "var(--accent)" : "var(--border-subtle)"}`,
-                    borderRadius: "var(--radius-md)",
-                    textAlign: "left",
-                    cursor: "pointer",
-                  }}
-                >
-                  <div style={{ fontWeight: 700, fontSize: "12px", color: "var(--text-primary)" }}>🎮 เล่นเกม</div>
-                  <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>5 ห้อง • 5 คน • 🎮</div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => applyPreset("LIVING")}
-                  style={{
-                    padding: "8px 10px",
-                    background: zoneName === "พูดคุย" ? "rgba(48, 209, 88, 0.2)" : "rgba(255, 255, 255, 0.03)",
-                    border: `1px solid ${zoneName === "พูดคุย" ? "var(--success)" : "var(--border-subtle)"}`,
-                    borderRadius: "var(--radius-md)",
-                    textAlign: "left",
-                    cursor: "pointer",
-                  }}
-                >
-                  <div style={{ fontWeight: 700, fontSize: "12px", color: "var(--text-primary)" }}>☕ พูดคุย</div>
-                  <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>5 ห้อง • 10 คน • ผลไม้</div>
-                </button>
-              </div>
-            </div>
-
-            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              {/* Category Selection */}
-              <div>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "6px" }}>
-                  หมวดหมู่ใน Discord (Category) *
+              {/* Category ID / Select */}
+              <div style={{ marginBottom: "14px" }}>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "var(--text-primary)", marginBottom: "4px" }}>
+                  หมวดหมู่ใน Discord (Category)
                 </label>
                 {categories.length > 0 ? (
                   <select
@@ -813,14 +687,13 @@ export default function DynamicVoiceManager() {
                       const cat = categories.find((c) => c.id === e.target.value);
                       if (cat) setCategoryName(cat.name);
                     }}
-                    disabled={!!editingConfig}
                     style={{
                       width: "100%",
-                      padding: "10px 14px",
-                      background: "rgba(255, 255, 255, 0.04)",
-                      border: "1px solid var(--border-default)",
-                      borderRadius: "var(--radius-md)",
-                      color: "var(--text-primary)",
+                      padding: "8px 12px",
+                      background: "rgba(255, 255, 255, 0.05)",
+                      border: "1px solid var(--border-subtle)",
+                      borderRadius: "var(--radius-sm)",
+                      color: "#fff",
                       fontSize: "13px",
                     }}
                   >
@@ -836,70 +709,47 @@ export default function DynamicVoiceManager() {
                     type="text"
                     value={categoryId}
                     onChange={(e) => setCategoryId(e.target.value)}
-                    placeholder="ใส่ Discord Category ID (เช่น 1234567890)"
-                    disabled={!!editingConfig}
+                    placeholder="Discord Category ID เช่น 1553703855467003925"
                     required
                     style={{
                       width: "100%",
-                      padding: "10px 14px",
-                      background: "rgba(255, 255, 255, 0.04)",
-                      border: "1px solid var(--border-default)",
-                      borderRadius: "var(--radius-md)",
-                      color: "var(--text-primary)",
+                      padding: "8px 12px",
+                      background: "rgba(255, 255, 255, 0.05)",
+                      border: "1px solid var(--border-subtle)",
+                      borderRadius: "var(--radius-sm)",
+                      color: "#fff",
                       fontSize: "13px",
                     }}
                   />
                 )}
               </div>
 
-              {/* Category Custom Label */}
-              <div>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "6px" }}>
-                  ชื่อหมวดหมู่ที่แสดง
-                </label>
-                <input
-                  type="text"
-                  value={categoryName}
-                  onChange={(e) => setCategoryName(e.target.value)}
-                  placeholder="เช่น Dreamland, Gaming Zone"
-                  style={{
-                    width: "100%",
-                    padding: "10px 14px",
-                    background: "rgba(255, 255, 255, 0.04)",
-                    border: "1px solid var(--border-default)",
-                    borderRadius: "var(--radius-md)",
-                    color: "var(--text-primary)",
-                    fontSize: "13px",
-                  }}
-                />
-              </div>
-
               {/* Zone Name & User Limit */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "6px" }}>
-                    ชื่อคำนำโซน (Zone Name) *
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "var(--text-primary)", marginBottom: "4px" }}>
+                    ชื่อโซน
                   </label>
                   <input
                     type="text"
                     value={zoneName}
                     onChange={(e) => setZoneName(e.target.value)}
-                    placeholder="เช่น นอนรวม, นอนคู่, นอนเดี่ยว"
+                    placeholder="เช่น พูดคุย, เล่นเกม, นอนรวม"
                     required
                     style={{
                       width: "100%",
-                      padding: "10px 14px",
-                      background: "rgba(255, 255, 255, 0.04)",
-                      border: "1px solid var(--border-default)",
-                      borderRadius: "var(--radius-md)",
-                      color: "var(--text-primary)",
+                      padding: "8px 12px",
+                      background: "rgba(255, 255, 255, 0.05)",
+                      border: "1px solid var(--border-subtle)",
+                      borderRadius: "var(--radius-sm)",
+                      color: "#fff",
                       fontSize: "13px",
                     }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "6px" }}>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "var(--text-primary)", marginBottom: "4px" }}>
                     จำกัดคนต่อห้อง (0 = ไม่จำกัด)
                   </label>
                   <input
@@ -910,156 +760,122 @@ export default function DynamicVoiceManager() {
                     onChange={(e) => setUserLimit(Number(e.target.value))}
                     style={{
                       width: "100%",
-                      padding: "10px 14px",
-                      background: "rgba(255, 255, 255, 0.04)",
-                      border: "1px solid var(--border-default)",
-                      borderRadius: "var(--radius-md)",
-                      color: "var(--text-primary)",
+                      padding: "8px 12px",
+                      background: "rgba(255, 255, 255, 0.05)",
+                      border: "1px solid var(--border-subtle)",
+                      borderRadius: "var(--radius-sm)",
+                      color: "#fff",
                       fontSize: "13px",
                     }}
                   />
                 </div>
               </div>
 
-              {/* Min Channels & Block Group Size */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              {/* Base Rooms & Block Size */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "6px" }}>
-                    จำนวนห้องขั้นต่ำ (คงไว้ตลอด)
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "var(--text-primary)", marginBottom: "4px" }}>
+                    ห้องฐานเริ่มต้น (ขั้นต่ำ)
                   </label>
                   <input
                     type="number"
-                    min="2"
-                    max="20"
+                    min="1"
+                    max="50"
                     value={minChannels}
-                    onChange={(e) => {
-                      const val = Number(e.target.value);
-                      setMinChannels(val);
-                      if (val <= 3) setBlockGroupSize(3);
-                      else setBlockGroupSize(5);
-                    }}
+                    onChange={(e) => setMinChannels(Number(e.target.value))}
+                    required
                     style={{
                       width: "100%",
-                      padding: "10px 14px",
-                      background: "rgba(255, 255, 255, 0.04)",
-                      border: "1px solid var(--border-default)",
-                      borderRadius: "var(--radius-md)",
-                      color: "var(--text-primary)",
+                      padding: "8px 12px",
+                      background: "rgba(255, 255, 255, 0.05)",
+                      border: "1px solid var(--border-subtle)",
+                      borderRadius: "var(--radius-sm)",
+                      color: "#fff",
                       fontSize: "13px",
                     }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "6px" }}>
-                    ขนาดบล็อกกิ่งไม้ (╭ ┆ ╰)
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "var(--text-primary)", marginBottom: "4px" }}>
+                    ขนาดบล็อก (แตกทีละกี่ห้อง)
                   </label>
-                  <select
+                  <input
+                    type="number"
+                    min="1"
+                    max="20"
                     value={blockGroupSize}
                     onChange={(e) => setBlockGroupSize(Number(e.target.value))}
+                    required
                     style={{
                       width: "100%",
-                      padding: "10px 14px",
-                      background: "rgba(255, 255, 255, 0.04)",
-                      border: "1px solid var(--border-default)",
-                      borderRadius: "var(--radius-md)",
-                      color: "var(--text-primary)",
+                      padding: "8px 12px",
+                      background: "rgba(255, 255, 255, 0.05)",
+                      border: "1px solid var(--border-subtle)",
+                      borderRadius: "var(--radius-sm)",
+                      color: "#fff",
                       fontSize: "13px",
                     }}
-                  >
-                    <option value={3}>บล็อกละ 3 ห้อง (ชุดห้องนอน)</option>
-                    <option value={5}>บล็อกละ 5 ห้อง (ชุดเกม / ทั่วไป)</option>
-                  </select>
+                  />
                 </div>
               </div>
 
-              {/* Emoji Sequence */}
-              <div>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "6px" }}>
-                  Emoji ท้ายชื่อห้อง (เช่น 🛌 หรือ 🎮)
+              {/* Emojis Sequence Input */}
+              <div style={{ marginBottom: "16px" }}>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "var(--text-primary)", marginBottom: "4px" }}>
+                  รายการอีโมจิประจำห้อง (คั่นด้วยจุลภาค)
                 </label>
                 <input
                   type="text"
                   value={emojis}
                   onChange={(e) => setEmojis(e.target.value)}
-                  placeholder="เช่น 🛌 หรือ 🎮"
+                  placeholder="เช่น 🥪, 🥐, 🥓, 🥨, 🍿 หรือ 🛏️ หรือ 🎮"
+                  required
                   style={{
                     width: "100%",
-                    padding: "10px 14px",
-                    background: "rgba(255, 255, 255, 0.04)",
-                    border: "1px solid var(--border-default)",
-                    borderRadius: "var(--radius-md)",
-                    color: "var(--text-primary)",
+                    padding: "8px 12px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    border: "1px solid var(--border-subtle)",
+                    borderRadius: "var(--radius-sm)",
+                    color: "#fff",
                     fontSize: "13px",
-                    marginBottom: "8px",
                   }}
                 />
-
-                {/* Quick Add Chips */}
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", alignItems: "center" }}>
-                  <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>คลิกเพื่อเพิ่ม:</span>
-                  {COMMON_EMOJIS.map((em) => (
-                    <button
-                      key={em}
-                      type="button"
-                      onClick={() => setEmojis((prev) => (prev ? `${prev}, ${em}` : em))}
-                      style={{
-                        padding: "2px 8px",
-                        background: "rgba(255, 255, 255, 0.05)",
-                        border: "1px solid var(--border-subtle)",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                        fontSize: "12px",
-                      }}
-                    >
-                      {em}
-                    </button>
-                  ))}
+                <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>
+                  หากมีคนเข้าใช้งานจนแตกห้องเกินจำนวนรายการอีโมจิ ระบบจะวนลูปนำรูปแรกกลับมาใช้ใหม่ในชุดถัดไปอัตโนมัติ
                 </div>
               </div>
 
-              {/* Auto Seed Rooms (Only for new zones) */}
-              {!editingConfig && (
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "4px" }}>
+              {/* Toggles */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "20px" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "var(--text-primary)", cursor: "pointer" }}>
                   <input
                     type="checkbox"
-                    id="autoSeedCheck"
-                    checked={autoSeed}
-                    onChange={(e) => setAutoSeed(e.target.checked)}
-                    style={{ width: 16, height: 16, accentColor: "var(--accent)" }}
+                    checked={isEnabled}
+                    onChange={(e) => setIsEnabled(e.target.checked)}
                   />
-                  <label htmlFor="autoSeedCheck" style={{ fontSize: "13px", color: "var(--text-primary)", cursor: "pointer" }}>
-                    ⚡ สั่งบอทสร้างห้องชุดเริ่มต้น (01 ถึง {minChannels}) ใน Discord ให้ทันที
-                  </label>
-                </div>
-              )}
-
-              {/* Enable / Disable */}
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "2px" }}>
-                <input
-                  type="checkbox"
-                  id="isEnabledCheck"
-                  checked={isEnabled}
-                  onChange={(e) => setIsEnabled(e.target.checked)}
-                  style={{ width: 16, height: 16, accentColor: "var(--accent)" }}
-                />
-                <label htmlFor="isEnabledCheck" style={{ fontSize: "13px", color: "var(--text-primary)", cursor: "pointer" }}>
-                  เปิดให้บอทเริ่มแตกห้องและดูแลหมวดหมู่นี้ทันที (Enabled)
+                  เปิดใช้งานการขยายและยุบห้องอัตโนมัติทันที
                 </label>
+
+                {!editingConfig && (
+                  <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "var(--text-muted)", cursor: "pointer" }}>
+                    <input
+                      type="checkbox"
+                      checked={autoSeed}
+                      onChange={(e) => setAutoSeed(e.target.checked)}
+                    />
+                    สร้างห้องฐานที่ยังขาดใน Discord ทันทีหลังบันทึก (Auto-seed)
+                  </label>
+                )}
               </div>
 
-              {/* Form Buttons */}
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "12px" }}>
+              {/* Submit Buttons */}
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="btn"
-                  style={{
-                    padding: "8px 18px",
-                    background: "transparent",
-                    color: "var(--text-muted)",
-                    borderRadius: "var(--radius-md)",
-                  }}
+                  className="btn btn-secondary"
+                  style={{ fontSize: "13px", padding: "8px 16px" }}
                 >
                   ยกเลิก
                 </button>
@@ -1067,13 +883,9 @@ export default function DynamicVoiceManager() {
                   type="submit"
                   disabled={saving}
                   className="btn btn-primary"
-                  style={{
-                    padding: "8px 22px",
-                    fontWeight: 600,
-                    borderRadius: "var(--radius-md)",
-                  }}
+                  style={{ fontSize: "13px", padding: "8px 20px", fontWeight: 600 }}
                 >
-                  {saving ? "กำลังบันทึก..." : editingConfig ? "บันทึกการแก้ไข" : "สร้างและเปิดใช้งาน"}
+                  {saving ? "กำลังบันทึก..." : editingConfig ? "บันทึกการแก้ไข" : "สร้างโซน"}
                 </button>
               </div>
             </form>
