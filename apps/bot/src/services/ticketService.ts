@@ -11,7 +11,6 @@ import {
   AttachmentBuilder,
 } from "discord.js";
 import { prisma, isRootOwner } from "@lynnbot/database";
-import { recordIncomingSlip } from "./slipService.js";
 
 /**
  * Check if the member has Staff / Admin permissions
@@ -438,19 +437,6 @@ export async function handleTicketClose(interaction: ButtonInteraction) {
                 name: `slip_${ticket.ticketId}_${att.name}`,
               })
             );
-
-            // Record into Slip database if not already recorded
-            try {
-              await recordIncomingSlip({
-                guild: interaction.guild,
-                channelId: interaction.channelId,
-                author: m.author,
-                attachment: att,
-                ticketId: ticket.ticketId,
-              });
-            } catch (err) {
-              console.error("Auto slip record error on close:", err);
-            }
           }
         }
 

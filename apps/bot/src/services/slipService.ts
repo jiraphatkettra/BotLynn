@@ -65,6 +65,21 @@ export async function recordIncomingSlip({
 
   if (!isImage) return null;
 
+  // Deduplication: prevent duplicate slip records for the same attachment or ticket
+  const existing = await prisma.slip.findFirst({
+    where: {
+      OR: [
+        { imageUrl: attachment.url },
+        ...(ticketId ? [{ ticketId, originalName: attachment.name }] : []),
+      ],
+    },
+  });
+
+  if (existing) {
+    console.log(`ℹ️ [Slip] Slip already recorded for attachment ${attachment.name} in ticket ${ticketId || channelId} (#${existing.id}). Skipping duplicate.`);
+    return existing;
+  }
+
   const user = await ensureUser(author);
 
   // 1. Download buffer
