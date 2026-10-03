@@ -140,7 +140,7 @@ export async function handleInteraction(
       await handleTicketCreate(btn);
       return;
     }
-    if (btn.customId === "ticket_claim") {
+    if (btn.customId === "ticket_claim" || btn.customId.startsWith("ticket_claim:")) {
       await handleTicketClaim(btn);
       return;
     }

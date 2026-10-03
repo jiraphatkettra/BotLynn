@@ -28,7 +28,7 @@ import { buyCommand } from "./commands/buy.js";
 import { attendanceCommand } from "./commands/attendance.js";
 import { adminCommand } from "./commands/admin.js";
 import { helpCommand } from "./commands/help.js";
-import { ticketSetupCommand } from "./commands/ticket.js";
+import { ticketSetupCommand, ticketClaimCommand } from "./commands/ticket.js";
 import { backupCommand, restoreCommand } from "./commands/backup.js";
 import {
   balanceCommand,
@@ -88,6 +88,7 @@ const commandList: BotCommand[] = [
   adminCommand,
   helpCommand,
   ticketSetupCommand,
+  ticketClaimCommand,
   backupCommand,
   restoreCommand,
   balanceCommand,

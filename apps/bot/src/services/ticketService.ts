@@ -1,5 +1,6 @@
 import {
   type ButtonInteraction,
+  type ChatInputCommandInteraction,
   type TextChannel,
   ChannelType,
   PermissionFlagsBits,
@@ -9,8 +10,66 @@ import {
   ButtonStyle,
   AttachmentBuilder,
 } from "discord.js";
-import { prisma } from "@lynnbot/database";
+import { prisma, isRootOwner } from "@lynnbot/database";
 import { recordIncomingSlip } from "./slipService.js";
+
+/**
+ * Check if the member has Staff / Admin permissions
+ */
+export async function checkIsStaffMember(
+  interaction: ButtonInteraction | ChatInputCommandInteraction
+): Promise<boolean> {
+  // 1. Root Owner
+  if (isRootOwner(interaction.user.id)) return true;
+
+  // 2. Discord Administrator / Manager Permissions
+  const member = interaction.member;
+  if (member && "permissions" in member) {
+    const perms = member.permissions as any;
+    if (
+      perms.has(PermissionFlagsBits.Administrator) ||
+      perms.has(PermissionFlagsBits.ManageGuild) ||
+      perms.has(PermissionFlagsBits.ManageChannels) ||
+      perms.has(PermissionFlagsBits.ManageMessages)
+    ) {
+      return true;
+    }
+  }
+
+  // 3. Database Role check
+  const dbUser = await prisma.user.findUnique({
+    where: { discordId: interaction.user.id },
+  });
+  if (dbUser && ["OWNER", "MANAGER", "ADMIN", "MODERATOR"].includes(dbUser.role)) {
+    return true;
+  }
+
+  // 4. Configured Staff Role in Setting
+  try {
+    const staffRoleSetting = await prisma.setting.findUnique({
+      where: { key: "ticket_staff_role" },
+    });
+    if (staffRoleSetting?.value && interaction.member) {
+      const memberRoles = (interaction.member as any).roles;
+      if (memberRoles?.cache?.has(staffRoleSetting.value)) {
+        return true;
+      }
+    }
+  } catch {}
+
+  // 5. Fallback: Role names containing Admin, Staff, Mod, Owner
+  if (interaction.member && "roles" in interaction.member) {
+    const rolesCache = (interaction.member as any).roles?.cache;
+    if (rolesCache) {
+      const hasStaffName = rolesCache.some((r: any) =>
+        /admin|staff|mod|manager|owner|ผู้ดูแล|แอดมิน|ทีมงาน/i.test(r.name)
+      );
+      if (hasStaffName) return true;
+    }
+  }
+
+  return false;
+}
 
 export async function handleTicketCreate(interaction: ButtonInteraction) {
   if (!interaction.guild) return;
@@ -89,19 +148,15 @@ export async function handleTicketCreate(interaction: ButtonInteraction) {
         `กรุณาระบุรายละเอียดปัญหา เรื่องที่ต้องการสอบถาม หรือแนบหลักฐานทิ้งไว้ในห้องนี้ได้เลยครับ\n` +
         `ทีมผู้ดูแลจะเข้ามาตรวจสอบและให้บริการอย่างรวดเร็วที่สุด\n\n` +
         `> เจ้าหน้าที่: เฉพาะคุณและทีมงานเท่านั้นที่สามารถเข้าถึงห้องนี้ได้\n\n` +
-        `-# คลิกปุ่มด้านล่างเพื่อรับเรื่องหรือปิดทิกเก็ต`
+        `-# คลิกปุ่มด้านล่างเพื่อปิดทิกเก็ตเมื่อเสร็จสิ้นการสนทนา (Close Ticket)`
       )
       .setFooter({
         text: "LynnBot Operations System • Ticket Helpdesk",
       })
       .setTimestamp();
 
+    // The user in the ticket room only sees the Close button
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-      new ButtonBuilder()
-        .setCustomId("ticket_claim")
-        .setLabel("รับเรื่อง • Claim")
-        .setStyle(ButtonStyle.Success)
-        .setEmoji("🙋‍♂️"),
       new ButtonBuilder()
         .setCustomId("ticket_close")
         .setLabel("ปิดทิกเก็ต • Close")
@@ -115,6 +170,48 @@ export async function handleTicketCreate(interaction: ButtonInteraction) {
       components: [row],
     });
 
+    // Send notification to ticket log channel if configured
+    try {
+      const logSetting = await prisma.setting.findUnique({
+        where: { key: "ticket_log_channel" },
+      });
+      if (logSetting?.value) {
+        const logChannel = interaction.guild.channels.cache.get(logSetting.value) as TextChannel | undefined;
+        if (logChannel) {
+          const alertEmbed = new EmbedBuilder()
+            .setColor(0x0071e3)
+            .setTitle(`📩  NEW TICKET • มีทิกเก็ตใหม่ #${ticketId.toUpperCase()}`)
+            .setDescription(
+              `• **รหัสทิกเก็ต:** \`${ticketId.toUpperCase()}\`\n` +
+              `• **ผู้เปิดทิกเก็ต:** <@${interaction.user.id}> (@${interaction.user.username})\n` +
+              `• **ห้องสนทนา:** <#${channel.id}>\n` +
+              `• **สถานะ:** ⏳ รอเจ้าหน้าที่รับเรื่อง\n` +
+              `• **เวลาเปิด:** <t:${Math.floor(Date.now() / 1000)}:R>\n\n` +
+              `> แอดมินสามารถกดปุ่ม **"รับเรื่อง • Claim"** ด้านล่างนี้ หรือคลิกเข้าไปยังห้องทิกเก็ตได้ทันที`
+            )
+            .setFooter({ text: "LynnBot Operations System • Ticket Alert" })
+            .setTimestamp();
+
+          const alertRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+              .setCustomId(`ticket_claim:${channel.id}`)
+              .setLabel("รับเรื่อง • Claim")
+              .setStyle(ButtonStyle.Success)
+              .setEmoji("🙋‍♂️"),
+            new ButtonBuilder()
+              .setLabel("ไปยังห้องทิกเก็ต")
+              .setStyle(ButtonStyle.Link)
+              .setURL(`https://discord.com/channels/${interaction.guildId}/${channel.id}`)
+              .setEmoji("🔗")
+          );
+
+          await logChannel.send({ embeds: [alertEmbed], components: [alertRow] });
+        }
+      }
+    } catch (logErr) {
+      console.error("Error forwarding ticket alert to log channel:", logErr);
+    }
+
     await interaction.editReply({
       content: `✅ เปิดห้องทิกเก็ตสำเร็จแล้ว: <#${channel.id}>`,
     });
@@ -126,12 +223,22 @@ export async function handleTicketCreate(interaction: ButtonInteraction) {
   }
 }
 
-export async function handleTicketClaim(interaction: ButtonInteraction) {
-  if (!interaction.guild || !interaction.channel) return;
+export async function handleTicketClaim(
+  interaction: ButtonInteraction | ChatInputCommandInteraction
+) {
+  if (!interaction.guild) return;
 
   try {
+    const isBtn = interaction.isButton();
+    const customId = isBtn ? (interaction as ButtonInteraction).customId : "";
+
+    // If clicked from log channel, customId is ticket_claim:<channelId>
+    const targetChannelId = customId.includes(":")
+      ? customId.split(":")[1]
+      : interaction.channelId;
+
     const ticket = await prisma.ticket.findUnique({
-      where: { channelId: interaction.channelId },
+      where: { channelId: targetChannelId },
     });
 
     if (!ticket) {
@@ -145,6 +252,33 @@ export async function handleTicketClaim(interaction: ButtonInteraction) {
     if (ticket.status === "CLAIMED") {
       await interaction.reply({
         content: `⚠️ ทิกเก็ตนี้มีผู้รับเรื่องแล้ว`,
+        ephemeral: true,
+      });
+      return;
+    }
+
+    if (ticket.status === "CLOSED") {
+      await interaction.reply({
+        content: `⚠️ ทิกเก็ตนี้ถูกปิดไปแล้ว`,
+        ephemeral: true,
+      });
+      return;
+    }
+
+    // CHECK 1: The ticket creator CANNOT claim their own ticket!
+    if (interaction.user.id === ticket.creatorId) {
+      await interaction.reply({
+        content: "❌ คุณเป็นผู้เปิดทิกเก็ตนี้ ไม่สามารถกดรับเรื่องของตัวเองได้ครับ (ปุ่มนี้สำหรับทีมงานเท่านั้น)",
+        ephemeral: true,
+      });
+      return;
+    }
+
+    // CHECK 2: Must be an Admin / Staff!
+    const isStaff = await checkIsStaffMember(interaction);
+    if (!isStaff) {
+      await interaction.reply({
+        content: "❌ ขออภัย เฉพาะทีมงานและผู้ดูแลระบบ (Admin/Staff) เท่านั้นที่สามารถกดรับเรื่องได้ครับ",
         ephemeral: true,
       });
       return;
@@ -173,22 +307,84 @@ export async function handleTicketClaim(interaction: ButtonInteraction) {
       },
     });
 
-    const embed = new EmbedBuilder()
-      .setColor(0x30d158)
-      .setTitle("🙋‍♂️  TICKET CLAIMED • เจ้าหน้าที่รับเรื่องแล้ว")
-      .setDescription(
-        `เจ้าหน้าที่ <@${interaction.user.id}> (${interaction.user.username}) ได้ทำการรับเรื่องและกำลังเข้าดูแลทิกเก็ตนี้ให้กับคุณครับ`
-      )
-      .setFooter({ text: "LynnBot Operations System" })
-      .setTimestamp();
+    // 1. Send claim announcement into the ticket channel
+    const ticketChannel = interaction.guild.channels.cache.get(ticket.channelId) as TextChannel | undefined;
+    if (ticketChannel) {
+      // Add admin to channel permissions if needed
+      try {
+        await ticketChannel.permissionOverwrites.edit(interaction.user.id, {
+          ViewChannel: true,
+          SendMessages: true,
+          AttachFiles: true,
+          ReadMessageHistory: true,
+        });
+      } catch {}
 
-    await interaction.reply({ embeds: [embed] });
+      const claimEmbed = new EmbedBuilder()
+        .setColor(0x30d158)
+        .setTitle("🙋‍♂️  TICKET CLAIMED • เจ้าหน้าที่รับเรื่องแล้ว")
+        .setDescription(
+          `เจ้าหน้าที่ <@${interaction.user.id}> (${interaction.user.displayName || interaction.user.username}) ได้ทำการรับเรื่องและกำลังเข้าดูแลทิกเก็ตนี้ให้กับคุณครับ`
+        )
+        .setFooter({ text: "LynnBot Operations System" })
+        .setTimestamp();
+
+      await ticketChannel.send({ embeds: [claimEmbed] });
+
+      // Update the first greeting message in the ticket channel to REMOVE the claim button, keeping ONLY Close!
+      try {
+        const messages = await ticketChannel.messages.fetch({ limit: 10 });
+        const greetingMsg = messages.find(
+          (m) =>
+            m.author.id === interaction.client.user.id &&
+            m.components.length > 0 &&
+            (m.components[0] as any).components?.some((c: any) => c.customId === "ticket_claim")
+        );
+        if (greetingMsg) {
+          const onlyCloseRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+              .setCustomId("ticket_close")
+              .setLabel("ปิดทิกเก็ต • Close")
+              .setStyle(ButtonStyle.Danger)
+              .setEmoji("🔒")
+          );
+          await greetingMsg.edit({ components: [onlyCloseRow] });
+        }
+      } catch (editErr) {
+        console.warn("Could not update ticket greeting message:", editErr);
+      }
+    }
+
+    // 2. If clicked from the log channel, update the log button so it's marked as claimed
+    if (isBtn && customId.startsWith("ticket_claim:")) {
+      const disabledRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
+          .setCustomId("claimed_info")
+          .setLabel(`รับเรื่องแล้วโดย ${interaction.user.displayName || interaction.user.username}`)
+          .setStyle(ButtonStyle.Secondary)
+          .setEmoji("✅")
+          .setDisabled(true),
+        new ButtonBuilder()
+          .setLabel("ไปยังห้องทิกเก็ต")
+          .setStyle(ButtonStyle.Link)
+          .setURL(`https://discord.com/channels/${interaction.guildId}/${ticket.channelId}`)
+          .setEmoji("🔗")
+      );
+      await (interaction as ButtonInteraction).update({ components: [disabledRow] });
+    } else {
+      await interaction.reply({
+        content: `✅ คุณได้รับเรื่องทิกเก็ต #${ticket.ticketId} เรียบร้อยแล้ว`,
+        ephemeral: true,
+      });
+    }
   } catch (error: any) {
     console.error("❌ Error in handleTicketClaim:", error);
-    await interaction.reply({
-      content: `❌ เกิดข้อผิดพลาด: ${error.message}`,
-      ephemeral: true,
-    });
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.reply({
+        content: `❌ เกิดข้อผิดพลาด: ${error.message}`,
+        ephemeral: true,
+      });
+    }
   }
 }
 

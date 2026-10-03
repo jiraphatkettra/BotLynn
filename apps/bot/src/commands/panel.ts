@@ -4,6 +4,7 @@ import {
   ChannelType,
   type TextChannel,
 } from "discord.js";
+import { prisma } from "@lynnbot/database";
 import type { BotCommand } from "../index.js";
 import {
   buildAttendancePanel,
@@ -37,6 +38,13 @@ export const panelCommand: BotCommand = {
         .setDescription("เลือกห้องที่ต้องการให้ส่งการ์ด (หากไม่เลือกจะส่งในห้องนี้)")
         .addChannelTypes(ChannelType.GuildText)
         .setRequired(false)
+    )
+    .addChannelOption((option) =>
+      option
+        .setName("log_channel")
+        .setDescription("ห้องสำหรับแจ้งเตือนแอดมิน / บันทึก Log (สำหรับ Ticket หรือ Shop)")
+        .addChannelTypes(ChannelType.GuildText)
+        .setRequired(false)
     ),
 
   async execute(interaction) {
@@ -44,6 +52,7 @@ export const panelCommand: BotCommand = {
     const targetChannel =
       (interaction.options.getChannel("channel") as TextChannel | null) ||
       (interaction.channel as TextChannel);
+    const logChannel = interaction.options.getChannel("log_channel") as TextChannel | null;
 
     if (!targetChannel) {
       await interaction.reply({
@@ -88,9 +97,40 @@ export const panelCommand: BotCommand = {
     try {
       await targetChannel.send(panelData);
 
+      let logNote = "";
+      if (logChannel) {
+        if (panelType === "ticket") {
+          await prisma.setting.upsert({
+            where: { key: "ticket_log_channel" },
+            update: { value: logChannel.id },
+            create: { key: "ticket_log_channel", value: logChannel.id, category: "channels", description: "ห้องบันทึกและแจ้งเตือนทิกเก็ต" },
+          });
+          logNote = `\n• บันทึกห้องแจ้งเตือนทิกเก็ตไปยัง <#${logChannel.id}> สำเร็จ`;
+        } else if (panelType === "shop") {
+          await prisma.setting.upsert({
+            where: { key: "slip_notify_channel" },
+            update: { value: logChannel.id },
+            create: { key: "slip_notify_channel", value: logChannel.id, category: "channels", description: "ห้องแจ้งเตือนสลิปร้านค้ายศ" },
+          });
+          await prisma.setting.upsert({
+            where: { key: "slip_log_channel" },
+            update: { value: logChannel.id },
+            create: { key: "slip_log_channel", value: logChannel.id, category: "channels", description: "ห้องแจ้งเตือนสลิปร้านค้ายศ" },
+          });
+          logNote = `\n• บันทึกห้องแจ้งเตือนสลิปร้านค้าไปยัง <#${logChannel.id}> สำเร็จ`;
+        } else if (panelType === "attendance") {
+          await prisma.setting.upsert({
+            where: { key: "attendance_log_channel" },
+            update: { value: logChannel.id },
+            create: { key: "attendance_log_channel", value: logChannel.id, category: "channels", description: "ห้องแจ้งเตือนตอกบัตร" },
+          });
+          logNote = `\n• บันทึกห้องแจ้งเตือนตอกบัตรไปยัง <#${logChannel.id}> สำเร็จ`;
+        }
+      }
+
       // Reply ephemerally to the admin so the command invocation does not clutter the chat
       await interaction.reply({
-        content: `✅ ติดตั้ง **${panelNameTh}** เรียบร้อยแล้วที่ห้อง <#${targetChannel.id}>\n-# ข้อความคำสั่งนี้มองเห็นเฉพาะคุณ ช่องแชทจะแสดงเฉพาะแผงควบคุมของบอทเพื่อความสะอาดตา`,
+        content: `✅ ติดตั้ง **${panelNameTh}** เรียบร้อยแล้วที่ห้อง <#${targetChannel.id}>${logNote}\n-# ข้อความคำสั่งนี้มองเห็นเฉพาะคุณ ช่องแชทจะแสดงเฉพาะแผงควบคุมของบอทเพื่อความสะอาดตา`,
         ephemeral: true,
       });
     } catch (err: any) {

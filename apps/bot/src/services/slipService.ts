@@ -258,8 +258,8 @@ export async function recordIncomingSlip({
 
   // 5. Forward to Admin Slip Review Channel
   try {
-    const slipChannelSetting = await prisma.setting.findUnique({
-      where: { key: "slip_notify_channel" },
+    const slipChannelSetting = await prisma.setting.findFirst({
+      where: { key: { in: ["slip_notify_channel", "slip_log_channel"] } },
     });
     const logChannelSetting = await prisma.setting.findUnique({
       where: { key: "ticket_log_channel" },

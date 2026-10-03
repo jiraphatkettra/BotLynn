@@ -7,6 +7,7 @@ import {
   PermissionFlagsBits,
   ChannelType,
 } from "discord.js";
+import { prisma } from "@lynnbot/database";
 import type { BotCommand } from "../index.js";
 
 export const ticketSetupCommand: BotCommand = {
@@ -18,6 +19,13 @@ export const ticketSetupCommand: BotCommand = {
       option
         .setName("channel")
         .setDescription("ห้องที่ต้องการให้ส่งการ์ดทิกเก็ต (ถ้าไม่เลือกจะส่งห้องปัจจุบัน)")
+        .addChannelTypes(ChannelType.GuildText)
+        .setRequired(false)
+    )
+    .addChannelOption((option) =>
+      option
+        .setName("log_channel")
+        .setDescription("ห้องสำหรับแจ้งเตือนแอดมิน / บันทึกประวัติทิกเก็ต (Ticket Log Channel)")
         .addChannelTypes(ChannelType.GuildText)
         .setRequired(false)
     )
@@ -38,6 +46,7 @@ export const ticketSetupCommand: BotCommand = {
     const targetChannel =
       (interaction.options.getChannel("channel") as any) ||
       interaction.channel;
+    const logChannel = interaction.options.getChannel("log_channel") as any;
 
     const title =
       interaction.options.getString("title") ||
@@ -74,8 +83,23 @@ export const ticketSetupCommand: BotCommand = {
         components: [row],
       });
 
+      let logNote = "";
+      if (logChannel) {
+        await prisma.setting.upsert({
+          where: { key: "ticket_log_channel" },
+          update: { value: logChannel.id },
+          create: {
+            key: "ticket_log_channel",
+            value: logChannel.id,
+            category: "channels",
+            description: "ห้องบันทึกและแจ้งเตือนทิกเก็ต",
+          },
+        });
+        logNote = `\n• บันทึกห้องแจ้งเตือนทิกเก็ตไปยัง <#${logChannel.id}> สำเร็จ`;
+      }
+
       await interaction.reply({
-        content: `✅ ส่งการ์ดทิกเก็ตไปยัง <#${targetChannel.id}> เรียบร้อยแล้ว`,
+        content: `✅ ส่งการ์ดทิกเก็ตไปยัง <#${targetChannel.id}> เรียบร้อยแล้ว${logNote}`,
         ephemeral: true,
       });
     } catch (err: any) {
@@ -87,3 +111,16 @@ export const ticketSetupCommand: BotCommand = {
     }
   },
 };
+
+export const ticketClaimCommand: BotCommand = {
+  data: new SlashCommandBuilder()
+    .setName("ticket-claim")
+    .setDescription("รับเรื่องดูแลทิกเก็ตนี้ (สำหรับทีมงานและผู้ดูแล)")
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
+
+  async execute(interaction) {
+    const { handleTicketClaim } = await import("../services/ticketService.js");
+    await handleTicketClaim(interaction);
+  },
+};
+
