@@ -24,6 +24,14 @@ import {
 import { leaveCommand } from "./commands/leave.js";
 import { panelCommand } from "./commands/panel.js";
 import { dynamicVoiceCommand } from "./commands/dynamicVoice.js";
+import { scheduleCommand } from "./commands/schedule.js";
+import { leaderboardCommand } from "./commands/leaderboard.js";
+import { giveawayCommand } from "./commands/giveaway.js";
+import { pollCommand } from "./commands/poll.js";
+import { warnCommand, warningsCommand, unwarnCommand } from "./commands/warn.js";
+import { reactionRoleCommand } from "./commands/reactionRole.js";
+import { scheduleMsgCommand } from "./commands/scheduleMsg.js";
+import { taskCommand } from "./commands/task.js";
 
 const commands = [
   clockinCommand.data.toJSON(),
@@ -42,6 +50,16 @@ const commands = [
   leaveCommand.data.toJSON(),
   panelCommand.data.toJSON(),
   dynamicVoiceCommand.data.toJSON(),
+  scheduleCommand.data.toJSON(),
+  leaderboardCommand.data.toJSON(),
+  giveawayCommand.data.toJSON(),
+  pollCommand.data.toJSON(),
+  warnCommand.data.toJSON(),
+  warningsCommand.data.toJSON(),
+  unwarnCommand.data.toJSON(),
+  reactionRoleCommand.data.toJSON(),
+  scheduleMsgCommand.data.toJSON(),
+  taskCommand.data.toJSON(),
 ];
 
 const rest = new REST({ version: "10" }).setToken(

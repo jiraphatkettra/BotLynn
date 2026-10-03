@@ -4238,6 +4238,75 @@ button, a, input, select, textarea {
   }
 }
 
+/* ============================================================================
+   NOTIFICATION CENTER & BELL COMPONENT
+   ============================================================================ */
+.apple-nav-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.09) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+.apple-notification-dropdown {
+  transform-origin: top right;
+}
+
+@media (max-width: 480px) {
+  .apple-notification-dropdown {
+    position: fixed !important;
+    top: 60px !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+}
+
+/* ============================================================================
+   MOBILE RESPONSIVENESS & TOUCH ENHANCEMENTS (ROADMAP 3.4)
+   ============================================================================ */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius-lg);
+}
+
+.table-responsive::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+}
+
+@media (max-width: 768px) {
+  .dashboard-stats-grid,
+  .dashboard-capability-grid,
+  .dashboard-activity-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .page-content {
+    padding: 1rem 0.75rem !important;
+  }
+
+  button, input, select, textarea {
+    font-size: 16px !important; /* Prevents auto-zoom on iOS Safari */
+  }
+
+  .btn {
+    min-height: 42px;
+  }
+
+  .table th, .table td {
+    padding: 10px 12px !important;
+    white-space: nowrap;
+  }
+}
+
+
 
 
 

@@ -1,6 +1,7 @@
 import { type Message } from "discord.js";
 import { prisma } from "@lynnbot/database";
 import { recordIncomingSlip } from "../services/slipService.js";
+import { processAutoMod } from "../services/automodService.js";
 
 /**
  * Handles incoming messages to automatically detect slips/images in tickets or submission channels
@@ -8,6 +9,10 @@ import { recordIncomingSlip } from "../services/slipService.js";
 export async function handleMessageCreate(message: Message) {
   // Ignore bot messages or DMs
   if (message.author.bot || !message.guild) return;
+
+  // Process Auto-Moderation first
+  const wasModerated = await processAutoMod(message);
+  if (wasModerated) return;
 
   // Check if message has attachments
   if (message.attachments.size === 0) return;

@@ -5,6 +5,8 @@ import { prisma } from "@lynnbot/database";
 import { formatRelativeTime, formatCurrency, getDiscordAvatarUrl } from "@/lib/utils";
 import LynnCoreOrb from "@/components/LynnCoreOrb";
 import TiltCard from "@/components/TiltCard";
+import AnalyticsCharts from "@/components/AnalyticsCharts";
+import LiveActivityFeed from "@/components/LiveActivityFeed";
 
 async function getDashboardData() {
   const now = new Date();
@@ -296,6 +298,11 @@ export default async function DashboardPage() {
           </p>
         </div>
       </section>
+
+      {/* ======================================================== */}
+      {/* 2.5 ANALYTICS & TELEMETRY SECTION                        */}
+      {/* ======================================================== */}
+      <AnalyticsCharts />
 
       {/* ======================================================== */}
       {/* 3. CORE SYSTEMS SHOWCASE (SCROLLABLE PRODUCT TOUR)       */}
@@ -715,73 +722,8 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Recent Audit Logs */}
-        <div className="dashboard-activity-card">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
-            <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#ffffff", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
-              <span>📜</span>
-              <span>บันทึกกิจกรรมล่าสุด (Audit Logs)</span>
-            </h3>
-            <Link href="/logs" style={{ fontSize: "12.5px", color: "#0A84FF", textDecoration: "none" }}>
-              ดูทั้งหมด →
-            </Link>
-          </div>
-
-          <div>
-            {data.recentLogs.length > 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {data.recentLogs.map((log) => (
-                  <div
-                    key={log.id}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "12px 14px",
-                      borderRadius: "12px",
-                      background: "rgba(255, 255, 255, 0.02)",
-                      border: "1px solid rgba(255, 255, 255, 0.05)",
-                    }}
-                  >
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: "13px", fontWeight: 500, color: "#ffffff" }}>
-                        {log.action}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: "12px",
-                          color: "rgba(255, 255, 255, 0.45)",
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          maxWidth: "260px",
-                          marginTop: "2px",
-                        }}
-                      >
-                        {log.details || log.category} • {formatRelativeTime(log.createdAt)}
-                      </div>
-                    </div>
-                    <span
-                      style={{
-                        fontSize: "11px",
-                        padding: "3px 8px",
-                        borderRadius: "6px",
-                        background: "rgba(255, 255, 255, 0.05)",
-                        color: "rgba(255, 255, 255, 0.6)",
-                      }}
-                    >
-                      {log.category}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ padding: "40px", textAlign: "center", color: "rgba(255, 255, 255, 0.4)", fontSize: "13px" }}>
-                ยังไม่มีบันทึกกิจกรรม
-              </div>
-            )}
-          </div>
-        </div>
+        {/* Recent Audit Logs (Real-time SSE Sync) */}
+        <LiveActivityFeed initialLogs={data.recentLogs} />
       </section>
     </div>
   );

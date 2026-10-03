@@ -36,6 +36,11 @@ model User {
   reviewedLeaves LeaveRequest[] @relation("ReviewedLeaves")
   slips          Slip[]
   reviewedSlips  Slip[]         @relation("ReviewedSlips")
+  shiftSchedules ShiftSchedule[]
+  userBadges     UserBadge[]
+  staffNotes     StaffNote[]
+  assignedTasks  Task[]         @relation("AssignedTasks")
+  createdTasks   Task[]         @relation("CreatedTasks")
 
   @@map("users")
 }
@@ -193,6 +198,13 @@ enum LogCategory {
   LEAVE
   SLIP
   FINANCE
+  SCHEDULE
+  BADGE
+  NOTE
+  GIVEAWAY
+  POLL
+  MODERATION
+  TASK
 }
 
 // ==========================================
@@ -501,4 +513,251 @@ model DynamicVoiceConfig {
   @@index([categoryId])
   @@map("dynamic_voice_configs")
 }
+
+// ==========================================
+// 1. STAFF SCHEDULING CALENDAR
+// ==========================================
+
+model ShiftSchedule {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date        DateTime
+  shiftType   String   // "MORNING", "AFTERNOON", "EVENING", "NIGHT"
+  startTime   String   // "09:00"
+  endTime     String   // "17:00"
+  note        String?
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([date])
+  @@map("shift_schedules")
+}
+
+// ==========================================
+// 2. BADGE & GAMIFICATION SYSTEM
+// ==========================================
+
+model Badge {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  description String?
+  icon        String      // emoji or image URL
+  criteria    String      // e.g. "attendance_streak_7", "tickets_closed_50"
+  tier        String      @default("BRONZE") // BRONZE, SILVER, GOLD, DIAMOND
+  createdAt   DateTime    @default(now())
+
+  userBadges  UserBadge[]
+
+  @@map("badges")
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId   String
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  earnedAt  DateTime @default(now())
+
+  @@unique([userId, badgeId])
+  @@map("user_badges")
+}
+
+// ==========================================
+// 3. STAFF INTERNAL NOTES & WIKI
+// ==========================================
+
+model StaffNote {
+  id          String   @id @default(cuid())
+  title       String
+  content     String   @db.Text
+  category    String   @default("GENERAL") // SOP, FAQ, GUIDE, MEMO
+  isPinned    Boolean  @default(false)
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([isPinned])
+  @@map("staff_notes")
+}
+
+// ==========================================
+// 4. GIVEAWAY SYSTEM
+// ==========================================
+
+model Giveaway {
+  id            String          @id @default(cuid())
+  title         String
+  description   String?
+  prize         String
+  channelId     String
+  messageId     String?         @unique
+  hostId        String          // Discord ID of host
+  hostName      String
+  maxWinners    Int             @default(1)
+  endsAt        DateTime
+  isActive      Boolean         @default(true)
+  entries       GiveawayEntry[]
+
+  createdAt     DateTime        @default(now())
+
+  @@index([isActive])
+  @@index([endsAt])
+  @@map("giveaways")
+}
+
+model GiveawayEntry {
+  id          String   @id @default(cuid())
+  giveawayId  String
+  giveaway    Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
+  discordId   String
+  discordName String
+
+  createdAt   DateTime @default(now())
+
+  @@unique([giveawayId, discordId])
+  @@map("giveaway_entries")
+}
+
+// ==========================================
+// 5. POLL & VOTING SYSTEM
+// ==========================================
+
+model Poll {
+  id          String       @id @default(cuid())
+  question    String
+  channelId   String
+  messageId   String?      @unique
+  creatorId   String
+  creatorName String
+  isAnonymous Boolean      @default(false)
+  isMultiple  Boolean      @default(false)
+  endsAt      DateTime?
+  isActive    Boolean      @default(true)
+  options     PollOption[]
+
+  createdAt   DateTime     @default(now())
+
+  @@map("polls")
+}
+
+model PollOption {
+  id       String     @id @default(cuid())
+  pollId   String
+  poll     Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  label    String
+  emoji    String?
+  votes    PollVote[]
+
+  @@map("poll_options")
+}
+
+model PollVote {
+  id        String     @id @default(cuid())
+  optionId  String
+  option    PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  discordId String
+
+  createdAt DateTime   @default(now())
+
+  @@unique([optionId, discordId])
+  @@map("poll_votes")
+}
+
+// ==========================================
+// 6. WARNING & MODERATION LOG
+// ==========================================
+
+model Warning {
+  id          String   @id @default(cuid())
+  discordId   String   // Target member
+  discordName String
+  issuedById  String   // Admin discord ID
+  issuedBy    String   // Admin name
+  reason      String
+  severity    String   @default("LOW") // LOW, MEDIUM, HIGH, CRITICAL
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+
+  @@index([discordId])
+  @@index([severity])
+  @@map("warnings")
+}
+
+// ==========================================
+// 7. REACTION ROLES SYSTEM
+// ==========================================
+
+model ReactionRole {
+  id          String   @id @default(cuid())
+  guildId     String
+  channelId   String
+  messageId   String
+  emoji       String   // Unicode emoji or custom emoji ID
+  roleId      String   // Discord role ID
+  roleName    String
+
+  createdAt   DateTime @default(now())
+
+  @@unique([messageId, emoji])
+  @@index([guildId])
+  @@map("reaction_roles")
+}
+
+// ==========================================
+// 8. SCHEDULED ANNOUNCEMENTS
+// ==========================================
+
+model ScheduledMessage {
+  id          String    @id @default(cuid())
+  guildId     String
+  channelId   String
+  content     String?   @db.Text
+  embedData   Json?     // Serialized embed object
+  cronExpr    String?   // Cron expression for recurring
+  scheduledAt DateTime? // For one-time messages
+  isRecurring Boolean   @default(false)
+  isActive    Boolean   @default(true)
+  lastSentAt  DateTime?
+  createdBy   String
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([isActive])
+  @@map("scheduled_messages")
+}
+
+// ==========================================
+// 9. TASK ASSIGNMENT & TO-DO SYSTEM
+// ==========================================
+
+model Task {
+  id           String     @id @default(cuid())
+  title        String
+  description  String?    @db.Text
+  assigneeId   String?
+  assignee     User?      @relation("AssignedTasks", fields: [assigneeId], references: [id])
+  assignedById String
+  assignedBy   User       @relation("CreatedTasks", fields: [assignedById], references: [id])
+  priority     String     @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  status       String     @default("TODO")   // TODO, IN_PROGRESS, DONE, CANCELLED
+  dueDate      DateTime?
+  completedAt  DateTime?
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([assigneeId])
+  @@index([status])
+  @@index([priority])
+  @@map("tasks")
+}
+
 

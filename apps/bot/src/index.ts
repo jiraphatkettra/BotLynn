@@ -1,6 +1,7 @@
 import {
   Client,
   GatewayIntentBits,
+  Partials,
   Collection,
   Events,
   type ChatInputCommandInteraction,
@@ -37,14 +38,25 @@ import {
 import { leaveCommand } from "./commands/leave.js";
 import { panelCommand } from "./commands/panel.js";
 import { dynamicVoiceCommand } from "./commands/dynamicVoice.js";
+import { scheduleCommand } from "./commands/schedule.js";
+import { leaderboardCommand } from "./commands/leaderboard.js";
+import { giveawayCommand } from "./commands/giveaway.js";
+import { pollCommand } from "./commands/poll.js";
+import { warnCommand, warningsCommand, unwarnCommand } from "./commands/warn.js";
+import { reactionRoleCommand } from "./commands/reactionRole.js";
+import { scheduleMsgCommand } from "./commands/scheduleMsg.js";
+import { taskCommand } from "./commands/task.js";
 
-// Import events
+// Import events & services
 import { handleReady } from "./events/ready.js";
 import { handleInteraction } from "./events/interactionCreate.js";
 import { handleVoiceStateUpdate } from "./events/voiceStateUpdate.js";
 import { handleGuildMemberAdd } from "./events/guildMemberAdd.js";
 import { handleMessageCreate } from "./events/messageCreate.js";
+import { handleMessageReactionAdd } from "./events/messageReactionAdd.js";
+import { handleMessageReactionRemove } from "./events/messageReactionRemove.js";
 import { checkAutoClockOut } from "./services/attendanceService.js";
+import { checkExpiredGiveaways, checkScheduledMessages } from "./services/cronService.js";
 
 export interface BotCommand {
   data: SlashCommandBuilder | any;
@@ -52,7 +64,7 @@ export interface BotCommand {
   autocomplete?: (interaction: AutocompleteInteraction) => Promise<void>;
 }
 
-// Create client
+// Create client with required partials for reaction roles
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -60,7 +72,9 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.GuildVoiceStates,
     GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMessageReactions,
   ],
+  partials: [Partials.Message, Partials.Channel, Partials.Reaction],
 });
 
 // Register commands
@@ -82,6 +96,16 @@ const commandList: BotCommand[] = [
   leaveCommand,
   panelCommand,
   dynamicVoiceCommand,
+  scheduleCommand,
+  leaderboardCommand,
+  giveawayCommand,
+  pollCommand,
+  warnCommand,
+  warningsCommand,
+  unwarnCommand,
+  reactionRoleCommand,
+  scheduleMsgCommand,
+  taskCommand,
 ];
 
 for (const command of commandList) {
@@ -97,7 +121,14 @@ client.once(Events.ClientReady, (readyClient) => {
   // Initial check for expired shifts & schedule periodic check every 15m
   setTimeout(() => checkAutoClockOut(client), 5000);
   setInterval(() => checkAutoClockOut(client), 15 * 60 * 1000);
+
+  // Background Giveaway check every 30s
+  setInterval(() => checkExpiredGiveaways(client), 30 * 1000);
+
+  // Background Scheduled Announcement check every 60s
+  setInterval(() => checkScheduledMessages(client), 60 * 1000);
 });
+
 client.on(Events.InteractionCreate, (interaction) =>
   handleInteraction(interaction, commands)
 );
@@ -109,6 +140,12 @@ client.on(Events.GuildMemberAdd, (member) =>
 );
 client.on(Events.MessageCreate, (message) =>
   handleMessageCreate(message)
+);
+client.on(Events.MessageReactionAdd, (reaction, user) =>
+  handleMessageReactionAdd(reaction as any, user as any)
+);
+client.on(Events.MessageReactionRemove, (reaction, user) =>
+  handleMessageReactionRemove(reaction as any, user as any)
 );
 
 // Graceful shutdown

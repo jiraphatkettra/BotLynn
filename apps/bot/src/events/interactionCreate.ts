@@ -33,13 +33,15 @@ import {
   handleAdminStaffList,
   handleAdminPendingLeaves,
   handleAdminBackupServer,
-} from "../services/panelInteractionService.js";
+} from "../services/panels/index.js";
 import {
   handleSlipApproveClick,
   handleSlipRejectClick,
   handleSlipApproveModalSubmit,
   handleSlipRejectModalSubmit,
 } from "../services/slipService.js";
+import { handleGiveawayJoin } from "../commands/giveaway.js";
+import { handlePollVote } from "../commands/poll.js";
 
 export async function handleInteraction(
   interaction: Interaction,
@@ -156,6 +158,22 @@ export async function handleInteraction(
     if (btn.customId.startsWith("slip_reject_")) {
       const slipId = btn.customId.replace("slip_reject_", "");
       await handleSlipRejectClick(btn, slipId);
+      return;
+    }
+
+    // Giveaway Buttons
+    if (btn.customId.startsWith("giveaway_join:")) {
+      const giveawayId = btn.customId.split(":")[1];
+      await handleGiveawayJoin(btn, giveawayId);
+      return;
+    }
+
+    // Poll Voting Buttons
+    if (btn.customId.startsWith("poll_vote:")) {
+      const parts = btn.customId.split(":");
+      const pollId = parts[1];
+      const optionId = parts[2];
+      await handlePollVote(btn, pollId, optionId);
       return;
     }
 
