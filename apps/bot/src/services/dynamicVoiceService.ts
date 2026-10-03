@@ -250,11 +250,7 @@ export async function processCategoryDynamicVoice(
         catName.includes("talk") ||
         catName.includes("พูดคุย")
       ) {
-        const existingVoice = category.children.cache.filter(
-          (ch): ch is VoiceChannel =>
-            ch.type === ChannelType.GuildVoice && ch.name.includes("พูดคุย")
-        );
-        const initialMin = Math.max(existingVoice.size, 10);
+        const initialMin = 10;
 
         await prisma.dynamicVoiceConfig.upsert({
           where: {
@@ -263,9 +259,7 @@ export async function processCategoryDynamicVoice(
               zoneName: "พูดคุย",
             },
           },
-          update: {
-            minChannels: initialMin,
-          },
+          update: {},
           create: {
             guildId: guild.id,
             categoryId,
