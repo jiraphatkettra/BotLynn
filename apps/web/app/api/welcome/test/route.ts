@@ -19,6 +19,8 @@ export async function POST(request: NextRequest) {
       bannerUrl,
       rulesChannelId,
       showFields,
+      showAuthor,
+      authorText,
     } = body;
 
     if (!channelId) {
@@ -98,10 +100,6 @@ export async function POST(request: NextRequest) {
 
     const embed: any = {
       color: colorNum,
-      author: {
-        name: `${authorName} เข้าร่วมเซิร์ฟเวอร์ (ทดสอบจาก Dashboard) ✨`,
-        icon_url: avatarUrl,
-      },
       description: formattedDesc,
       thumbnail: {
         url: avatarUrl,
@@ -112,6 +110,18 @@ export async function POST(request: NextRequest) {
       },
       timestamp: new Date().toISOString(),
     };
+
+    if (showAuthor !== false && showAuthor !== "false") {
+      const rawAuthor = authorText || `${authorName} เข้าร่วมเซิร์ฟเวอร์ ✨`;
+      embed.author = {
+        name: rawAuthor
+          .replace(/\{user\}/g, `<@${authorDiscordId}>`)
+          .replace(/\{name\}/g, authorName)
+          .replace(/\{username\}/g, authorName)
+          .replace(/\{server\}/g, serverName),
+        icon_url: avatarUrl,
+      };
+    }
 
     if (title && title.trim()) {
       const formattedTitle = title.trim()

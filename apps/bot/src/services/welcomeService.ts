@@ -17,6 +17,8 @@ export interface WelcomeOptions {
   rulesChannelId?: string;
   embedColor?: string;
   showFields?: boolean;
+  showAuthor?: boolean;
+  customAuthor?: string;
   isTest?: boolean;
 }
 
@@ -110,12 +112,19 @@ export function buildWelcomeEmbed(
 
   const embed = new EmbedBuilder()
     .setColor(embedColor)
-    .setAuthor({
-      name: `${member.displayName || member.user.username} เข้าร่วมเซิร์ฟเวอร์ ✨`,
-      iconURL: avatarUrl,
-    })
     .setDescription(formattedDesc)
     .setThumbnail(avatarUrl);
+
+  // Optional Author header: only set if showAuthor is not explicitly false
+  const showAuthor = options.showAuthor !== false;
+  if (showAuthor) {
+    const rawAuthor = options.customAuthor || `${member.displayName || member.user.username} เข้าร่วมเซิร์ฟเวอร์ ✨`;
+    const formattedAuthor = formatWelcomeText(rawAuthor, member, rulesChannel);
+    embed.setAuthor({
+      name: formattedAuthor,
+      iconURL: avatarUrl,
+    });
+  }
 
   // Optional Title: Only set if provided and non-empty
   if (options.customTitle && options.customTitle.trim()) {
@@ -224,6 +233,8 @@ export async function handleWelcomeMember(
             "welcome_banner_url",
             "welcome_dm_enabled",
             "welcome_show_fields",
+            "welcome_show_author",
+            "welcome_author_text",
             "rules_channel_id",
             "autorole_enabled",
             "autorole_id",
@@ -273,6 +284,8 @@ export async function handleWelcomeMember(
       rulesChannelId: settingsMap.rules_channel_id,
       embedColor: settingsMap.welcome_embed_color,
       showFields: settingsMap.welcome_show_fields === "true",
+      showAuthor: settingsMap.welcome_show_author !== "false",
+      customAuthor: settingsMap.welcome_author_text,
       isTest: options.isTest,
     });
 

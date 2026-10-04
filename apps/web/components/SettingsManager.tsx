@@ -221,6 +221,8 @@ export default function SettingsManager({
           bannerUrl: settings.welcome_banner_url,
           rulesChannelId: settings.rules_channel_id,
           showFields: settings.welcome_show_fields === "true",
+          showAuthor: settings.welcome_show_author !== "false",
+          authorText: settings.welcome_author_text,
         }),
       });
       const data = await res.json();
@@ -747,6 +749,48 @@ export default function SettingsManager({
 
                 <div className="settings-row" style={{ padding: "12px 0" }}>
                   <div>
+                    <div className="settings-row-label">แสดงแถบชื่อผู้เข้าร่วมด้านบน (Author Header)</div>
+                    <div className="settings-row-desc">
+                      แสดงรูปโปรไฟล์และข้อความ 'ชื่อ เข้าร่วมเซิร์ฟเวอร์ ✨' ที่ส่วนบนสุดของการ์ด (มีหรือไม่มีก็ได้)
+                    </div>
+                  </div>
+                  <label className="toggle">
+                    <input
+                      type="checkbox"
+                      disabled={!isSuperAdmin}
+                      checked={settings.welcome_show_author !== "false"}
+                      onChange={(e) =>
+                        handleChange("welcome_show_author", e.target.checked ? "true" : "false")
+                      }
+                    />
+                    <span className="toggle-slider" />
+                  </label>
+                </div>
+
+                {settings.welcome_show_author !== "false" && (
+                  <div className="settings-row" style={{ padding: "10px 0", background: "rgba(255,255,255,0.02)", borderRadius: "var(--radius-sm)", paddingLeft: 10, paddingRight: 10 }}>
+                    <div>
+                      <div className="settings-row-label" style={{ fontSize: 13 }}>ข้อความแถบผู้เข้าร่วม (Author Text)</div>
+                      <div className="settings-row-desc">
+                        ค่าเริ่มต้น: &#123;name&#125; เข้าร่วมเซิร์ฟเวอร์ ✨
+                      </div>
+                    </div>
+                    <div style={{ minWidth: 200, maxWidth: 300, width: "100%" }}>
+                      <input
+                        type="text"
+                        className="form-input"
+                        disabled={!isSuperAdmin}
+                        value={settings.welcome_author_text || ""}
+                        onChange={(e) => handleChange("welcome_author_text", e.target.value)}
+                        placeholder="{name} เข้าร่วมเซิร์ฟเวอร์ ✨"
+                        style={{ width: "100%", fontSize: 13 }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="settings-row" style={{ padding: "12px 0" }}>
+                  <div>
                     <div className="settings-row-label">แสดงกล่องข้อมูลสมาชิก 3 ช่อง (Member Info Grid)</div>
                     <div className="settings-row-desc">
                       แสดงแถบข้อมูลสมาชิก (@ชื่อ), ลำดับสมาชิกคนที่, และวันที่สร้างบัญชี (ปิดเพื่อความมินิมอล ไม่รก)
@@ -1119,15 +1163,20 @@ export default function SettingsManager({
                         boxShadow: "0 2px 10px rgba(0,0,0,0.3)",
                       }}
                     >
-                      {/* Author */}
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                        <div style={{ width: 22, height: 22, borderRadius: "50%", backgroundColor: "#555", overflow: "hidden" }}>
-                          <img src="/logo.png" alt="User" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e: any) => { e.target.style.display = "none"; }} />
+                      {/* Author (Optional: rendered only if showAuthor is true) */}
+                      {settings.welcome_show_author !== "false" && (
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                          <div style={{ width: 22, height: 22, borderRadius: "50%", backgroundColor: "#555", overflow: "hidden" }}>
+                            <img src="/logo.png" alt="User" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e: any) => { e.target.style.display = "none"; }} />
+                          </div>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: "#dbdee1" }}>
+                            {(settings.welcome_author_text || "{name} เข้าร่วมเซิร์ฟเวอร์ ✨")
+                              .replace(/\{name\}/g, "จิ๊กโก๋")
+                              .replace(/\{user\}/g, "@จิ๊กโก๋")
+                              .replace(/\{server\}/g, "753 BC")}
+                          </span>
                         </div>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: "#dbdee1" }}>
-                          จิ๊กโก๋ เข้าร่วมเซิร์ฟเวอร์ ✨
-                        </span>
-                      </div>
+                      )}
 
                       {/* Title & Thumbnail Grid */}
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>

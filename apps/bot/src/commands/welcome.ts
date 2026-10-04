@@ -228,6 +228,8 @@ export const welcomeCommand: BotCommand = {
               "welcome_embed_color",
               "welcome_banner_url",
               "welcome_show_fields",
+              "welcome_show_author",
+              "welcome_author_text",
               "rules_channel_id",
             ],
           },
@@ -246,6 +248,8 @@ export const welcomeCommand: BotCommand = {
         rulesChannelId: settingsMap.rules_channel_id,
         embedColor: settingsMap.welcome_embed_color,
         showFields: settingsMap.welcome_show_fields === "true",
+        showAuthor: settingsMap.welcome_show_author !== "false",
+        customAuthor: settingsMap.welcome_author_text,
         isTest: true,
       });
 
