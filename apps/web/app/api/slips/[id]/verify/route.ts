@@ -87,6 +87,21 @@ export async function POST(
       const v = outcome.data;
       const amount = v.amount || 0;
 
+      let targetUserId = slip.userId;
+      if (!targetUserId) {
+        const targetDbUser = await prisma.user.upsert({
+          where: { discordId: slip.discordId },
+          update: {},
+          create: {
+            discordId: slip.discordId,
+            username: slip.discordName,
+            displayName: slip.discordName,
+            role: "MEMBER",
+          },
+        });
+        targetUserId = targetDbUser.id;
+      }
+
       // 1. Transaction update
       const [updatedSlip, updatedUser] = await prisma.$transaction([
         prisma.slip.update({
@@ -116,7 +131,7 @@ export async function POST(
         }),
         prisma.walletTransaction.create({
           data: {
-            userId: slip.userId || reviewer?.id || "",
+            userId: targetUserId,
             amount,
             type: "TOPUP",
             note: `เติมเงินอัตโนมัติจากสลิป #${slip.id.slice(-6).toUpperCase()} (${v.transRef || "API"})`,

@@ -7,17 +7,21 @@ export async function handleVoiceStateUpdate(
   newState: VoiceState
 ) {
   const member = newState.member || oldState.member;
-  if (!member || member.user.bot) return;
-
-  const discordId = member.user.id;
-  const now = new Date();
+  if (!member) return;
 
   // 1. Process Dynamic Voice Pool Automation (Auto-expansion & Pruning)
+  // Must process for all members including bots, because bots occupy voice channels!
   try {
     await handleDynamicVoiceState(oldState, newState);
   } catch (dynamicErr) {
     console.error("❌ Error in handleDynamicVoiceState:", dynamicErr);
   }
+
+  // 2. Track Voice Session for Attendance & Stats (Ignore bot accounts)
+  if (member.user.bot) return;
+
+  const discordId = member.user.id;
+  const now = new Date();
 
   // 2. Track Voice Session for Attendance & Stats
   try {

@@ -4,6 +4,7 @@ import {
   CategoryChannel,
   Guild,
   type VoiceState,
+  type Client,
 } from "discord.js";
 import { prisma } from "@lynnbot/database";
 
@@ -22,6 +23,7 @@ export const DEFAULT_SLEEP_EMOJI = "🛏️";
 
 // In-memory mutex locks to prevent race conditions during voice channel creation/deletion
 const categoryLocks = new Set<string>();
+const pendingCategoryUpdates = new Set<string>();
 
 /**
  * Parse an existing Discord channel name into structural components:
@@ -136,12 +138,18 @@ export async function handleDynamicVoiceState(
   // Identify affected categories
   const affectedCategoryIds = new Set<string>();
 
-  const newChannel = newState.channel;
+  let newChannel = newState.channel;
+  if (!newChannel && newState.channelId) {
+    newChannel = (await guild.channels.fetch(newState.channelId).catch(() => null)) as any;
+  }
   if (newChannel && newChannel.parentId) {
     affectedCategoryIds.add(newChannel.parentId);
   }
 
-  const oldChannel = oldState.channel;
+  let oldChannel = oldState.channel;
+  if (!oldChannel && oldState.channelId) {
+    oldChannel = (await guild.channels.fetch(oldState.channelId).catch(() => null)) as any;
+  }
   if (oldChannel && oldChannel.parentId) {
     affectedCategoryIds.add(oldChannel.parentId);
   }
@@ -158,18 +166,29 @@ export async function processCategoryDynamicVoice(
   guild: Guild,
   categoryId: string
 ) {
-  // If lock is held, skip this tick (debouncing)
+  // If lock is held, record pending update so it triggers after lock is released (prevents dropped events)
   if (categoryLocks.has(categoryId)) {
+    pendingCategoryUpdates.add(categoryId);
     return;
   }
 
   categoryLocks.add(categoryId);
 
   try {
-    const category = guild.channels.cache.get(categoryId) as CategoryChannel;
+    let category = guild.channels.cache.get(categoryId) as CategoryChannel;
+    if (!category) {
+      try {
+        category = (await guild.channels.fetch(categoryId)) as CategoryChannel;
+      } catch {
+        return;
+      }
+    }
     if (!category || category.type !== ChannelType.GuildCategory) {
       return;
     }
+
+    // Refresh guild channel cache to guarantee active member counts and channel lists are 100% current
+    await guild.channels.fetch().catch(() => {});
 
     let configs = await prisma.dynamicVoiceConfig.findMany({
       where: { categoryId },
@@ -345,8 +364,14 @@ export async function processCategoryDynamicVoice(
     console.error(`❌ [Dynamic Voice] Error processing category ${categoryId}:`, error);
   } finally {
     // Release lock after 1.5s delay to prevent spamming Discord rate limits
-    setTimeout(() => {
+    setTimeout(async () => {
       categoryLocks.delete(categoryId);
+      if (pendingCategoryUpdates.has(categoryId)) {
+        pendingCategoryUpdates.delete(categoryId);
+        await processCategoryDynamicVoice(guild, categoryId).catch((err) =>
+          console.error(`❌ [Dynamic Voice] Error in queued category ${categoryId}:`, err)
+        );
+      }
     }, 1500);
   }
 }
@@ -466,29 +491,30 @@ async function processSingleZoneDynamicVoice(
   if (totalChannels > minChannels) {
     const surplusChannels = voiceChannels.filter((v) => v.roomNumber > minChannels);
 
-    if (surplusChannels.length >= blockSize) {
+    if (surplusChannels.length > 0) {
       // Find the highest batch block (e.g. rooms 04-06 or rooms 06-10)
       const highestNum = Math.max(...surplusChannels.map((v) => v.roomNumber));
-      const blockStart = highestNum - blockSize + 1;
+      const blockStart = Math.max(minChannels + 1, highestNum - blockSize + 1);
       const blockChannels = surplusChannels.filter(
         (v) => v.roomNumber >= blockStart && v.roomNumber <= highestNum
       );
 
       // Check if every single room in this highest surplus block is empty
       const isBlockCompletelyEmpty =
-        blockChannels.length === blockSize &&
+        blockChannels.length > 0 &&
         blockChannels.every((v) => v.memberCount === 0);
 
       // Check if lower remaining channels have at least 1 empty room (so we don't prune while lower rooms are still 100% full)
       const lowerChannels = voiceChannels.filter((v) => v.roomNumber < blockStart);
-      const hasEmptyInLower = lowerChannels.some((v) => v.memberCount === 0);
+      const hasEmptyInLower =
+        lowerChannels.length === 0 || lowerChannels.some((v) => v.memberCount === 0);
 
       if (isBlockCompletelyEmpty && hasEmptyInLower) {
         console.log(
-          `🎙️ [Dynamic Voice] Entire surplus block [Rooms ${blockStart} to ${highestNum}] for '${zoneName}' is empty. Pruning whole block...`
+          `🎙️ [Dynamic Voice] Surplus block [Rooms ${blockStart} to ${highestNum}] for '${zoneName}' is empty. Pruning whole block...`
         );
 
-        // Delete from highest number downwards (e.g. 06 -> 05 -> 04)
+        // Delete from highest number downwards (e.g. 10 -> 09 -> 08 -> 07 -> 06)
         const toDeleteSorted = [...blockChannels].sort((a, b) => b.roomNumber - a.roomNumber);
         for (const chInfo of toDeleteSorted) {
           await chInfo.channel
@@ -502,6 +528,11 @@ async function processSingleZoneDynamicVoice(
 
         // Re-align channel positions after pruning
         await enforceCategoryChannelOrder(category);
+
+        // If there are still more surplus channels above minChannels, queue another check pass
+        if (surplusChannels.length > blockChannels.length) {
+          pendingCategoryUpdates.add(category.id);
+        }
       }
     }
   }
@@ -656,3 +687,37 @@ export async function enforceCategoryChannelOrder(category: CategoryChannel) {
     console.error(`❌ [Dynamic Voice] Failed to enforce channel order in '${category.name}':`, err);
   }
 }
+
+/**
+ * Scan and synchronize all active dynamic voice categories across all guilds.
+ * Automatically prunes leftover empty rooms and seeds minimum rooms if missing.
+ */
+export async function syncAllDynamicVoiceCategories(client: Client) {
+  try {
+    const configs = await prisma.dynamicVoiceConfig.findMany({
+      where: { isEnabled: true },
+      select: { categoryId: true, guildId: true },
+    });
+
+    const uniqueCategories = new Map<string, string>();
+    for (const c of configs) {
+      uniqueCategories.set(c.categoryId, c.guildId);
+    }
+
+    for (const [categoryId, guildId] of uniqueCategories.entries()) {
+      try {
+        const guild =
+          client.guilds.cache.get(guildId) ||
+          (await client.guilds.fetch(guildId).catch(() => null));
+        if (guild) {
+          await processCategoryDynamicVoice(guild, categoryId);
+        }
+      } catch (catErr) {
+        console.error(`❌ [Dynamic Voice] Error syncing category ${categoryId}:`, catErr);
+      }
+    }
+  } catch (err) {
+    console.error("❌ [Dynamic Voice] Error in syncAllDynamicVoiceCategories:", err);
+  }
+}
+

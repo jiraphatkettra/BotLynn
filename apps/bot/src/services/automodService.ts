@@ -13,7 +13,11 @@ const userMessageTimestamps = new Map<string, number[]>();
 export async function processAutoMod(message: Message): Promise<boolean> {
   // Never automod admins or bot messages
   if (message.author.bot || !message.guild) return false;
-  if (message.member?.permissions.has(PermissionFlagsBits.ManageMessages)) return false;
+  let member = message.member;
+  if (!member && message.guild) {
+    member = await message.guild.members.fetch(message.author.id).catch(() => null);
+  }
+  if (member?.permissions.has(PermissionFlagsBits.ManageMessages)) return false;
 
   try {
     // 1. Fetch Auto-Mod Settings from Setting table

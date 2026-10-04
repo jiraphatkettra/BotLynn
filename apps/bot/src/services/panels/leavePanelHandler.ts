@@ -245,7 +245,7 @@ export async function handleMyLeavesStatus(interaction: ButtonInteraction) {
       new ButtonBuilder()
         .setCustomId(`leave_cancel:${pendingLeave.id}`)
         .setLabel("ยกเลิกคำขอล่าสุดที่รอดำเนินการ • Cancel Request")
-        .setEmoji("✕")
+        .setEmoji("❌")
         .setStyle(ButtonStyle.Secondary)
     );
     await interaction.editReply({ embeds: [embed], components: [cancelRow] });

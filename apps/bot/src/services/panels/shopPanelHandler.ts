@@ -127,7 +127,7 @@ export async function handleShopSelectRole(interaction: StringSelectMenuInteract
     new ButtonBuilder()
       .setCustomId("shop_cancel_checkout")
       .setLabel("ยกเลิก • Cancel")
-      .setEmoji("✕")
+      .setEmoji("❌")
       .setStyle(ButtonStyle.Secondary)
   );
 

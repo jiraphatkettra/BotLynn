@@ -495,6 +495,21 @@ export async function handleSlipApproveModalSubmit(
 
   const admin = await ensureUser(interaction.user);
 
+  let targetUserId = slip.userId;
+  if (!targetUserId) {
+    const targetDbUser = await prisma.user.upsert({
+      where: { discordId: slip.discordId },
+      update: {},
+      create: {
+        discordId: slip.discordId,
+        username: slip.discordName,
+        displayName: slip.discordName,
+        role: "MEMBER",
+      },
+    });
+    targetUserId = targetDbUser.id;
+  }
+
   // Execute approval transaction
   await prisma.$transaction([
     prisma.slip.update({
@@ -516,7 +531,7 @@ export async function handleSlipApproveModalSubmit(
     }),
     prisma.walletTransaction.create({
       data: {
-        userId: slip.userId || admin.id,
+        userId: targetUserId,
         amount,
         type: "TOPUP",
         note: `อนุมัติสลิป #${slip.id.slice(-6).toUpperCase()} (${note})`,

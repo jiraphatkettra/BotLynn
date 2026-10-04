@@ -46,6 +46,11 @@ import { warnCommand, warningsCommand, unwarnCommand } from "./commands/warn.js"
 import { reactionRoleCommand } from "./commands/reactionRole.js";
 import { scheduleMsgCommand } from "./commands/scheduleMsg.js";
 import { taskCommand } from "./commands/task.js";
+import { meCommand } from "./commands/me.js";
+import { myslipsCommand } from "./commands/myslips.js";
+import { myticketsCommand } from "./commands/mytickets.js";
+import { userinfoCommand } from "./commands/userinfo.js";
+import { welcomeCommand } from "./commands/welcome.js";
 
 // Import events & services
 import { handleReady } from "./events/ready.js";
@@ -57,6 +62,7 @@ import { handleMessageReactionAdd } from "./events/messageReactionAdd.js";
 import { handleMessageReactionRemove } from "./events/messageReactionRemove.js";
 import { checkAutoClockOut } from "./services/attendanceService.js";
 import { checkExpiredGiveaways, checkScheduledMessages } from "./services/cronService.js";
+import { syncAllDynamicVoiceCategories } from "./services/dynamicVoiceService.js";
 
 export interface BotCommand {
   data: SlashCommandBuilder | any;
@@ -107,6 +113,11 @@ const commandList: BotCommand[] = [
   reactionRoleCommand,
   scheduleMsgCommand,
   taskCommand,
+  meCommand,
+  myslipsCommand,
+  myticketsCommand,
+  userinfoCommand,
+  welcomeCommand,
 ];
 
 for (const command of commandList) {
@@ -128,6 +139,10 @@ client.once(Events.ClientReady, (readyClient) => {
 
   // Background Scheduled Announcement check every 60s
   setInterval(() => checkScheduledMessages(client), 60 * 1000);
+
+  // Sync Dynamic Voice categories after 5s and every 5m (prunes leftover empty rooms)
+  setTimeout(() => syncAllDynamicVoiceCategories(client), 5000);
+  setInterval(() => syncAllDynamicVoiceCategories(client), 5 * 60 * 1000);
 });
 
 client.on(Events.InteractionCreate, (interaction) =>

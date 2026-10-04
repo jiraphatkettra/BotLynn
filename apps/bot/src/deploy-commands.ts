@@ -32,8 +32,14 @@ import { warnCommand, warningsCommand, unwarnCommand } from "./commands/warn.js"
 import { reactionRoleCommand } from "./commands/reactionRole.js";
 import { scheduleMsgCommand } from "./commands/scheduleMsg.js";
 import { taskCommand } from "./commands/task.js";
+import { meCommand } from "./commands/me.js";
+import { myslipsCommand } from "./commands/myslips.js";
+import { myticketsCommand } from "./commands/mytickets.js";
+import { userinfoCommand } from "./commands/userinfo.js";
+import { welcomeCommand } from "./commands/welcome.js";
 
 const commands = [
+  welcomeCommand.data.toJSON(),
   clockinCommand.data.toJSON(),
   clockoutCommand.data.toJSON(),
   shopCommand.data.toJSON(),
@@ -61,6 +67,10 @@ const commands = [
   reactionRoleCommand.data.toJSON(),
   scheduleMsgCommand.data.toJSON(),
   taskCommand.data.toJSON(),
+  meCommand.data.toJSON(),
+  myslipsCommand.data.toJSON(),
+  myticketsCommand.data.toJSON(),
+  userinfoCommand.data.toJSON(),
 ];
 
 const rest = new REST({ version: "10" }).setToken(
