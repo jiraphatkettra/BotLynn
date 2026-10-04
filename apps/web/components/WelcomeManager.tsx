@@ -217,7 +217,10 @@ export default function WelcomeManager({
               </>
             ) : (
               <>
-                <span>⚡</span> ทดสอบส่งเข้า Discord ทันที
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                </svg>
+                ทดสอบส่งเข้า Discord ทันที
               </>
             )}
           </button>
@@ -631,7 +634,7 @@ export default function WelcomeManager({
             >
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--border-subtle)", paddingBottom: 10 }}>
                 <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)", letterSpacing: "0.05em", textTransform: "uppercase" }}>
-                  👀 Live Preview • ตัวอย่างการ์ดใน Discord
+                  Live Preview • ตัวอย่างการ์ดใน Discord
                 </span>
                 <span style={{ fontSize: 11, color: "var(--accent)", background: "rgba(41,151,255,0.1)", padding: "2px 8px", borderRadius: 9999 }}>
                   Real-time Sync
@@ -882,7 +885,7 @@ export default function WelcomeManager({
               disabled={saving}
               onClick={handleReset}
             >
-              ↩️ คืนค่าเดิม
+              คืนค่าเดิม
             </button>
             <button
               type="button"
@@ -896,7 +899,7 @@ export default function WelcomeManager({
                   <span className="spinner" style={{ width: 14, height: 14 }} /> กำลังบันทึก...
                 </>
               ) : (
-                "💾 บันทึกการตั้งค่า"
+                "บันทึกการตั้งค่า"
               )}
             </button>
           </div>
