@@ -1,5 +1,27 @@
 import { PrismaClient } from "@prisma/client";
 
+if (process.env.DATABASE_URL) {
+  let url = process.env.DATABASE_URL.trim();
+  if (
+    (url.startsWith('"') && url.endsWith('"')) ||
+    (url.startsWith("'") && url.endsWith("'"))
+  ) {
+    url = url.slice(1, -1).trim();
+  }
+  process.env.DATABASE_URL = url;
+}
+
+if (process.env.DIRECT_URL) {
+  let url = process.env.DIRECT_URL.trim();
+  if (
+    (url.startsWith('"') && url.endsWith('"')) ||
+    (url.startsWith("'") && url.endsWith("'"))
+  ) {
+    url = url.slice(1, -1).trim();
+  }
+  process.env.DIRECT_URL = url;
+}
+
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };

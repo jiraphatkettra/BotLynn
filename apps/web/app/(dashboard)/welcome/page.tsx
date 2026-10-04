@@ -4,6 +4,8 @@ import { prisma } from "@lynnbot/database";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "ระบบต้อนรับ & แจกยศ | LynnBot",
   description: "ปรับแต่งการ์ดต้อนรับสมาชิกใหม่ Embed, รูปภาพ, สีธีม, และแจกยศอัตโนมัติ",

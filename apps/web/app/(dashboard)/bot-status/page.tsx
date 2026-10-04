@@ -2,6 +2,8 @@ import Header from "@/components/Header";
 import { prisma } from "@lynnbot/database";
 import { formatDateTime, formatDuration } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 async function getBotStatusData() {
   const [sessions, currentSession, totalUptime] = await Promise.all([
     prisma.botSession.findMany({
