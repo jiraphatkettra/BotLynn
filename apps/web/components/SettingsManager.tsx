@@ -224,6 +224,9 @@ export default function SettingsManager({
           showAuthor: settings.welcome_show_author !== "false",
           authorText: settings.welcome_author_text,
           showThumbnail: settings.welcome_show_thumbnail !== "false",
+          showRulesField: settings.welcome_show_rules_field !== "false",
+          rulesFieldTitle: settings.welcome_rules_field_title,
+          rulesFieldText: settings.welcome_rules_field_text,
         }),
       });
       const data = await res.json();
@@ -887,6 +890,101 @@ export default function SettingsManager({
                   </div>
                 </div>
 
+                {/* Rules Field Toggle */}
+                <div className="settings-row" style={{ padding: "12px 0" }}>
+                  <div>
+                    <div className="settings-row-label">แสดงกล่องข้อความกฎระเบียบ (Rules Field)</div>
+                    <div className="settings-row-desc">
+                      แสดงกล่องข้อความแนะนำเริ่มต้นใช้งานและห้องกฎระเบียบใน Embed (มีหรือไม่มีก็ได้)
+                    </div>
+                  </div>
+                  <label className="toggle">
+                    <input
+                      type="checkbox"
+                      disabled={!isSuperAdmin}
+                      checked={settings.welcome_show_rules_field !== "false"}
+                      onChange={(e) =>
+                        handleChange("welcome_show_rules_field", e.target.checked ? "true" : "false")
+                      }
+                    />
+                    <span className="toggle-slider" />
+                  </label>
+                </div>
+
+                {/* Rules Field Custom Title & Text (if enabled) */}
+                {settings.welcome_show_rules_field !== "false" && (
+                  <div style={{ background: "rgba(255,255,255,0.02)", borderRadius: "var(--radius-sm)", padding: "10px 12px", marginBottom: 12 }}>
+                    <div className="settings-row" style={{ padding: "8px 0" }}>
+                      <div>
+                        <div className="settings-row-label" style={{ fontSize: 13 }}>หัวข้อกล่องกฎระเบียบ (Field Title)</div>
+                        <div className="settings-row-desc">
+                          ค่าเริ่มต้น: 📜 เริ่มต้นใช้งาน (ปรับเปลี่ยนได้อิสระ)
+                        </div>
+                      </div>
+                      <div style={{ minWidth: 220, maxWidth: 320, width: "100%" }}>
+                        <input
+                          type="text"
+                          className="form-input"
+                          disabled={!isSuperAdmin}
+                          value={settings.welcome_rules_field_title !== undefined ? settings.welcome_rules_field_title : ""}
+                          onChange={(e) => handleChange("welcome_rules_field_title", e.target.value)}
+                          placeholder="📜 เริ่มต้นใช้งาน"
+                          style={{ width: "100%", fontSize: 13 }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="settings-row" style={{ padding: "8px 0" }}>
+                      <div>
+                        <div className="settings-row-label" style={{ fontSize: 13 }}>ข้อความกล่องกฎระเบียบ (Field Text)</div>
+                        <div className="settings-row-desc">
+                          ค่าเริ่มต้น: อ่านกฎระเบียบก่อนเริ่มคุย: &#123;rules&#125;
+                        </div>
+                      </div>
+                      <div style={{ minWidth: 220, maxWidth: 320, width: "100%" }}>
+                        <input
+                          type="text"
+                          className="form-input"
+                          disabled={!isSuperAdmin}
+                          value={settings.welcome_rules_field_text !== undefined ? settings.welcome_rules_field_text : ""}
+                          onChange={(e) => handleChange("welcome_rules_field_text", e.target.value)}
+                          placeholder="อ่านกฎระเบียบก่อนเริ่มคุย: {rules}"
+                          style={{ width: "100%", fontSize: 13 }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 }}>
+                      {[
+                        { tag: "{rules}", desc: "แท็กห้องกฎ" },
+                        { tag: "{server}", desc: "ชื่อเซิร์ฟเวอร์" },
+                        { tag: "{user}", desc: "แท็กสมาชิก" },
+                      ].map((item) => (
+                        <button
+                          key={item.tag}
+                          type="button"
+                          className="btn btn-xs btn-secondary"
+                          disabled={!isSuperAdmin}
+                          onClick={() => {
+                            const cur = settings.welcome_rules_field_text !== undefined ? settings.welcome_rules_field_text : "อ่านกฎระเบียบก่อนเริ่มคุย: {rules}";
+                            handleChange("welcome_rules_field_text", cur + " " + item.tag);
+                          }}
+                          style={{
+                            fontSize: 11,
+                            padding: "2px 8px",
+                            fontFamily: "var(--font-mono, monospace)",
+                            background: "rgba(255,255,255,0.06)",
+                            border: "1px solid rgba(255,255,255,0.12)",
+                          }}
+                          title={item.desc}
+                        >
+                          + {item.tag}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* 3. Title */}
                 <div className="settings-row" style={{ padding: "12px 0" }}>
                   <div>
@@ -1283,10 +1381,23 @@ export default function SettingsManager({
                         </div>
                       )}
 
-                      {settings.rules_channel_id && (
+                      {/* Rules field (Optional: rendered only if show_rules_field is not false and rules_channel_id is set) */}
+                      {settings.welcome_show_rules_field !== "false" && settings.rules_channel_id && (
                         <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: "#949ba4" }}>📜 เริ่มต้นใช้งาน</div>
-                          <div style={{ fontSize: 12, color: "#5865f2" }}>อ่านกฎระเบียบก่อนเริ่มคุย: #rules</div>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: "#949ba4" }}>
+                            {settings.welcome_rules_field_title && settings.welcome_rules_field_title.trim()
+                              ? settings.welcome_rules_field_title
+                              : "📜 เริ่มต้นใช้งาน"}
+                          </div>
+                          <div style={{ fontSize: 12, color: "#5865f2" }}>
+                            {(settings.welcome_rules_field_text && settings.welcome_rules_field_text.trim()
+                              ? settings.welcome_rules_field_text
+                              : "อ่านกฎระเบียบก่อนเริ่มคุย: {rules}")
+                              .replace(/\{rules\}/g, "#rules")
+                              .replace(/\{server\}/g, "753 BC")
+                              .replace(/\{user\}/g, "@จิ๊กโก๋")
+                              .replace(/\{name\}/g, "จิ๊กโก๋")}
+                          </div>
                         </div>
                       )}
 

@@ -231,6 +231,9 @@ export const welcomeCommand: BotCommand = {
               "welcome_show_author",
               "welcome_author_text",
               "welcome_show_thumbnail",
+              "welcome_show_rules_field",
+              "welcome_rules_field_title",
+              "welcome_rules_field_text",
               "rules_channel_id",
             ],
           },
@@ -252,6 +255,9 @@ export const welcomeCommand: BotCommand = {
         showAuthor: settingsMap.welcome_show_author !== "false",
         customAuthor: settingsMap.welcome_author_text,
         showThumbnail: settingsMap.welcome_show_thumbnail !== "false",
+        showRulesField: settingsMap.welcome_show_rules_field !== "false",
+        rulesFieldTitle: settingsMap.welcome_rules_field_title,
+        rulesFieldText: settingsMap.welcome_rules_field_text,
         isTest: true,
       });
 

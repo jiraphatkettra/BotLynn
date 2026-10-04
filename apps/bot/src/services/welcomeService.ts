@@ -20,6 +20,9 @@ export interface WelcomeOptions {
   showAuthor?: boolean;
   customAuthor?: string;
   showThumbnail?: boolean;
+  showRulesField?: boolean;
+  rulesFieldTitle?: string;
+  rulesFieldText?: string;
   isTest?: boolean;
 }
 
@@ -158,10 +161,16 @@ export function buildWelcomeEmbed(
     );
   }
 
-  if (rulesChannel) {
+  // Optional Rules field: only set if rulesChannel exists and showRulesField is not explicitly false
+  const showRulesField = options.showRulesField !== false;
+  if (showRulesField && rulesChannel) {
+    const rawTitle = options.rulesFieldTitle?.trim() || "📜 เริ่มต้นใช้งาน";
+    const formattedRulesTitle = formatWelcomeText(rawTitle, member, rulesChannel);
+    const rawRulesText = options.rulesFieldText?.trim() || "อ่านกฎระเบียบก่อนเริ่มคุย: {rules}";
+    const formattedRulesText = formatWelcomeText(rawRulesText, member, rulesChannel);
     embed.addFields({
-      name: "📜 เริ่มต้นใช้งาน",
-      value: `อ่านกฎระเบียบก่อนเริ่มคุย: <#${rulesChannel.id}>`,
+      name: formattedRulesTitle,
+      value: formattedRulesText,
       inline: false,
     });
   }
@@ -242,6 +251,9 @@ export async function handleWelcomeMember(
             "welcome_show_author",
             "welcome_author_text",
             "welcome_show_thumbnail",
+            "welcome_show_rules_field",
+            "welcome_rules_field_title",
+            "welcome_rules_field_text",
             "rules_channel_id",
             "autorole_enabled",
             "autorole_id",
@@ -294,6 +306,9 @@ export async function handleWelcomeMember(
       showAuthor: settingsMap.welcome_show_author !== "false",
       customAuthor: settingsMap.welcome_author_text,
       showThumbnail: settingsMap.welcome_show_thumbnail !== "false",
+      showRulesField: settingsMap.welcome_show_rules_field !== "false",
+      rulesFieldTitle: settingsMap.welcome_rules_field_title,
+      rulesFieldText: settingsMap.welcome_rules_field_text,
       isTest: options.isTest,
     });
 

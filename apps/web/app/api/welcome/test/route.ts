@@ -22,6 +22,9 @@ export async function POST(request: NextRequest) {
       showAuthor,
       authorText,
       showThumbnail,
+      showRulesField,
+      rulesFieldTitle,
+      rulesFieldText,
     } = body;
 
     if (!channelId) {
@@ -91,10 +94,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (rulesChannelId) {
+    if (showRulesField !== false && showRulesField !== "false" && rulesChannelId) {
+      const fieldTitle = rulesFieldTitle && rulesFieldTitle.trim() ? rulesFieldTitle.trim() : "📜 เริ่มต้นใช้งาน";
+      const rawFieldContent = rulesFieldText && rulesFieldText.trim() ? rulesFieldText.trim() : "อ่านกฎระเบียบก่อนเริ่มคุย: {rules}";
+      const formattedFieldContent = rawFieldContent
+        .replace(/\{rules\}/g, `<#${rulesChannelId}>`)
+        .replace(/\{server\}/g, serverName)
+        .replace(/\{user\}/g, `<@${authorDiscordId}>`)
+        .replace(/\{name\}/g, authorName);
+
       embedFields.push({
-        name: "📜 เริ่มต้นใช้งาน",
-        value: `อ่านกฎระเบียบก่อนเริ่มคุย: <#${rulesChannelId}>`,
+        name: fieldTitle,
+        value: formattedFieldContent,
         inline: false,
       });
     }
