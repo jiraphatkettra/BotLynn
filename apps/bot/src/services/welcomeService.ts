@@ -97,10 +97,6 @@ export function buildWelcomeEmbed(
   const rawMessage = options.customMessage || defaultGreeting;
   const formattedDesc = formatWelcomeText(rawMessage, member, rulesChannel);
 
-  const defaultTitle = `👋  WELCOME TO ${guild.name.toUpperCase()}`;
-  const rawTitle = options.customTitle || defaultTitle;
-  const formattedTitle = formatWelcomeText(rawTitle, member, rulesChannel);
-
   let embedColor: any = THEME_COLORS.accent;
   if (options.embedColor) {
     const cleanHex = options.embedColor.replace("#", "").trim();
@@ -118,9 +114,14 @@ export function buildWelcomeEmbed(
       name: `${member.displayName || member.user.username} เข้าร่วมเซิร์ฟเวอร์ ✨`,
       iconURL: avatarUrl,
     })
-    .setTitle(formattedTitle)
     .setDescription(formattedDesc)
     .setThumbnail(avatarUrl);
+
+  // Optional Title: Only set if provided and non-empty
+  if (options.customTitle && options.customTitle.trim()) {
+    const formattedTitle = formatWelcomeText(options.customTitle.trim(), member, rulesChannel);
+    embed.setTitle(formattedTitle);
+  }
 
   if (options.showFields) {
     embed.addFields(

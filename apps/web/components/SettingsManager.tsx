@@ -823,19 +823,33 @@ export default function SettingsManager({
                   <div>
                     <div className="settings-row-label">หัวข้อการ์ดต้อนรับ (Title)</div>
                     <div className="settings-row-desc">
-                      ข้อความหัวเรื่องด้านบนการ์ด (ใช้ &#123;server&#125;, &#123;name&#125; ได้)
+                      ข้อความหัวเรื่องด้านบนการ์ด (เว้นว่างไว้หากไม่ต้องการให้มีหัวข้อ หรือใช้ &#123;server&#125;, &#123;name&#125; ได้)
                     </div>
                   </div>
                   <div style={{ minWidth: 240, maxWidth: 320, width: "100%" }}>
-                    <input
-                      type="text"
-                      className="form-input"
-                      disabled={!isSuperAdmin}
-                      value={settings.welcome_title || "👋  WELCOME TO {server}"}
-                      onChange={(e) => handleChange("welcome_title", e.target.value)}
-                      placeholder="👋  WELCOME TO {server}"
-                      style={{ width: "100%" }}
-                    />
+                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                      <input
+                        type="text"
+                        className="form-input"
+                        disabled={!isSuperAdmin}
+                        value={settings.welcome_title !== undefined ? settings.welcome_title : ""}
+                        onChange={(e) => handleChange("welcome_title", e.target.value)}
+                        placeholder="เว้นว่างได้ (ไม่แสดงหัวข้อ)"
+                        style={{ flex: 1 }}
+                      />
+                      {settings.welcome_title && (
+                        <button
+                          type="button"
+                          className="btn btn-xs btn-secondary"
+                          disabled={!isSuperAdmin}
+                          onClick={() => handleChange("welcome_title", "")}
+                          title="ลบหัวข้อ (ไม่ใส่หัวข้อ)"
+                          style={{ padding: "4px 8px", fontSize: 11, flexShrink: 0 }}
+                        >
+                          ✕ ลบ
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -1118,20 +1132,23 @@ export default function SettingsManager({
                       {/* Title & Thumbnail Grid */}
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
                         <div style={{ flex: 1 }}>
-                          <h4
-                            style={{
-                              fontSize: 14,
-                              fontWeight: 700,
-                              color: "#fff",
-                              margin: "0 0 8px 0",
-                              lineHeight: 1.3,
-                            }}
-                          >
-                            {(settings.welcome_title || "👋  WELCOME TO {server}")
-                              .replace(/\{server\}/g, "753 BC")
-                              .replace(/\{user\}/g, "จิ๊กโก๋")
-                              .replace(/\{name\}/g, "จิ๊กโก๋")}
-                          </h4>
+                          {/* Title (Optional) */}
+                          {Boolean(settings.welcome_title && settings.welcome_title.trim()) && (
+                            <h4
+                              style={{
+                                fontSize: 14,
+                                fontWeight: 700,
+                                color: "#fff",
+                                margin: "0 0 8px 0",
+                                lineHeight: 1.3,
+                              }}
+                            >
+                              {settings.welcome_title
+                                .replace(/\{server\}/g, "753 BC")
+                                .replace(/\{user\}/g, "จิ๊กโก๋")
+                                .replace(/\{name\}/g, "จิ๊กโก๋")}
+                            </h4>
+                          )}
 
                           {/* Description */}
                           <div

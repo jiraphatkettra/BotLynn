@@ -58,12 +58,6 @@ export async function POST(request: NextRequest) {
       .replace(/\{count\}/g, "60")
       .replace(/\{rules\}/g, rulesText);
 
-    const defaultTitle = `👋  WELCOME TO ${serverName.toUpperCase()}`;
-    const rawTitle = title || defaultTitle;
-    const formattedTitle = rawTitle
-      .replace(/\{server\}/g, serverName)
-      .replace(/\{user\}/g, authorName);
-
     let colorNum = 0x2997ff; // Apple Blue default
     if (color) {
       const cleanHex = color.replace("#", "").trim();
@@ -108,7 +102,6 @@ export async function POST(request: NextRequest) {
         name: `${authorName} เข้าร่วมเซิร์ฟเวอร์ (ทดสอบจาก Dashboard) ✨`,
         icon_url: avatarUrl,
       },
-      title: formattedTitle,
       description: formattedDesc,
       thumbnail: {
         url: avatarUrl,
@@ -119,6 +112,13 @@ export async function POST(request: NextRequest) {
       },
       timestamp: new Date().toISOString(),
     };
+
+    if (title && title.trim()) {
+      const formattedTitle = title.trim()
+        .replace(/\{server\}/g, serverName)
+        .replace(/\{user\}/g, authorName);
+      embed.title = formattedTitle;
+    }
 
     if (bannerUrl && bannerUrl.startsWith("http")) {
       embed.image = { url: bannerUrl };
