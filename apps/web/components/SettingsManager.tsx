@@ -220,6 +220,7 @@ export default function SettingsManager({
           color: settings.welcome_embed_color || "#2997ff",
           bannerUrl: settings.welcome_banner_url,
           rulesChannelId: settings.rules_channel_id,
+          showFields: settings.welcome_show_fields === "true",
         }),
       });
       const data = await res.json();
@@ -300,7 +301,10 @@ export default function SettingsManager({
       "การ์ดต้อนรับ",
       "ห้องส่งข้อความต้อนรับ",
       "ข้อความต้อนรับกำหนดเอง",
-      "ยศเริ่มต้นที่ต้องการแจก"
+      "ยศเริ่มต้นที่ต้องการแจก",
+      "แสดงกล่องข้อมูลสมาชิก",
+      "member info",
+      "ลำดับสมาชิก"
     ));
 
   const showWalletCard =
@@ -741,6 +745,26 @@ export default function SettingsManager({
                   </label>
                 </div>
 
+                <div className="settings-row" style={{ padding: "12px 0" }}>
+                  <div>
+                    <div className="settings-row-label">แสดงกล่องข้อมูลสมาชิก 3 ช่อง (Member Info Grid)</div>
+                    <div className="settings-row-desc">
+                      แสดงแถบข้อมูลสมาชิก (@ชื่อ), ลำดับสมาชิกคนที่, และวันที่สร้างบัญชี (ปิดเพื่อความมินิมอล ไม่รก)
+                    </div>
+                  </div>
+                  <label className="toggle">
+                    <input
+                      type="checkbox"
+                      disabled={!isSuperAdmin}
+                      checked={settings.welcome_show_fields === "true"}
+                      onChange={(e) =>
+                        handleChange("welcome_show_fields", e.target.checked ? "true" : "false")
+                      }
+                    />
+                    <span className="toggle-slider" />
+                  </label>
+                </div>
+
                 {/* 2. Channel Selectors */}
                 <div className="settings-row" style={{ padding: "12px 0" }}>
                   <div>
@@ -1145,24 +1169,26 @@ export default function SettingsManager({
                         </div>
                       </div>
 
-                      {/* Fields */}
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, margin: "10px 0" }}>
-                        <div>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: "#949ba4" }}>👤 สมาชิก</div>
-                          <div style={{ fontSize: 12, color: "#5865f2", fontWeight: 600 }}>@จิ๊กโก๋</div>
-                          <div style={{ fontSize: 10, color: "#80848e" }}>dasd08930</div>
+                      {/* Fields (Optional: Hidden by default) */}
+                      {settings.welcome_show_fields === "true" && (
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, margin: "10px 0" }}>
+                          <div>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: "#949ba4" }}>👤 สมาชิก</div>
+                            <div style={{ fontSize: 12, color: "#5865f2", fontWeight: 600 }}>@จิ๊กโก๋</div>
+                            <div style={{ fontSize: 10, color: "#80848e" }}>dasd08930</div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: "#949ba4" }}>👥 ลำดับสมาชิก</div>
+                            <div style={{ fontSize: 12, color: "#dbdee1", fontWeight: 600 }}>คนที่ #60</div>
+                            <div style={{ fontSize: 10, color: "#80848e" }}>ในเซิร์ฟเวอร์</div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: "#949ba4" }}>📅 สร้างบัญชีเมื่อ</div>
+                            <div style={{ fontSize: 12, color: "#dbdee1" }}>วันนี้</div>
+                            <div style={{ fontSize: 10, color: "#80848e" }}>(จำลอง)</div>
+                          </div>
                         </div>
-                        <div>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: "#949ba4" }}>👥 ลำดับสมาชิก</div>
-                          <div style={{ fontSize: 12, color: "#dbdee1", fontWeight: 600 }}>คนที่ #60</div>
-                          <div style={{ fontSize: 10, color: "#80848e" }}>ในเซิร์ฟเวอร์</div>
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: "#949ba4" }}>📅 สร้างบัญชีเมื่อ</div>
-                          <div style={{ fontSize: 12, color: "#dbdee1" }}>วันนี้</div>
-                          <div style={{ fontSize: 10, color: "#80848e" }}>(จำลอง)</div>
-                        </div>
-                      </div>
+                      )}
 
                       {settings.rules_channel_id && (
                         <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.06)" }}>

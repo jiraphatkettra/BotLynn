@@ -16,6 +16,7 @@ export interface WelcomeOptions {
   bannerUrl?: string;
   rulesChannelId?: string;
   embedColor?: string;
+  showFields?: boolean;
   isTest?: boolean;
 }
 
@@ -119,8 +120,10 @@ export function buildWelcomeEmbed(
     })
     .setTitle(formattedTitle)
     .setDescription(formattedDesc)
-    .setThumbnail(avatarUrl)
-    .addFields(
+    .setThumbnail(avatarUrl);
+
+  if (options.showFields) {
+    embed.addFields(
       {
         name: "👤 ข้อมูลสมาชิก",
         value: `<@${member.id}>\n\`${member.user.username}\``,
@@ -137,6 +140,7 @@ export function buildWelcomeEmbed(
         inline: true,
       }
     );
+  }
 
   if (rulesChannel) {
     embed.addFields({
@@ -218,6 +222,7 @@ export async function handleWelcomeMember(
             "welcome_embed_color",
             "welcome_banner_url",
             "welcome_dm_enabled",
+            "welcome_show_fields",
             "rules_channel_id",
             "autorole_enabled",
             "autorole_id",
@@ -266,6 +271,7 @@ export async function handleWelcomeMember(
       bannerUrl: settingsMap.welcome_banner_url,
       rulesChannelId: settingsMap.rules_channel_id,
       embedColor: settingsMap.welcome_embed_color,
+      showFields: settingsMap.welcome_show_fields === "true",
       isTest: options.isTest,
     });
 

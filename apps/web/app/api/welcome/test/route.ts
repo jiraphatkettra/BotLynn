@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
       color,
       bannerUrl,
       rulesChannelId,
+      showFields,
     } = body;
 
     if (!channelId) {
@@ -72,18 +73,9 @@ export async function POST(request: NextRequest) {
 
     const avatarUrl = user?.image || "https://cdn.discordapp.com/embed/avatars/0.png";
 
-    const embed: any = {
-      color: colorNum,
-      author: {
-        name: `${authorName} เข้าร่วมเซิร์ฟเวอร์ (ทดสอบจาก Dashboard) ✨`,
-        icon_url: avatarUrl,
-      },
-      title: formattedTitle,
-      description: formattedDesc,
-      thumbnail: {
-        url: avatarUrl,
-      },
-      fields: [
+    const embedFields: any[] = [];
+    if (showFields === true || showFields === "true") {
+      embedFields.push(
         {
           name: "👤 ข้อมูลสมาชิก",
           value: `<@${authorDiscordId}>\n\`${authorName}\``,
@@ -98,21 +90,35 @@ export async function POST(request: NextRequest) {
           name: "📅 สร้างบัญชีเมื่อ",
           value: `<t:${Math.floor(Date.now() / 1000)}:D>\n(จำลอง)`,
           inline: true,
-        },
-      ],
-      footer: {
-        text: `${serverName} • LynnBot Welcome System (Dashboard Test)`,
-      },
-      timestamp: new Date().toISOString(),
-    };
+        }
+      );
+    }
 
     if (rulesChannelId) {
-      embed.fields.push({
+      embedFields.push({
         name: "📜 เริ่มต้นใช้งาน",
         value: `อ่านกฎระเบียบก่อนเริ่มคุย: <#${rulesChannelId}>`,
         inline: false,
       });
     }
+
+    const embed: any = {
+      color: colorNum,
+      author: {
+        name: `${authorName} เข้าร่วมเซิร์ฟเวอร์ (ทดสอบจาก Dashboard) ✨`,
+        icon_url: avatarUrl,
+      },
+      title: formattedTitle,
+      description: formattedDesc,
+      thumbnail: {
+        url: avatarUrl,
+      },
+      fields: embedFields,
+      footer: {
+        text: `${serverName} • LynnBot Welcome System (Dashboard Test)`,
+      },
+      timestamp: new Date().toISOString(),
+    };
 
     if (bannerUrl && bannerUrl.startsWith("http")) {
       embed.image = { url: bannerUrl };

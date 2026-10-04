@@ -223,8 +223,11 @@ export const welcomeCommand: BotCommand = {
             in: [
               "welcome_enabled",
               "welcome_channel_id",
+              "welcome_title",
               "welcome_message",
+              "welcome_embed_color",
               "welcome_banner_url",
+              "welcome_show_fields",
               "rules_channel_id",
             ],
           },
@@ -237,9 +240,12 @@ export const welcomeCommand: BotCommand = {
       }
 
       const embed = buildWelcomeEmbed(member, {
+        customTitle: settingsMap.welcome_title,
         customMessage: settingsMap.welcome_message,
         bannerUrl: settingsMap.welcome_banner_url,
         rulesChannelId: settingsMap.rules_channel_id,
+        embedColor: settingsMap.welcome_embed_color,
+        showFields: settingsMap.welcome_show_fields === "true",
         isTest: true,
       });
 
