@@ -53,6 +53,7 @@ export default function WelcomeManager({
     "welcome_dm_enabled",
     "welcome_show_author",
     "welcome_author_text",
+    "welcome_show_thumbnail",
     "welcome_show_fields",
     "welcome_channel_id",
     "rules_channel_id",
@@ -143,6 +144,7 @@ export default function WelcomeManager({
           showFields: settings.welcome_show_fields === "true",
           showAuthor: settings.welcome_show_author !== "false",
           authorText: settings.welcome_author_text,
+          showThumbnail: settings.welcome_show_thumbnail !== "false",
         }),
       });
       const data = await res.json();
@@ -314,6 +316,27 @@ export default function WelcomeManager({
                   </div>
                 </div>
               )}
+
+              {/* Thumbnail Toggle (Image on the right side) */}
+              <div className="settings-row" style={{ padding: "12px 0" }}>
+                <div>
+                  <div className="settings-row-label">รูปภาพด้านขวาของการ์ด (Thumbnail)</div>
+                  <div className="settings-row-desc">
+                    แสดงรูปโปรไฟล์ของผู้เข้าร่วมที่มุมขวาบนของ Embed (มีหรือไม่มีก็ได้)
+                  </div>
+                </div>
+                <label className="toggle">
+                  <input
+                    type="checkbox"
+                    disabled={!isSuperAdmin}
+                    checked={settings.welcome_show_thumbnail !== "false"}
+                    onChange={(e) =>
+                      handleChange("welcome_show_thumbnail", e.target.checked ? "true" : "false")
+                    }
+                  />
+                  <span className="toggle-slider" />
+                </label>
+              </div>
 
               {/* Member Info Grid Toggle */}
               <div className="settings-row" style={{ padding: "12px 0" }}>
@@ -746,20 +769,22 @@ export default function WelcomeManager({
                         </div>
                       </div>
 
-                      {/* Thumbnail */}
-                      <div
-                        style={{
-                          width: 64,
-                          height: 64,
-                          borderRadius: "50%",
-                          backgroundColor: "#404249",
-                          overflow: "hidden",
-                          flexShrink: 0,
-                          boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
-                        }}
-                      >
-                        <img src="/logo.png" alt="Member" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e: any) => { e.target.style.display = "none"; }} />
-                      </div>
+                      {/* Thumbnail (Optional: rendered only if show_thumbnail is not false) */}
+                      {settings.welcome_show_thumbnail !== "false" && (
+                        <div
+                          style={{
+                            width: 64,
+                            height: 64,
+                            borderRadius: "50%",
+                            backgroundColor: "#404249",
+                            overflow: "hidden",
+                            flexShrink: 0,
+                            boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+                          }}
+                        >
+                          <img src="/logo.png" alt="Member" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e: any) => { e.target.style.display = "none"; }} />
+                        </div>
+                      )}
                     </div>
 
                     {/* Fields (Optional: Hidden by default) */}

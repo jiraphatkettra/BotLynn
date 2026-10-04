@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
       showFields,
       showAuthor,
       authorText,
+      showThumbnail,
     } = body;
 
     if (!channelId) {
@@ -101,15 +102,18 @@ export async function POST(request: NextRequest) {
     const embed: any = {
       color: colorNum,
       description: formattedDesc,
-      thumbnail: {
-        url: avatarUrl,
-      },
       fields: embedFields,
       footer: {
         text: `${serverName} • LynnBot Welcome System (Dashboard Test)`,
       },
       timestamp: new Date().toISOString(),
     };
+
+    if (showThumbnail !== false && showThumbnail !== "false") {
+      embed.thumbnail = {
+        url: avatarUrl,
+      };
+    }
 
     if (showAuthor !== false && showAuthor !== "false") {
       const rawAuthor = authorText || `${authorName} เข้าร่วมเซิร์ฟเวอร์ ✨`;

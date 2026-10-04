@@ -19,6 +19,7 @@ export interface WelcomeOptions {
   showFields?: boolean;
   showAuthor?: boolean;
   customAuthor?: string;
+  showThumbnail?: boolean;
   isTest?: boolean;
 }
 
@@ -112,8 +113,13 @@ export function buildWelcomeEmbed(
 
   const embed = new EmbedBuilder()
     .setColor(embedColor)
-    .setDescription(formattedDesc)
-    .setThumbnail(avatarUrl);
+    .setDescription(formattedDesc);
+
+  // Optional Thumbnail: only set if showThumbnail is not explicitly false
+  const showThumbnail = options.showThumbnail !== false;
+  if (showThumbnail) {
+    embed.setThumbnail(avatarUrl);
+  }
 
   // Optional Author header: only set if showAuthor is not explicitly false
   const showAuthor = options.showAuthor !== false;
@@ -235,6 +241,7 @@ export async function handleWelcomeMember(
             "welcome_show_fields",
             "welcome_show_author",
             "welcome_author_text",
+            "welcome_show_thumbnail",
             "rules_channel_id",
             "autorole_enabled",
             "autorole_id",
@@ -286,6 +293,7 @@ export async function handleWelcomeMember(
       showFields: settingsMap.welcome_show_fields === "true",
       showAuthor: settingsMap.welcome_show_author !== "false",
       customAuthor: settingsMap.welcome_author_text,
+      showThumbnail: settingsMap.welcome_show_thumbnail !== "false",
       isTest: options.isTest,
     });
 
