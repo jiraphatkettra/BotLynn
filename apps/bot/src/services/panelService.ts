@@ -176,6 +176,14 @@ export function buildAdminHubPanel() {
   return { embeds: [embed], components: [row] };
 }
 
+function getModerationWebUrl(): string {
+  const envUrl = process.env.DASHBOARD_URL || process.env.NEXTAUTH_URL;
+  if (envUrl && !envUrl.includes("localhost")) {
+    return `${envUrl.replace(/\/$/, "")}/moderation`;
+  }
+  return "https://bot-lynn-web-g3sg.vercel.app/moderation";
+}
+
 /**
  * 6. Moderation & Warning Panel (แผงควบคุมความประพฤติและลงโทษสมาชิก)
  */
@@ -204,7 +212,12 @@ export function buildModerationPanel() {
       .setCustomId("panel_warn_check")
       .setLabel("ประวัติการเตือน • Check Warnings")
       .setEmoji("🔍")
-      .setStyle(ButtonStyle.Secondary)
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
+      .setLabel("ออกใบเตือนผ่านเว็บ • Web Report")
+      .setEmoji("🌐")
+      .setStyle(ButtonStyle.Link)
+      .setURL(getModerationWebUrl())
   );
 
   return { embeds: [embed], components: [row] };

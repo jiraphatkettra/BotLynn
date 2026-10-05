@@ -5,6 +5,8 @@ import {
   TextInputBuilder,
   TextInputStyle,
   ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
   EmbedBuilder,
   PermissionFlagsBits,
   type GuildMember,
@@ -12,6 +14,14 @@ import {
 } from "discord.js";
 import { prisma } from "@lynnbot/database";
 import { THEME_COLORS } from "../../utils/theme.js";
+
+function getModerationWebUrl(): string {
+  const envUrl = process.env.DASHBOARD_URL || process.env.NEXTAUTH_URL;
+  if (envUrl && !envUrl.includes("localhost")) {
+    return `${envUrl.replace(/\/$/, "")}/moderation`;
+  }
+  return "https://bot-lynn-web-g3sg.vercel.app/moderation";
+}
 
 const SEVERITY_COLORS: Record<string, number> = {
   LOW: THEME_COLORS.accent,
@@ -254,14 +264,23 @@ export async function handleWarnModalSubmit(interaction: ModalSubmitInteraction)
     ? (interaction.guild?.channels.cache.get(notifyChannelId) as TextChannel | undefined)
     : undefined;
 
+  const linkRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setLabel("เปิดหน้ารายงานบนเว็บ • Web Dashboard")
+      .setEmoji("🌐")
+      .setStyle(ButtonStyle.Link)
+      .setURL(getModerationWebUrl())
+  );
+
   if (notifyChannel && notifyChannel.id !== interaction.channelId) {
-    await notifyChannel.send({ embeds: [embed] }).catch(() => {});
+    await notifyChannel.send({ embeds: [embed], components: [linkRow] }).catch(() => {});
     await interaction.editReply({
       content: `✅ บันทึกการลงโทษ <@${targetId}> เรียบร้อยแล้ว (ประกาศลงห้อง <#${notifyChannel.id}>)`,
       embeds: [embed],
+      components: [linkRow],
     });
   } else {
-    await interaction.editReply({ embeds: [embed] });
+    await interaction.editReply({ embeds: [embed], components: [linkRow] });
   }
 }
 

@@ -376,6 +376,23 @@ export async function POST(req: Request) {
                   timestamp: new Date().toISOString(),
                 },
               ],
+              components: [
+                {
+                  type: 1,
+                  components: [
+                    {
+                      type: 2,
+                      style: 5,
+                      label: "เปิดหน้ารายงานบนเว็บ • Web Dashboard",
+                      emoji: { name: "🌐" },
+                      url:
+                        process.env.NEXTAUTH_URL && !process.env.NEXTAUTH_URL.includes("localhost")
+                          ? `${process.env.NEXTAUTH_URL.replace(/\/$/, "")}/moderation`
+                          : "https://bot-lynn-web-g3sg.vercel.app/moderation",
+                    },
+                  ],
+                },
+              ],
             }),
           });
         }
