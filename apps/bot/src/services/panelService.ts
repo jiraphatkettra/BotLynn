@@ -175,3 +175,38 @@ export function buildAdminHubPanel() {
 
   return { embeds: [embed], components: [row] };
 }
+
+/**
+ * 6. Moderation & Warning Panel (แผงควบคุมความประพฤติและลงโทษสมาชิก)
+ */
+export function buildModerationPanel() {
+  const embed = new EmbedBuilder()
+    .setColor(THEME_COLORS.danger)
+    .setTitle("⚖️  DISCIPLINE & MODERATION • แผงควบคุมความประพฤติ & ลงโทษสมาชิก")
+    .setDescription(
+      "ศูนย์กลางบันทึกการตักเตือน ลงโทษความผิด และดูแลความเรียบร้อยของเซิร์ฟเวอร์\n" +
+      "ทีมงานสามารถกดปุ่มด้านล่างเพื่อออกใบเตือน หรือตรวจสอบประวัติการลงโทษของสมาชิกได้ทันที\n\n" +
+      "> ⚠️ **เกณฑ์การลงโทษอัตโนมัติ (Escalation Rules):**\n" +
+      "> • เตือนสะสม **3 ครั้ง**: ระงับการส่งข้อความ 1 ชั่วโมง (Timeout 1h)\n" +
+      "> • เตือนสะสม **5 ครั้ง**: เตะออกจากเซิร์ฟเวอร์ทันที (Kick)\n\n" +
+      "-# ทุกการเตือนจะถูกบันทึกลงสู่ระบบ Dashboard และส่ง DM แจ้งเตือนผู้กระทำผิดอัตโนมัติ"
+    )
+    .setFooter({ text: "LynnBot Operations System • Security & Discipline" })
+    .setTimestamp();
+
+  const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId("panel_warn_create")
+      .setLabel("ออกใบเตือน / ลงโทษ • Warn Member")
+      .setEmoji("⚠️")
+      .setStyle(ButtonStyle.Danger),
+    new ButtonBuilder()
+      .setCustomId("panel_warn_check")
+      .setLabel("ประวัติการเตือน • Check Warnings")
+      .setEmoji("🔍")
+      .setStyle(ButtonStyle.Secondary)
+  );
+
+  return { embeds: [embed], components: [row] };
+}
+

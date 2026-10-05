@@ -12,6 +12,7 @@ import {
   buildShopPanel,
   buildTicketPanel,
   buildAdminHubPanel,
+  buildModerationPanel,
 } from "../services/panelService.js";
 
 export const panelCommand: BotCommand = {
@@ -29,7 +30,8 @@ export const panelCommand: BotCommand = {
           { name: "📝 แผงยื่นคำขอลางาน (Staff Leave System)", value: "leave" },
           { name: "🛒 แผงร้านค้ายศ & กระเป๋าเงิน (Shop & Wallet)", value: "shop" },
           { name: "📩 แผงศูนย์ช่วยเหลือ (Ticket Support)", value: "ticket" },
-          { name: "🛡️ แผงควบคุมด่วนทีมงาน (Staff Control Hub)", value: "admin-hub" }
+          { name: "🛡️ แผงควบคุมด่วนทีมงาน (Staff Control Hub)", value: "admin-hub" },
+          { name: "⚖️ แผงตักเตือน & บันทึกลงโทษ (Moderation & Warning)", value: "moderation" }
         )
     )
     .addChannelOption((option) =>
@@ -85,6 +87,10 @@ export const panelCommand: BotCommand = {
       case "admin-hub":
         panelData = buildAdminHubPanel();
         panelNameTh = "แผงควบคุมด่วนทีมงาน (Staff Control Hub)";
+        break;
+      case "moderation":
+        panelData = buildModerationPanel();
+        panelNameTh = "แผงควบคุมความประพฤติ & บันทึกการลงโทษ (Moderation & Warning)";
         break;
       default:
         await interaction.reply({

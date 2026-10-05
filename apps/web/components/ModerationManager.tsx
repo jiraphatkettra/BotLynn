@@ -27,6 +27,24 @@ export default function ModerationManager() {
   const [selectedSeverity, setSelectedSeverity] = useState("ALL");
   const [loading, setLoading] = useState(true);
 
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+  // Form State
+  const [formDiscordId, setFormDiscordId] = useState("");
+  const [formDiscordName, setFormDiscordName] = useState("");
+  const [formReason, setFormReason] = useState("");
+  const [formSeverity, setFormSeverity] = useState("LOW");
+  const [formAction, setFormAction] = useState("WARN");
+  const [formCustomIssuer, setFormCustomIssuer] = useState("");
+
+  const showToast = (message: string, type: "success" | "error" = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
+
   const loadWarnings = async () => {
     try {
       setLoading(true);
@@ -53,19 +71,70 @@ export default function ModerationManager() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, isActive: !currentStatus }),
       });
-      if (res.ok) loadWarnings();
+      if (res.ok) {
+        showToast(currentStatus ? "ยกเลิกผลการเตือนเรียบร้อยแล้ว" : "เปิดใช้งานการเตือนใหม่อีกครั้ง", "success");
+        loadWarnings();
+      }
     } catch (err) {
       console.error(err);
+      showToast("เกิดข้อผิดพลาดในการอัปเดตสถานะ", "error");
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("ต้องการลบประวัติการเตือนนี้หรือไม่?")) return;
+    if (!confirm("ต้องการลบประวัติการเตือนนี้ถาวรหรือไม่?")) return;
     try {
       const res = await fetch(`/api/moderation?id=${id}`, { method: "DELETE" });
-      if (res.ok) loadWarnings();
+      if (res.ok) {
+        showToast("ลบประวัติการเตือนเรียบร้อยแล้ว", "success");
+        loadWarnings();
+      }
     } catch (err) {
       console.error(err);
+      showToast("เกิดข้อผิดพลาดในการลบข้อมูล", "error");
+    }
+  };
+
+  const handleCreateWarning = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formDiscordId.trim() || !formReason.trim()) {
+      showToast("กรุณากรอกไอดีสมาชิกและเหตุผลการลงโทษ", "error");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/moderation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          discordId: formDiscordId.trim(),
+          discordName: formDiscordName.trim(),
+          reason: formReason.trim(),
+          severity: formSeverity,
+          action: formAction,
+          customIssuer: formCustomIssuer.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "ไม่สามารถบันทึกการลงโทษได้");
+      }
+
+      showToast(`บันทึกการลงโทษสมาชิกเรียบร้อยแล้ว! ${data.actionResult && data.actionResult !== "ไม่มี" ? `(${data.actionResult})` : ""}`, "success");
+      setIsModalOpen(false);
+      setFormDiscordId("");
+      setFormDiscordName("");
+      setFormReason("");
+      setFormSeverity("LOW");
+      setFormAction("WARN");
+      setFormCustomIssuer("");
+      loadWarnings();
+    } catch (err: any) {
+      showToast(err.message || "เกิดข้อผิดพลาดในการบันทึก", "error");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -78,7 +147,32 @@ export default function ModerationManager() {
   const criticalCount = warnings.filter((w) => w.severity === "CRITICAL" && w.isActive).length;
 
   return (
-    <div style={{ width: "100%", maxWidth: "1100px", margin: "0 auto" }}>
+    <div style={{ width: "100%", maxWidth: "1100px", margin: "0 auto", position: "relative" }}>
+      {/* Toast Notification */}
+      {toast && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: "24px",
+            right: "24px",
+            zIndex: 9999,
+            padding: "12px 20px",
+            borderRadius: "10px",
+            backgroundColor: toast.type === "success" ? "#30d158" : "#ff453a",
+            color: "#ffffff",
+            fontSize: "14px",
+            fontWeight: 600,
+            boxShadow: "0 6px 20px rgba(0,0,0,0.35)",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          <span>{toast.type === "success" ? "✓" : "⚠"}</span>
+          <span>{toast.message}</span>
+        </div>
+      )}
+
       {/* KPI Cards */}
       <div
         style={{
@@ -110,27 +204,64 @@ export default function ModerationManager() {
         </div>
       </div>
 
-      {/* Filter Tabs */}
-      <div style={{ display: "flex", gap: "8px", marginBottom: "20px", overflowX: "auto" }}>
-        {["ALL", "LOW", "MEDIUM", "HIGH", "CRITICAL"].map((sev) => (
-          <button
-            key={sev}
-            type="button"
-            onClick={() => setSelectedSeverity(sev)}
-            style={{
-              padding: "6px 14px",
-              borderRadius: "9999px",
-              border: "none",
-              fontSize: "12px",
-              fontWeight: 600,
-              cursor: "pointer",
-              background: selectedSeverity === sev ? "#2997ff" : "rgba(255, 255, 255, 0.05)",
-              color: selectedSeverity === sev ? "#ffffff" : "var(--text-secondary)",
-            }}
-          >
-            {sev === "ALL" ? "ทั้งหมด" : SEVERITY_MAP[sev]?.label || sev}
-          </button>
-        ))}
+      {/* Action Bar & Filter Tabs */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "12px",
+          marginBottom: "20px",
+        }}
+      >
+        {/* Filter Tabs */}
+        <div style={{ display: "flex", gap: "8px", overflowX: "auto" }}>
+          {["ALL", "LOW", "MEDIUM", "HIGH", "CRITICAL"].map((sev) => (
+            <button
+              key={sev}
+              type="button"
+              onClick={() => setSelectedSeverity(sev)}
+              style={{
+                padding: "6px 14px",
+                borderRadius: "9999px",
+                border: "none",
+                fontSize: "12px",
+                fontWeight: 600,
+                cursor: "pointer",
+                background: selectedSeverity === sev ? "#2997ff" : "rgba(255, 255, 255, 0.05)",
+                color: selectedSeverity === sev ? "#ffffff" : "var(--text-secondary)",
+                transition: "all 0.15s ease",
+              }}
+            >
+              {sev === "ALL" ? "ทั้งหมด" : SEVERITY_MAP[sev]?.label || sev}
+            </button>
+          ))}
+        </div>
+
+        {/* Add Warning Button */}
+        <button
+          type="button"
+          onClick={() => setIsModalOpen(true)}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "8px 18px",
+            borderRadius: "10px",
+            backgroundColor: "#ff453a",
+            color: "#ffffff",
+            border: "none",
+            fontSize: "13px",
+            fontWeight: 600,
+            cursor: "pointer",
+            boxShadow: "0 2px 12px rgba(255, 69, 58, 0.3)",
+            transition: "all 0.2s ease",
+          }}
+        >
+          <span>+</span>
+          <span>ออกใบเตือน / บันทึกการลงโทษ</span>
+        </button>
       </div>
 
       {/* Warnings List Table */}
@@ -154,71 +285,367 @@ export default function ModerationManager() {
             </tr>
           </thead>
           <tbody>
-            {filteredWarnings.map((w) => {
-              const sev = SEVERITY_MAP[w.severity] || SEVERITY_MAP.LOW;
-              return (
-                <tr key={w.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.04)" }}>
-                  <td style={{ padding: "12px 16px" }}>
-                    <div style={{ fontSize: "13px", fontWeight: 600, color: "#ffffff" }}>{w.discordName}</div>
-                    <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>ID: {w.discordId}</div>
-                  </td>
-                  <td style={{ padding: "12px 16px", fontSize: "13px", color: "rgba(255, 255, 255, 0.8)", maxWidth: "260px" }}>
-                    {w.reason}
-                  </td>
-                  <td style={{ padding: "12px 16px", textAlign: "center" }}>
-                    <span style={{ fontSize: "11px", fontWeight: 700, padding: "2px 8px", borderRadius: "6px", background: sev.bg, color: sev.color }}>
-                      {sev.label}
-                    </span>
-                  </td>
-                  <td style={{ padding: "12px 16px", fontSize: "12px", color: "var(--text-secondary)" }}>
-                    <div>{w.issuedBy}</div>
-                    <div style={{ fontSize: "10px", color: "var(--text-muted)" }}>{formatRelativeTime(w.createdAt)}</div>
-                  </td>
-                  <td style={{ padding: "12px 16px", textAlign: "center" }}>
-                    <span style={{ fontSize: "11px", fontWeight: 600, color: w.isActive ? "#30d158" : "var(--text-muted)" }}>
-                      {w.isActive ? "🔴 กำลังมีผล" : "⚪ ยกเลิก"}
-                    </span>
-                  </td>
-                  <td style={{ padding: "12px 16px", textAlign: "right" }}>
-                    <div style={{ display: "inline-flex", gap: "8px" }}>
-                      <button
-                        type="button"
-                        onClick={() => handleToggleActive(w.id, w.isActive)}
-                        style={{
-                          padding: "4px 8px",
-                          borderRadius: "6px",
-                          background: "rgba(255, 255, 255, 0.06)",
-                          border: "1px solid rgba(255, 255, 255, 0.1)",
-                          color: "#ffffff",
-                          fontSize: "11px",
-                          cursor: "pointer",
-                        }}
-                      >
-                        {w.isActive ? "ยกเลิกเตือน" : "เปิดใช้งาน"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(w.id)}
-                        style={{
-                          padding: "4px 8px",
-                          borderRadius: "6px",
-                          background: "rgba(255, 69, 58, 0.1)",
-                          border: "1px solid rgba(255, 69, 58, 0.2)",
-                          color: "#ff453a",
-                          fontSize: "11px",
-                          cursor: "pointer",
-                        }}
-                      >
-                        ลบ
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
+            {filteredWarnings.length === 0 ? (
+              <tr>
+                <td colSpan={6} style={{ padding: "40px 16px", textAlign: "center", color: "var(--text-muted)", fontSize: "14px" }}>
+                  {loading ? "กำลังโหลดข้อมูล..." : "ไม่มีประวัติการตักเตือนในหมวดหมู่นี้"}
+                </td>
+              </tr>
+            ) : (
+              filteredWarnings.map((w) => {
+                const sev = SEVERITY_MAP[w.severity] || SEVERITY_MAP.LOW;
+                return (
+                  <tr key={w.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.04)" }}>
+                    <td style={{ padding: "12px 16px" }}>
+                      <div style={{ fontSize: "13px", fontWeight: 600, color: "#ffffff" }}>{w.discordName}</div>
+                      <div style={{ fontSize: "11px", color: "var(--text-muted)", fontFamily: "var(--font-mono, monospace)" }}>ID: {w.discordId}</div>
+                    </td>
+                    <td style={{ padding: "12px 16px", fontSize: "13px", color: "rgba(255, 255, 255, 0.8)", maxWidth: "260px" }}>
+                      {w.reason}
+                    </td>
+                    <td style={{ padding: "12px 16px", textAlign: "center" }}>
+                      <span style={{ fontSize: "11px", fontWeight: 700, padding: "3px 10px", borderRadius: "6px", background: sev.bg, color: sev.color }}>
+                        {sev.label}
+                      </span>
+                    </td>
+                    <td style={{ padding: "12px 16px", fontSize: "12px", color: "var(--text-secondary)" }}>
+                      <div style={{ fontWeight: 600 }}>{w.issuedBy}</div>
+                      <div style={{ fontSize: "10px", color: "var(--text-muted)" }}>{formatRelativeTime(w.createdAt)}</div>
+                    </td>
+                    <td style={{ padding: "12px 16px", textAlign: "center" }}>
+                      <span style={{ fontSize: "11px", fontWeight: 600, color: w.isActive ? "#30d158" : "var(--text-muted)" }}>
+                        {w.isActive ? "🔴 กำลังมีผล" : "⚪ ยกเลิกแล้ว"}
+                      </span>
+                    </td>
+                    <td style={{ padding: "12px 16px", textAlign: "right" }}>
+                      <div style={{ display: "inline-flex", gap: "8px" }}>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleActive(w.id, w.isActive)}
+                          style={{
+                            padding: "4px 10px",
+                            borderRadius: "6px",
+                            background: "rgba(255, 255, 255, 0.06)",
+                            border: "1px solid rgba(255, 255, 255, 0.1)",
+                            color: "#ffffff",
+                            fontSize: "11px",
+                            cursor: "pointer",
+                          }}
+                        >
+                          {w.isActive ? "ยกเลิกเตือน" : "เปิดใช้งาน"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(w.id)}
+                          style={{
+                            padding: "4px 10px",
+                            borderRadius: "6px",
+                            background: "rgba(255, 69, 58, 0.1)",
+                            border: "1px solid rgba(255, 69, 58, 0.2)",
+                            color: "#ff453a",
+                            fontSize: "11px",
+                            cursor: "pointer",
+                          }}
+                        >
+                          ลบ
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>
+
+      {/* Create Warning Modal */}
+      {isModalOpen && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            backdropFilter: "blur(8px)",
+            zIndex: 1000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsModalOpen(false);
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#1c1c1e",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              borderRadius: "18px",
+              maxWidth: "520px",
+              width: "100%",
+              padding: "24px",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.6)",
+              maxHeight: "90vh",
+              overflowY: "auto",
+            }}
+          >
+            {/* Modal Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "18px" }}>
+              <div>
+                <h3 style={{ margin: "0 0 4px", fontSize: "18px", fontWeight: 700, color: "#ffffff" }}>
+                  ออกใบเตือน & บันทึกการลงโทษสมาชิก
+                </h3>
+                <p style={{ margin: 0, fontSize: "12px", color: "var(--text-secondary)" }}>
+                  บันทึกลงสู่ระบบแดชบอร์ด และส่งข้อความตักเตือนเข้า Discord ของสมาชิกอัตโนมัติ
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                style={{
+                  background: "rgba(255, 255, 255, 0.08)",
+                  border: "none",
+                  borderRadius: "50%",
+                  width: "28px",
+                  height: "28px",
+                  color: "#ffffff",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateWarning}>
+              {/* Target Discord ID */}
+              <div style={{ marginBottom: "14px" }}>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#ffffff", marginBottom: "6px" }}>
+                  ไอดี Discord สมาชิกที่ต้องการเตือน (Discord User ID) <span style={{ color: "#ff453a" }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="เช่น 1078869442609561691 หรือแท็ก @สมาชิก"
+                  value={formDiscordId}
+                  onChange={(e) => setFormDiscordId(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    color: "#ffffff",
+                    fontSize: "13px",
+                  }}
+                />
+                <span style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px", display: "block" }}>
+                  (คลิกขวาที่ชื่อสมาชิกใน Discord แล้วกด &quot;คัดลอก ID ผู้ใช้&quot;)
+                </span>
+              </div>
+
+              {/* Target Username (Optional) */}
+              <div style={{ marginBottom: "14px" }}>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#ffffff", marginBottom: "6px" }}>
+                  ชื่อสมาชิก (Display Name) <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>(ทางเลือก)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="เว้นว่างไว้เพื่อให้ระบบตรวจจับชื่อจาก Discord อัตโนมัติ"
+                  value={formDiscordName}
+                  onChange={(e) => setFormDiscordName(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    color: "#ffffff",
+                    fontSize: "13px",
+                  }}
+                />
+              </div>
+
+              {/* Severity Level */}
+              <div style={{ marginBottom: "14px" }}>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#ffffff", marginBottom: "6px" }}>
+                  ระดับความรุนแรง (Severity)
+                </label>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "8px" }}>
+                  {(["LOW", "MEDIUM", "HIGH", "CRITICAL"] as const).map((sev) => {
+                    const info = SEVERITY_MAP[sev];
+                    const isSelected = formSeverity === sev;
+                    return (
+                      <button
+                        key={sev}
+                        type="button"
+                        onClick={() => setFormSeverity(sev)}
+                        style={{
+                          padding: "8px 6px",
+                          borderRadius: "8px",
+                          border: isSelected ? `2px solid ${info.color}` : "1px solid rgba(255,255,255,0.08)",
+                          background: isSelected ? info.bg : "rgba(255,255,255,0.03)",
+                          color: isSelected ? info.color : "var(--text-secondary)",
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          textAlign: "center",
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        {info.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Action Dropdown */}
+              <div style={{ marginBottom: "14px" }}>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#ffffff", marginBottom: "6px" }}>
+                  มาตรการดำเนินการใน Discord (Action)
+                </label>
+                <select
+                  value={formAction}
+                  onChange={(e) => setFormAction(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    background: "#2c2c2e",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    color: "#ffffff",
+                    fontSize: "13px",
+                  }}
+                >
+                  <option value="WARN">บันทึกการตักเตือนในระบบ (Warning Record Only)</option>
+                  <option value="TIMEOUT_10M">บันทึก + ปิดปาก (Timeout) 10 นาที</option>
+                  <option value="TIMEOUT_1H">บันทึก + ปิดปาก (Timeout) 1 ชั่วโมง</option>
+                  <option value="TIMEOUT_1D">บันทึก + ปิดปาก (Timeout) 24 ชั่วโมง</option>
+                  <option value="KICK">เตะออกจากเซิร์ฟเวอร์ (Kick Member)</option>
+                </select>
+              </div>
+
+              {/* Reason */}
+              <div style={{ marginBottom: "14px" }}>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#ffffff", marginBottom: "6px" }}>
+                  สาเหตุและพฤติกรรมความผิด (Reason) <span style={{ color: "#ff453a" }}>*</span>
+                </label>
+                <textarea
+                  required
+                  rows={3}
+                  placeholder="ระบุเหตุผลในการตักเตือนหรือบทลงโทษ..."
+                  value={formReason}
+                  onChange={(e) => setFormReason(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    color: "#ffffff",
+                    fontSize: "13px",
+                    resize: "vertical",
+                  }}
+                />
+                {/* Quick Reason Presets */}
+                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "6px" }}>
+                  {[
+                    "ใช้คำหยาบ / ก่อกวน",
+                    "แปะลิงก์โฆษณา",
+                    "สแปมข้อความ",
+                    "ละเมิดกฎห้องเสียง",
+                    "ไม่สุภาพต่อทีมงาน",
+                  ].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setFormReason((prev) => (prev ? `${prev}, ${preset}` : preset))}
+                      style={{
+                        padding: "3px 8px",
+                        borderRadius: "4px",
+                        background: "rgba(255, 255, 255, 0.06)",
+                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        color: "var(--text-secondary)",
+                        fontSize: "10px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      + {preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Custom Issuer (Optional) */}
+              <div style={{ marginBottom: "20px" }}>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#ffffff", marginBottom: "6px" }}>
+                  ผู้บันทึกการลงโทษ (Issued By) <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>(ระบุชื่อ หรือใช้บัญชีปัจจุบัน)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="เว้นว่างไว้เพื่อใช้ชื่อบัญชีของคุณในระบบ"
+                  value={formCustomIssuer}
+                  onChange={(e) => setFormCustomIssuer(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    color: "#ffffff",
+                    fontSize: "13px",
+                  }}
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: "8px",
+                    background: "rgba(255, 255, 255, 0.06)",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    color: "#ffffff",
+                    fontSize: "13px",
+                    cursor: "pointer",
+                  }}
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  style={{
+                    padding: "8px 20px",
+                    borderRadius: "8px",
+                    background: "#ff453a",
+                    border: "none",
+                    color: "#ffffff",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    cursor: submitting ? "not-allowed" : "pointer",
+                    opacity: submitting ? 0.7 : 1,
+                    boxShadow: "0 2px 10px rgba(255, 69, 58, 0.3)",
+                  }}
+                >
+                  {submitting ? "กำลังบันทึก..." : "ยืนยันบันทึกการลงโทษ"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -33,6 +33,10 @@ import {
   handleAdminStaffList,
   handleAdminPendingLeaves,
   handleAdminBackupServer,
+  showWarnCreateModal,
+  showWarnCheckModal,
+  handleWarnModalSubmit,
+  handleWarnCheckModalSubmit,
 } from "../services/panels/index.js";
 import {
   handleSlipApproveClick,
@@ -137,6 +141,16 @@ export async function handleInteraction(
           return;
         }
 
+        // Moderation Panel Buttons
+        if (btn.customId === "panel_warn_create") {
+          await showWarnCreateModal(btn);
+          return;
+        }
+        if (btn.customId === "panel_warn_check") {
+          await showWarnCheckModal(btn);
+          return;
+        }
+
         // Ticket System Buttons
         if (btn.customId === "ticket_create") {
           await handleTicketCreate(btn);
@@ -235,6 +249,16 @@ export async function handleInteraction(
         if (modal.customId.startsWith("modal_slip_reject_")) {
           const slipId = modal.customId.replace("modal_slip_reject_", "");
           await handleSlipRejectModalSubmit(modal, slipId);
+          return;
+        }
+
+        // Moderation Panel Modals
+        if (modal.customId === "modal_warn_create") {
+          await handleWarnModalSubmit(modal);
+          return;
+        }
+        if (modal.customId === "modal_warn_check") {
+          await handleWarnCheckModalSubmit(modal);
           return;
         }
       } catch (modalError: any) {
