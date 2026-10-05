@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { formatRelativeTime } from "@/lib/utils";
 
 interface WarningItem {
@@ -13,6 +13,13 @@ interface WarningItem {
   severity: string;
   isActive: boolean;
   createdAt: string;
+}
+
+interface MemberItem {
+  id: string;
+  name: string;
+  username: string;
+  avatarUrl: string;
 }
 
 const SEVERITY_MAP: Record<string, { label: string; color: string; bg: string }> = {
@@ -39,6 +46,84 @@ export default function ModerationManager() {
   const [formSeverity, setFormSeverity] = useState("LOW");
   const [formAction, setFormAction] = useState("WARN");
   const [formCustomIssuer, setFormCustomIssuer] = useState("");
+
+  // Member Search State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<MemberItem[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<MemberItem | null>(null);
+  const searchDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Live member search with debouncing
+  useEffect(() => {
+    if (!isModalOpen) return;
+    if (selectedMember && (searchQuery === selectedMember.name || searchQuery === selectedMember.id)) {
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        setIsSearching(true);
+        const res = await fetch(`/api/moderation?search=${encodeURIComponent(searchQuery)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSearchResults(data.members || []);
+        }
+      } catch (err) {
+        console.error("Search members error:", err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, isModalOpen, selectedMember]);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchDropdownRef.current && !searchDropdownRef.current.contains(e.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleOpenModal = () => {
+    setFormDiscordId("");
+    setFormDiscordName("");
+    setFormReason("");
+    setFormSeverity("LOW");
+    setFormAction("WARN");
+    setFormCustomIssuer("");
+    setSearchQuery("");
+    setSelectedMember(null);
+    setIsDropdownOpen(false);
+    setIsModalOpen(true);
+    // Prefetch members
+    fetch("/api/moderation?search=")
+      .then((res) => res.json())
+      .then((data) => setSearchResults(data.members || []))
+      .catch(() => {});
+  };
+
+  const handleSelectMember = (member: MemberItem) => {
+    setSelectedMember(member);
+    setFormDiscordId(member.id);
+    setFormDiscordName(member.name);
+    setSearchQuery(member.name);
+    setIsDropdownOpen(false);
+  };
+
+  const handleClearSelectedMember = () => {
+    setSelectedMember(null);
+    setFormDiscordId("");
+    setFormDiscordName("");
+    setSearchQuery("");
+    setIsDropdownOpen(true);
+  };
 
   const showToast = (message: string, type: "success" | "error" = "success") => {
     setToast({ message, type });
@@ -130,6 +215,8 @@ export default function ModerationManager() {
       setFormSeverity("LOW");
       setFormAction("WARN");
       setFormCustomIssuer("");
+      setSelectedMember(null);
+      setSearchQuery("");
       loadWarnings();
     } catch (err: any) {
       showToast(err.message || "เกิดข้อผิดพลาดในการบันทึก", "error");
@@ -242,7 +329,7 @@ export default function ModerationManager() {
         {/* Add Warning Button */}
         <button
           type="button"
-          onClick={() => setIsModalOpen(true)}
+          onClick={handleOpenModal}
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -425,30 +512,195 @@ export default function ModerationManager() {
             </div>
 
             <form onSubmit={handleCreateWarning}>
-              {/* Target Discord ID */}
-              <div style={{ marginBottom: "14px" }}>
+              {/* Member Search / Selector */}
+              <div style={{ marginBottom: "16px" }}>
                 <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#ffffff", marginBottom: "6px" }}>
-                  ไอดี Discord สมาชิกที่ต้องการเตือน (Discord User ID) <span style={{ color: "#ff453a" }}>*</span>
+                  สมาชิก Discord ที่ต้องการเตือน / ลงโทษ <span style={{ color: "#ff453a" }}>*</span>
                 </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="เช่น 1078869442609561691 หรือแท็ก @สมาชิก"
-                  value={formDiscordId}
-                  onChange={(e) => setFormDiscordId(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    borderRadius: "8px",
-                    background: "rgba(255, 255, 255, 0.05)",
-                    border: "1px solid rgba(255, 255, 255, 0.12)",
-                    color: "#ffffff",
-                    fontSize: "13px",
-                  }}
-                />
-                <span style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px", display: "block" }}>
-                  (คลิกขวาที่ชื่อสมาชิกใน Discord แล้วกด &quot;คัดลอก ID ผู้ใช้&quot;)
-                </span>
+
+                {selectedMember ? (
+                  /* Selected Member Badge */
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "12px",
+                      padding: "10px 14px",
+                      borderRadius: "10px",
+                      background: "rgba(41, 151, 255, 0.08)",
+                      border: "1px solid rgba(41, 151, 255, 0.3)",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+                      <img
+                        src={selectedMember.avatarUrl}
+                        alt={selectedMember.name}
+                        style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
+                        }}
+                      />
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {selectedMember.name}
+                        </div>
+                        <div style={{ fontSize: "11px", color: "var(--text-secondary)", display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+                          <span>@{selectedMember.username}</span>
+                          <span style={{ fontFamily: "monospace", fontSize: "11px", background: "rgba(255, 255, 255, 0.08)", padding: "1px 6px", borderRadius: "4px" }}>
+                            {selectedMember.id}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleClearSelectedMember}
+                      style={{
+                        padding: "6px 12px",
+                        borderRadius: "8px",
+                        background: "rgba(255, 255, 255, 0.08)",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                        color: "#ffffff",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        flexShrink: 0,
+                        transition: "all 0.15s ease",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 69, 58, 0.2)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)")}
+                    >
+                      เปลี่ยนสมาชิก
+                    </button>
+                  </div>
+                ) : (
+                  /* Search Input & Dropdown */
+                  <div ref={searchDropdownRef} style={{ position: "relative" }}>
+                    <div style={{ position: "relative" }}>
+                      <input
+                        type="text"
+                        required={!formDiscordId}
+                        placeholder="พิมพ์ค้นหาชื่อสมาชิก, @username หรือพิมพ์ Discord ID..."
+                        value={searchQuery}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setSearchQuery(val);
+                          setFormDiscordId(val);
+                          setIsDropdownOpen(true);
+                        }}
+                        onFocus={() => setIsDropdownOpen(true)}
+                        style={{
+                          width: "100%",
+                          padding: "10px 12px 10px 36px",
+                          borderRadius: "8px",
+                          background: "rgba(255, 255, 255, 0.05)",
+                          border: isDropdownOpen ? "1px solid #2997ff" : "1px solid rgba(255, 255, 255, 0.12)",
+                          color: "#ffffff",
+                          fontSize: "13px",
+                          outline: "none",
+                          transition: "border-color 0.15s ease",
+                        }}
+                      />
+                      <svg
+                        style={{
+                          position: "absolute",
+                          left: "12px",
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          width: "15px",
+                          height: "15px",
+                          fill: "none",
+                          stroke: "var(--text-muted)",
+                          strokeWidth: 2,
+                        }}
+                        viewBox="0 0 24 24"
+                      >
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="M21 21l-4.35-4.35" />
+                      </svg>
+                      {isSearching && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            right: "12px",
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            fontSize: "11px",
+                            color: "#2997ff",
+                          }}
+                        >
+                          กำลังค้นหา...
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Auto-complete Dropdown */}
+                    {isDropdownOpen && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "calc(100% + 4px)",
+                          left: 0,
+                          right: 0,
+                          zIndex: 100,
+                          maxHeight: "240px",
+                          overflowY: "auto",
+                          background: "#1c1c1e",
+                          border: "1px solid rgba(255, 255, 255, 0.15)",
+                          borderRadius: "10px",
+                          boxShadow: "0 12px 32px rgba(0, 0, 0, 0.65)",
+                        }}
+                      >
+                        {searchResults.length > 0 ? (
+                          searchResults.map((member) => (
+                            <div
+                              key={member.id}
+                              onClick={() => handleSelectMember(member)}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "10px",
+                                padding: "9px 12px",
+                                cursor: "pointer",
+                                borderBottom: "1px solid rgba(255, 255, 255, 0.04)",
+                                transition: "background 0.12s ease",
+                              }}
+                              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)")}
+                              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                            >
+                              <img
+                                src={member.avatarUrl}
+                                alt={member.name}
+                                style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
+                                }}
+                              />
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: "13px", fontWeight: 600, color: "#ffffff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                  {member.name}
+                                </div>
+                                <div style={{ fontSize: "11px", color: "var(--text-secondary)", display: "flex", gap: "6px" }}>
+                                  <span>@{member.username}</span>
+                                  <span style={{ fontFamily: "monospace", color: "var(--text-muted)" }}>({member.id})</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div style={{ padding: "14px 16px", fontSize: "12px", color: "var(--text-secondary)", textAlign: "center" }}>
+                            {isSearching ? "กำลังโหลดรายชื่อสมาชิก..." : "ไม่พบสมาชิกตามชื่อนี้ (หากมี Discord ID สามารถกรอกเลข 17-20 หลักได้โดยตรง)"}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px", display: "block" }}>
+                      พิมพ์ค้นหาชื่อสมาชิกจาก Discord หรือพิมพ์ Discord ID 17-20 หลัก
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Target Username (Optional) */}

@@ -13,6 +13,164 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
+    const search = searchParams.get("search");
+
+    // Member search endpoint for live typing / auto-complete
+    if (search !== null) {
+      const query = search.trim();
+      const token = process.env.DISCORD_TOKEN;
+      const guildId = process.env.DISCORD_GUILD_ID;
+
+      const resultsMap = new Map<string, {
+        id: string;
+        name: string;
+        username: string;
+        avatarUrl: string;
+      }>();
+
+      const getAvatarUrl = (userId: string, userAvatar?: string | null, memberAvatar?: string | null) => {
+        if (guildId && memberAvatar) {
+          return `https://cdn.discordapp.com/guilds/${guildId}/users/${userId}/avatars/${memberAvatar}.png?size=64`;
+        }
+        if (userAvatar) {
+          return `https://cdn.discordapp.com/avatars/${userId}/${userAvatar}.png?size=64`;
+        }
+        try {
+          const index = Number((BigInt(userId) >> BigInt(22)) % BigInt(6));
+          return `https://cdn.discordapp.com/embed/avatars/${Math.abs(index) % 6}.png`;
+        } catch {
+          return "https://cdn.discordapp.com/embed/avatars/0.png";
+        }
+      };
+
+      // 1. Direct Discord ID match if 17-20 digits
+      const isIdMatch = /^\d{17,20}$/.test(query);
+      if (isIdMatch && token) {
+        try {
+          if (guildId) {
+            const mRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${query}`, {
+              headers: { Authorization: `Bot ${token}` },
+            });
+            if (mRes.ok) {
+              const m = await mRes.json();
+              if (m.user) {
+                resultsMap.set(m.user.id, {
+                  id: m.user.id,
+                  name: m.nick || m.user.global_name || m.user.username,
+                  username: m.user.username,
+                  avatarUrl: getAvatarUrl(m.user.id, m.user.avatar, m.avatar),
+                });
+              }
+            }
+          }
+          if (!resultsMap.has(query)) {
+            const uRes = await fetch(`https://discord.com/api/v10/users/${query}`, {
+              headers: { Authorization: `Bot ${token}` },
+            });
+            if (uRes.ok) {
+              const u = await uRes.json();
+              resultsMap.set(u.id, {
+                id: u.id,
+                name: u.global_name || u.username,
+                username: u.username,
+                avatarUrl: getAvatarUrl(u.id, u.avatar),
+              });
+            }
+          }
+        } catch (e) {
+          console.error("Error fetching direct Discord user by ID:", e);
+        }
+      }
+
+      // 2. Search Guild members via Discord API
+      if (token && guildId) {
+        try {
+          const endpoint = query.length > 0
+            ? `https://discord.com/api/v10/guilds/${guildId}/members/search?query=${encodeURIComponent(query)}&limit=15`
+            : `https://discord.com/api/v10/guilds/${guildId}/members?limit=15`;
+          const dRes = await fetch(endpoint, {
+            headers: { Authorization: `Bot ${token}` },
+          });
+          if (dRes.ok) {
+            const members = await dRes.json();
+            if (Array.isArray(members)) {
+              for (const m of members) {
+                if (m.user && !resultsMap.has(m.user.id)) {
+                  resultsMap.set(m.user.id, {
+                    id: m.user.id,
+                    name: m.nick || m.user.global_name || m.user.username,
+                    username: m.user.username,
+                    avatarUrl: getAvatarUrl(m.user.id, m.user.avatar, m.avatar),
+                  });
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.error("Error searching Discord guild members:", e);
+        }
+      }
+
+      // 3. Search local Database users
+      try {
+        const dbUsers = await prisma.user.findMany({
+          where: query
+            ? {
+                OR: [
+                  { username: { contains: query, mode: "insensitive" } },
+                  { displayName: { contains: query, mode: "insensitive" } },
+                  { discordId: { contains: query } },
+                ],
+              }
+            : undefined,
+          take: 10,
+        });
+
+        for (const u of dbUsers) {
+          if (!resultsMap.has(u.discordId)) {
+            resultsMap.set(u.discordId, {
+              id: u.discordId,
+              name: u.displayName || u.username,
+              username: u.username,
+              avatarUrl: getAvatarUrl(u.discordId, u.avatar),
+            });
+          }
+        }
+      } catch (e) {
+        console.error("Error searching DB users:", e);
+      }
+
+      // 4. Past warnings to include past penalized members
+      if (query && resultsMap.size < 10) {
+        try {
+          const pastWarns = await prisma.warning.findMany({
+            where: {
+              OR: [
+                { discordName: { contains: query, mode: "insensitive" } },
+                { discordId: { contains: query } },
+              ],
+            },
+            take: 5,
+            select: { discordId: true, discordName: true },
+          });
+          for (const w of pastWarns) {
+            if (!resultsMap.has(w.discordId)) {
+              resultsMap.set(w.discordId, {
+                id: w.discordId,
+                name: w.discordName,
+                username: w.discordName,
+                avatarUrl: getAvatarUrl(w.discordId),
+              });
+            }
+          }
+        } catch {}
+      }
+
+      return NextResponse.json({
+        members: Array.from(resultsMap.values()),
+      });
+    }
+
     const severity = searchParams.get("severity");
 
     const warnings = await prisma.warning.findMany({
