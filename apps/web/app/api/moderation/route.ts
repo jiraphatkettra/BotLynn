@@ -337,7 +337,54 @@ export async function POST(req: Request) {
       } catch {}
     }
 
-    // 5. Audit Log
+    // 5. Send Server Announcement if moderation_notify_channel is configured
+    if (token) {
+      try {
+        const notifySetting = await prisma.setting.findUnique({
+          where: { key: "moderation_notify_channel" },
+        });
+        if (notifySetting?.value) {
+          const sevColor =
+            cleanSeverity === "CRITICAL"
+              ? 0xff453a
+              : cleanSeverity === "HIGH"
+              ? 0xff6b00
+              : cleanSeverity === "MEDIUM"
+              ? 0xff9f0a
+              : 0x2997ff;
+
+          await fetch(`https://discord.com/api/v10/channels/${notifySetting.value}/messages`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bot ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              embeds: [
+                {
+                  title: "⚖️  PUNISHMENT LOGGED • บันทึกการลงโทษสมาชิก",
+                  description:
+                    `ดำเนินการบันทึกการกระทำผิดและบทลงโทษเรียบร้อยแล้ว\n\n` +
+                    `👤 **สมาชิกที่ถูกลงโทษ:** <@${cleanId}> (\`${finalDiscordName}\`)\n` +
+                    `📝 **สาเหตุ / ความผิด:** ${reason}\n` +
+                    `⚡ **ระดับความรุนแรง:** \`${cleanSeverity}\`\n` +
+                    `🛡️ **ผู้ลงโทษ (Moderator):** **${issuedBy}**\n` +
+                    `🔨 **มาตรการที่ใช้:** **${actionResultNote}**\n\n` +
+                    `-# ดำเนินการผ่านระบบ LynnBot Moderation Dashboard`,
+                  color: sevColor,
+                  footer: { text: `Warning ID: ${warning.id} • LynnBot Security` },
+                  timestamp: new Date().toISOString(),
+                },
+              ],
+            }),
+          });
+        }
+      } catch (notifyErr: any) {
+        console.warn("Could not send warning announcement to Discord channel:", notifyErr.message);
+      }
+    }
+
+    // 6. Audit Log
     if (sessionUser?.id) {
       await prisma.auditLog.create({
         data: {

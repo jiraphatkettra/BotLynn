@@ -8,6 +8,7 @@ import {
   EmbedBuilder,
   PermissionFlagsBits,
   type GuildMember,
+  type TextChannel,
 } from "discord.js";
 import { prisma } from "@lynnbot/database";
 import { THEME_COLORS } from "../../utils/theme.js";
@@ -244,7 +245,24 @@ export async function handleWarnModalSubmit(interaction: ModalSubmitInteraction)
     .setFooter({ text: `Warning ID: ${warning.id}` })
     .setTimestamp();
 
-  await interaction.editReply({ embeds: [embed] });
+  // Check configured announcement channel
+  const notifySetting = await prisma.setting.findUnique({
+    where: { key: "moderation_notify_channel" },
+  });
+  const notifyChannelId = notifySetting?.value;
+  const notifyChannel = notifyChannelId
+    ? (interaction.guild?.channels.cache.get(notifyChannelId) as TextChannel | undefined)
+    : undefined;
+
+  if (notifyChannel && notifyChannel.id !== interaction.channelId) {
+    await notifyChannel.send({ embeds: [embed] }).catch(() => {});
+    await interaction.editReply({
+      content: `✅ บันทึกการลงโทษ <@${targetId}> เรียบร้อยแล้ว (ประกาศลงห้อง <#${notifyChannel.id}>)`,
+      embeds: [embed],
+    });
+  } else {
+    await interaction.editReply({ embeds: [embed] });
+  }
 }
 
 /**

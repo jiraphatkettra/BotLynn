@@ -539,6 +539,47 @@ export default function SettingsManager({
                   )}
                 </div>
               </div>
+
+              {/* Channel 3: Moderation */}
+              <div className="settings-row">
+                <div>
+                  <div className="settings-row-label">ห้องประกาศการเตือน & ลงโทษสมาชิก (Moderation Log)</div>
+                  <div className="settings-row-desc">
+                    เมื่อมีการออกใบเตือนหรือลงโทษสมาชิก (ผ่าน Dashboard, /warn หรือผ่าน Panel) บอทจะประกาศลงในห้องนี้
+                  </div>
+                </div>
+                <div style={{ minWidth: 280, maxWidth: 420, width: "100%", display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ flex: 1 }}>
+                    <CustomSelect
+                      disabled={!isSuperAdmin || loadingChannels}
+                      value={settings.moderation_notify_channel || ""}
+                      onChange={(val) => handleChange("moderation_notify_channel", val)}
+                      placeholder="— ไม่เปิดใช้งาน (ส่งในห้องที่ใช้คำสั่ง) —"
+                      searchPlaceholder="ค้นหาห้อง Discord (#channel)..."
+                      options={[
+                        { value: "", label: "— ไม่เปิดใช้งาน (ส่งในห้องที่ใช้คำสั่ง) —" },
+                        ...channels.map((ch) => ({
+                          value: ch.id,
+                          label: `#${ch.name}`,
+                          sub: `ID: ${ch.id}`,
+                        })),
+                      ]}
+                      style={{ width: "100%" }}
+                    />
+                  </div>
+                  {settings.moderation_notify_channel && (
+                    <button
+                      type="button"
+                      className="channel-test-btn"
+                      disabled={!isSuperAdmin || testingChannel === settings.moderation_notify_channel}
+                      onClick={() => handleTestChannel(settings.moderation_notify_channel, "ห้องประกาศการลงโทษ")}
+                      title="ทดสอบส่งข้อความแจ้งเตือนเข้าห้องนี้"
+                    >
+                      {testingChannel === settings.moderation_notify_channel ? "⏳ กำลังส่ง..." : "⚡ ทดสอบ"}
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
 
             {testResult && (

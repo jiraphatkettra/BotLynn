@@ -29,9 +29,9 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
     const userRole = (session?.user as any)?.role;
 
-    if (userRole !== "OWNER") {
+    if (userRole !== "OWNER" && userRole !== "MANAGER" && userRole !== "ADMIN") {
       return NextResponse.json(
-        { error: "เฉพาะ SuperAdmin (OWNER) เท่านั้นที่สามารถเปลี่ยนการตั้งค่าได้" },
+        { error: "เฉพาะผู้ดูแลระบบ (ADMIN / OWNER) เท่านั้นที่สามารถเปลี่ยนการตั้งค่าได้" },
         { status: 403 }
       );
     }
@@ -57,7 +57,9 @@ export async function POST(request: NextRequest) {
             ? "shop"
             : key.startsWith("attendance")
               ? "attendance"
-              : "general",
+              : key.startsWith("moderation")
+                ? "moderation"
+                : "general",
         },
       });
     }

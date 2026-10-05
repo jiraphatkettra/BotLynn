@@ -44,7 +44,7 @@ export const panelCommand: BotCommand = {
     .addChannelOption((option) =>
       option
         .setName("log_channel")
-        .setDescription("ห้องสำหรับแจ้งเตือนแอดมิน / บันทึก Log (สำหรับ Ticket หรือ Shop)")
+        .setDescription("ห้องสำหรับแจ้งเตือนแอดมิน / บันทึก Log (สำหรับ Ticket, Shop หรือ Moderation)")
         .addChannelTypes(ChannelType.GuildText)
         .setRequired(false)
     ),
@@ -131,6 +131,13 @@ export const panelCommand: BotCommand = {
             create: { key: "attendance_log_channel", value: logChannel.id, category: "channels", description: "ห้องแจ้งเตือนตอกบัตร" },
           });
           logNote = `\n• บันทึกห้องแจ้งเตือนตอกบัตรไปยัง <#${logChannel.id}> สำเร็จ`;
+        } else if (panelType === "moderation") {
+          await prisma.setting.upsert({
+            where: { key: "moderation_notify_channel" },
+            update: { value: logChannel.id },
+            create: { key: "moderation_notify_channel", value: logChannel.id, category: "channels", description: "ห้องประกาศการตักเตือนและลงโทษสมาชิก" },
+          });
+          logNote = `\n• บันทึกห้องประกาศเตือนและลงโทษสมาชิกไปยัง <#${logChannel.id}> สำเร็จ`;
         }
       }
 

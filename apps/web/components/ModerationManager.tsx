@@ -22,6 +22,11 @@ interface MemberItem {
   avatarUrl: string;
 }
 
+interface DiscordChannel {
+  id: string;
+  name: string;
+}
+
 const SEVERITY_MAP: Record<string, { label: string; color: string; bg: string }> = {
   LOW: { label: "ระดับเบา", color: "#2997ff", bg: "rgba(41, 151, 255, 0.15)" },
   MEDIUM: { label: "ปานกลาง", color: "#ff9f0a", bg: "rgba(255, 159, 10, 0.15)" },
@@ -54,6 +59,13 @@ export default function ModerationManager() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<MemberItem | null>(null);
   const searchDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Channel Settings State
+  const [channels, setChannels] = useState<DiscordChannel[]>([]);
+  const [notifyChannelId, setNotifyChannelId] = useState<string>("");
+  const [isChannelModalOpen, setIsChannelModalOpen] = useState(false);
+  const [tempChannelId, setTempChannelId] = useState<string>("");
+  const [savingChannel, setSavingChannel] = useState(false);
 
   // Live member search with debouncing
   useEffect(() => {
@@ -145,8 +157,56 @@ export default function ModerationManager() {
     }
   };
 
+  const loadChannelSettings = async () => {
+    try {
+      const [cRes, sRes] = await Promise.all([
+        fetch("/api/discord/guild-data"),
+        fetch("/api/settings"),
+      ]);
+      if (cRes.ok) {
+        const cData = await cRes.json();
+        if (Array.isArray(cData.channels)) setChannels(cData.channels);
+      }
+      if (sRes.ok) {
+        const sData = await sRes.json();
+        if (sData.settings?.moderation_notify_channel) {
+          setNotifyChannelId(sData.settings.moderation_notify_channel);
+          setTempChannelId(sData.settings.moderation_notify_channel);
+        }
+      }
+    } catch (err) {
+      console.error("Error loading channels:", err);
+    }
+  };
+
+  const handleSaveChannel = async () => {
+    setSavingChannel(true);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          settings: { moderation_notify_channel: tempChannelId },
+        }),
+      });
+      if (res.ok) {
+        setNotifyChannelId(tempChannelId);
+        setIsChannelModalOpen(false);
+        showToast(tempChannelId ? "บันทึกห้องประกาศเตือนใน Discord เรียบร้อยแล้ว" : "ปิดการส่งประกาศเตือนแล้ว", "success");
+      } else {
+        const err = await res.json();
+        showToast(err.error || "ไม่สามารถบันทึกได้", "error");
+      }
+    } catch (err: any) {
+      showToast("เกิดข้อผิดพลาดในการบันทึก", "error");
+    } finally {
+      setSavingChannel(false);
+    }
+  };
+
   useEffect(() => {
     loadWarnings();
+    loadChannelSettings();
   }, []);
 
   const handleToggleActive = async (id: string, currentStatus: boolean) => {
@@ -326,29 +386,63 @@ export default function ModerationManager() {
           ))}
         </div>
 
-        {/* Add Warning Button */}
-        <button
-          type="button"
-          onClick={handleOpenModal}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "8px 18px",
-            borderRadius: "10px",
-            backgroundColor: "#ff453a",
-            color: "#ffffff",
-            border: "none",
-            fontSize: "13px",
-            fontWeight: 600,
-            cursor: "pointer",
-            boxShadow: "0 2px 12px rgba(255, 69, 58, 0.3)",
-            transition: "all 0.2s ease",
-          }}
-        >
-          <span>+</span>
-          <span>ออกใบเตือน / บันทึกการลงโทษ</span>
-        </button>
+        {/* Buttons on Right */}
+        <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+          {/* Configure Announcement Channel Button */}
+          <button
+            type="button"
+            onClick={() => {
+              setTempChannelId(notifyChannelId);
+              setIsChannelModalOpen(true);
+            }}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "8px 14px",
+              borderRadius: "10px",
+              background: notifyChannelId ? "rgba(41, 151, 255, 0.1)" : "rgba(255, 255, 255, 0.05)",
+              border: notifyChannelId ? "1px solid rgba(41, 151, 255, 0.3)" : "1px solid rgba(255, 255, 255, 0.12)",
+              color: notifyChannelId ? "#2997ff" : "var(--text-secondary)",
+              fontSize: "12px",
+              fontWeight: 600,
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+            }}
+            title="กำหนดห้องสำหรับให้บอทประกาศเตือนสมาชิกในเซิร์ฟเวอร์"
+          >
+            <span>📢</span>
+            <span>
+              {notifyChannelId
+                ? `ห้องประกาศ: #${channels.find((c) => c.id === notifyChannelId)?.name || notifyChannelId}`
+                : "กำหนดห้องประกาศเตือน"}
+            </span>
+          </button>
+
+          {/* Add Warning Button */}
+          <button
+            type="button"
+            onClick={handleOpenModal}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "8px 18px",
+              borderRadius: "10px",
+              backgroundColor: "#ff453a",
+              color: "#ffffff",
+              border: "none",
+              fontSize: "13px",
+              fontWeight: 600,
+              cursor: "pointer",
+              boxShadow: "0 2px 12px rgba(255, 69, 58, 0.3)",
+              transition: "all 0.2s ease",
+            }}
+          >
+            <span>+</span>
+            <span>ออกใบเตือน / บันทึกการลงโทษ</span>
+          </button>
+        </div>
       </div>
 
       {/* Warnings List Table */}
@@ -895,6 +989,137 @@ export default function ModerationManager() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Configure Announcement Channel Modal */}
+      {isChannelModalOpen && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            backdropFilter: "blur(8px)",
+            zIndex: 999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsChannelModalOpen(false);
+          }}
+        >
+          <div
+            style={{
+              background: "#1c1c1e",
+              border: "1px solid rgba(255, 255, 255, 0.15)",
+              borderRadius: "16px",
+              padding: "24px",
+              width: "100%",
+              maxWidth: "460px",
+              boxShadow: "0 20px 40px rgba(0, 0, 0, 0.6)",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <div>
+                <h3 style={{ margin: "0 0 4px", fontSize: "16px", fontWeight: 700, color: "#ffffff" }}>
+                  📢 ห้องประกาศเตือนสมาชิกใน Discord
+                </h3>
+                <p style={{ margin: 0, fontSize: "12px", color: "var(--text-secondary)" }}>
+                  เลือกห้องที่ต้องการให้บอทส่งการ์ดประกาศเมื่อมีการเตือนหรือลงโทษ
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsChannelModalOpen(false)}
+                style={{
+                  background: "rgba(255, 255, 255, 0.08)",
+                  border: "none",
+                  borderRadius: "50%",
+                  width: "28px",
+                  height: "28px",
+                  color: "#ffffff",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ marginBottom: "20px" }}>
+              <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#ffffff", marginBottom: "8px" }}>
+                เลือกห้อง Discord (#channel)
+              </label>
+              <select
+                value={tempChannelId}
+                onChange={(e) => setTempChannelId(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  borderRadius: "8px",
+                  background: "#2c2c2e",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                  color: "#ffffff",
+                  fontSize: "13px",
+                  outline: "none",
+                }}
+              >
+                <option value="">— ไม่เปิดใช้งาน (ส่งในห้องที่กดใช้คำสั่ง) —</option>
+                {channels.map((ch) => (
+                  <option key={ch.id} value={ch.id}>
+                    #{ch.name} (ID: {ch.id})
+                  </option>
+                ))}
+              </select>
+              <span style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "6px", display: "block" }}>
+                เมื่อบันทึกแล้ว การเตือนผ่าน Web Dashboard, คำสั่ง /warn หรือแผงควบคุม /panel จะประกาศลงห้องนี้โดยอัตโนมัติ
+              </span>
+            </div>
+
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                onClick={() => setIsChannelModalOpen(false)}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  background: "rgba(255, 255, 255, 0.06)",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  color: "#ffffff",
+                  fontSize: "13px",
+                  cursor: "pointer",
+                }}
+              >
+                ยกเลิก
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveChannel}
+                disabled={savingChannel}
+                style={{
+                  padding: "8px 20px",
+                  borderRadius: "8px",
+                  background: "#2997ff",
+                  border: "none",
+                  color: "#ffffff",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  cursor: savingChannel ? "not-allowed" : "pointer",
+                  opacity: savingChannel ? 0.7 : 1,
+                }}
+              >
+                {savingChannel ? "กำลังบันทึก..." : "บันทึกการตั้งค่าห้อง"}
+              </button>
+            </div>
           </div>
         </div>
       )}

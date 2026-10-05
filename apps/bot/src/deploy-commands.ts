@@ -28,7 +28,7 @@ import { scheduleCommand } from "./commands/schedule.js";
 import { leaderboardCommand } from "./commands/leaderboard.js";
 import { giveawayCommand } from "./commands/giveaway.js";
 import { pollCommand } from "./commands/poll.js";
-import { warnCommand, warningsCommand, unwarnCommand } from "./commands/warn.js";
+import { warnCommand, warningsCommand, unwarnCommand, warnchannelCommand } from "./commands/warn.js";
 import { reactionRoleCommand } from "./commands/reactionRole.js";
 import { scheduleMsgCommand } from "./commands/scheduleMsg.js";
 import { taskCommand } from "./commands/task.js";
@@ -64,6 +64,7 @@ const commands = [
   warnCommand.data.toJSON(),
   warningsCommand.data.toJSON(),
   unwarnCommand.data.toJSON(),
+  warnchannelCommand.data.toJSON(),
   reactionRoleCommand.data.toJSON(),
   scheduleMsgCommand.data.toJSON(),
   taskCommand.data.toJSON(),

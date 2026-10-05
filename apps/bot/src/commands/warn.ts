@@ -2,6 +2,8 @@ import {
   SlashCommandBuilder,
   EmbedBuilder,
   PermissionFlagsBits,
+  ChannelType,
+  type TextChannel,
   type GuildMember,
 } from "discord.js";
 import { prisma } from "@lynnbot/database";
@@ -104,7 +106,7 @@ export const warnCommand: BotCommand = {
       // Ignore if user has DMs closed
     }
 
-    // 5. Send Channel Embed
+    // 5. Send Channel Embed / Announce to Configured Channel
     const embed = new EmbedBuilder()
       .setColor(SEVERITY_COLORS[severity] || THEME_COLORS.danger)
       .setTitle("⚠️  MEMBER WARNED • บันทึกการเตือนสมาชิก")
@@ -120,7 +122,24 @@ export const warnCommand: BotCommand = {
       .setFooter({ text: `Warning ID: ${warning.id}` })
       .setTimestamp();
 
-    await interaction.editReply({ embeds: [embed] });
+    // Check configured announcement channel
+    const notifySetting = await prisma.setting.findUnique({
+      where: { key: "moderation_notify_channel" },
+    });
+    const notifyChannelId = notifySetting?.value;
+    const notifyChannel = notifyChannelId
+      ? (interaction.guild?.channels.cache.get(notifyChannelId) as TextChannel | undefined)
+      : undefined;
+
+    if (notifyChannel && notifyChannel.id !== interaction.channelId) {
+      await notifyChannel.send({ embeds: [embed] }).catch(() => {});
+      await interaction.editReply({
+        content: `✅ บันทึกการตักเตือน <@${targetUser.id}> เรียบร้อยแล้ว (ประกาศลงห้อง <#${notifyChannel.id}>)`,
+        embeds: [embed],
+      });
+    } else {
+      await interaction.editReply({ embeds: [embed] });
+    }
   },
 };
 
@@ -200,5 +219,56 @@ export const unwarnCommand: BotCommand = {
     await interaction.editReply({
       content: `✅ ยกเลิกการเตือนของ <@${warning.discordId}> (ID: \`${warning.id}\`) เรียบร้อยแล้ว`,
     });
+  },
+};
+
+export const warnchannelCommand: BotCommand = {
+  data: new SlashCommandBuilder()
+    .setName("warnchannel")
+    .setDescription("กำหนดหรือตรวจสอบห้องสำหรับบอทประกาศเตือนสมาชิกในเซิร์ฟเวอร์")
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+    .addChannelOption((opt) =>
+      opt
+        .setName("channel")
+        .setDescription("เลือกห้องที่ต้องการให้บอทประกาศเตือนสมาชิก (เว้นว่างไว้เพื่อดูห้องปัจจุบัน)")
+        .addChannelTypes(ChannelType.GuildText)
+        .setRequired(false)
+    ),
+
+  async execute(interaction) {
+    await interaction.deferReply({ ephemeral: true });
+
+    const channel = interaction.options.getChannel("channel") as TextChannel | null;
+
+    if (channel) {
+      await prisma.setting.upsert({
+        where: { key: "moderation_notify_channel" },
+        update: { value: channel.id },
+        create: {
+          key: "moderation_notify_channel",
+          value: channel.id,
+          category: "channels",
+          description: "ห้องประกาศการตักเตือนและลงโทษสมาชิก",
+        },
+      });
+
+      await interaction.editReply({
+        content: `✅ บันทึกห้องประกาศเตือนสมาชิกไปยัง <#${channel.id}> เรียบร้อยแล้ว!\nเมื่อมีการเตือนสมาชิกผ่านคำสั่ง \`/warn\`, แผงควบคุม \`/panel\` หรือผ่าน Dashboard ระบบจะส่งข้อความประกาศลงห้องนี้โดยอัตโนมัติ`,
+      });
+    } else {
+      const currentSetting = await prisma.setting.findUnique({
+        where: { key: "moderation_notify_channel" },
+      });
+
+      if (currentSetting?.value) {
+        await interaction.editReply({
+          content: `📢 ห้องประกาศเตือนสมาชิกปัจจุบันคือ: <#${currentSetting.value}> (ID: \`${currentSetting.value}\`)\n-# หากต้องการเปลี่ยน ให้ระบุตัวเลือก \`channel\` ในคำสั่งนี้`,
+        });
+      } else {
+        await interaction.editReply({
+          content: `⚠️ ยังไม่ได้กำหนดห้องประกาศเตือนสมาชิก (บอทจะส่งในห้องที่กดใช้คำสั่ง)\n-# หากต้องการกำหนดห้อง ให้พิมพ์ \`/warnchannel channel:#ห้องที่ต้องการ\``,
+        });
+      }
+    }
   },
 };
