@@ -9,6 +9,7 @@ import {
 } from "discord.js";
 import { prisma } from "@lynnbot/database";
 import type { BotCommand } from "../index.js";
+import { renderCustomEmbed } from "../services/embedService.js";
 
 export const ticketSetupCommand: BotCommand = {
   data: new SlashCommandBuilder()
@@ -56,7 +57,7 @@ export const ticketSetupCommand: BotCommand = {
       interaction.options.getString("description") ||
       "หากคุณพบปัญหา ต้องการสอบถามข้อมูล ติดต่อทีมงาน หรือแจ้งปัญหาการซื้อยศ\nสามารถกดปุ่มด้านล่างเพื่อเปิดห้องสนทนาส่วนตัว (Ticket) กับทีมแอดมินได้ทันที";
 
-    const embed = new EmbedBuilder()
+    const defaultEmbed = new EmbedBuilder()
       .setColor(0x16161c)
       .setTitle(`📩  ${title.toUpperCase()} • TICKET SUPPORT`)
       .setDescription(
@@ -68,6 +69,10 @@ export const ticketSetupCommand: BotCommand = {
         text: "LynnBot Operations System • Ticket Helpdesk",
       })
       .setTimestamp();
+
+    const embed = await renderCustomEmbed("ticket_panel", defaultEmbed, {
+      server_name: interaction.guild?.name || "Server",
+    });
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder()

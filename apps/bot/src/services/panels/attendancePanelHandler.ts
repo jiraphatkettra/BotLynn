@@ -7,6 +7,7 @@ import {
 import { prisma } from "@lynnbot/database";
 import { THEME_COLORS } from "../../utils/theme.js";
 import { ensureUser, toggleOnDutyRole } from "./common.js";
+import { renderCustomEmbed } from "../embedService.js";
 
 /**
  * ============================================================================
@@ -77,7 +78,7 @@ export async function handleAttendanceClockIn(interaction: ButtonInteraction) {
     console.error("Attendance log notify error:", err);
   }
 
-  const embed = new EmbedBuilder()
+  const defaultEmbed = new EmbedBuilder()
     .setColor(THEME_COLORS.success)
     .setTitle("⏱️  CLOCK-IN RECORDED • บันทึกเวลาเข้างานเรียบร้อย")
     .setDescription(
@@ -89,6 +90,12 @@ export async function handleAttendanceClockIn(interaction: ButtonInteraction) {
     )
     .setFooter({ text: "LynnBot Operations System • Attendance" })
     .setTimestamp();
+
+  const embed = await renderCustomEmbed("attendance_clockin", defaultEmbed, {
+    user: `<@${interaction.user.id}>`,
+    time: `<t:${Math.floor(now.getTime() / 1000)}:T>`,
+    role_status: "รับยศ On-Duty เรียบร้อยแล้ว",
+  });
 
   await interaction.editReply({ embeds: [embed] });
 }
@@ -160,7 +167,7 @@ export async function handleAttendanceClockOut(interaction: ButtonInteraction) {
     console.error("Attendance log notify error:", err);
   }
 
-  const embed = new EmbedBuilder()
+  const defaultEmbed = new EmbedBuilder()
     .setColor(THEME_COLORS.success)
     .setTitle("🏁  CLOCK-OUT RECORDED • บันทึกเวลาออกงานเรียบร้อย")
     .setDescription(
@@ -173,6 +180,13 @@ export async function handleAttendanceClockOut(interaction: ButtonInteraction) {
     )
     .setFooter({ text: "LynnBot Operations System • Attendance" })
     .setTimestamp();
+
+  const embed = await renderCustomEmbed("attendance_clockout", defaultEmbed, {
+    user: `<@${interaction.user.id}>`,
+    clock_in_time: `<t:${Math.floor(activeAttendance.clockIn.getTime() / 1000)}:T>`,
+    clock_out_time: `<t:${Math.floor(now.getTime() / 1000)}:T>`,
+    duration: `${hours} ชั่วโมง ${minutes} นาที`,
+  });
 
   await interaction.editReply({ embeds: [embed] });
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import CustomSelect from "@/components/CustomSelect";
+import EmbedEditorModal from "@/components/EmbedEditorModal";
 
 interface DiscordChannel {
   id: string;
@@ -39,6 +40,7 @@ export default function SettingsManager({
   // UX Enhancements: Tabs & Search
   const [activeTab, setActiveTab] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false);
 
   // Quick channel test
   const [testingChannel, setTestingChannel] = useState<string | null>(null);
@@ -439,6 +441,29 @@ export default function SettingsManager({
             </button>
           )}
         </div>
+
+        <button
+          type="button"
+          onClick={() => setIsEmbedModalOpen(true)}
+          style={{
+            padding: "8px 14px",
+            borderRadius: "10px",
+            background: "rgba(41, 151, 255, 0.12)",
+            border: "1px solid rgba(41, 151, 255, 0.3)",
+            color: "#2997ff",
+            fontSize: "12px",
+            fontWeight: 600,
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            whiteSpace: "nowrap",
+          }}
+          title="เปิด Embed Studio เพื่อปรับแต่ง Discord Embed ทั้งหมดของระบบ"
+        >
+          <span>🎨</span>
+          <span>Embed Studio (ปรับแต่งข้อความ Embed บอท)</span>
+        </button>
       </div>
 
       {/* 1. Bot Notification Channels Card */}
@@ -2119,6 +2144,15 @@ export default function SettingsManager({
             </button>
           </div>
         </div>
+      )}
+
+      {/* Discord Embed Studio Modal */}
+      {isEmbedModalOpen && (
+        <EmbedEditorModal
+          isOpen={isEmbedModalOpen}
+          onClose={() => setIsEmbedModalOpen(false)}
+          initialCategory="all"
+        />
       )}
     </div>
   );

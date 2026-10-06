@@ -13,6 +13,7 @@ import {
 import { prisma } from "@lynnbot/database";
 import { THEME_COLORS } from "../../utils/theme.js";
 import { ensureUser } from "./common.js";
+import { renderCustomEmbed } from "../embedService.js";
 
 /**
  * ============================================================================
@@ -154,7 +155,7 @@ export async function handleLeaveModalSubmit(interaction: ModalSubmitInteraction
     if (targetChannelId && interaction.guild) {
       const channel = interaction.guild.channels.cache.get(targetChannelId) as TextChannel | undefined;
       if (channel) {
-        const reviewEmbed = new EmbedBuilder()
+        const defaultReviewEmbed = new EmbedBuilder()
           .setColor(THEME_COLORS.warning)
           .setTitle("📋  NEW LEAVE REQUEST • มีคำขอลางานใหม่")
           .setDescription(
@@ -168,6 +169,14 @@ export async function handleLeaveModalSubmit(interaction: ModalSubmitInteraction
           )
           .setFooter({ text: `Leave ID: ${leaveRequest.id}` })
           .setTimestamp();
+
+        const reviewEmbed = await renderCustomEmbed("leave_requested", defaultReviewEmbed, {
+          user: `<@${interaction.user.id}>`,
+          leave_type: leaveTypeTh,
+          start_date: startDate.toLocaleDateString("th-TH"),
+          days: `${days} วัน`,
+          reason,
+        });
 
         const actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
           new ButtonBuilder()

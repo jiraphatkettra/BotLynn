@@ -11,6 +11,7 @@ import {
   AttachmentBuilder,
 } from "discord.js";
 import { prisma, isRootOwner } from "@lynnbot/database";
+import { renderCustomEmbed } from "./embedService.js";
 
 /**
  * Check if the member has Staff / Admin permissions
@@ -139,7 +140,7 @@ export async function handleTicketCreate(interaction: ButtonInteraction) {
     });
 
     // Send greeting in the channel
-    const embed = new EmbedBuilder()
+    const defaultEmbed = new EmbedBuilder()
       .setColor(0x16161c)
       .setTitle(`🎫  TICKET #${ticketId.toUpperCase()} • ศูนย์บริการช่วยเหลือ`)
       .setDescription(
@@ -153,6 +154,12 @@ export async function handleTicketCreate(interaction: ButtonInteraction) {
         text: "LynnBot Operations System • Tickets",
       })
       .setTimestamp();
+
+    const embed = await renderCustomEmbed("ticket_welcome", defaultEmbed, {
+      user: `<@${interaction.user.id}>`,
+      ticket_id: ticketId.toUpperCase(),
+      subject: "บริการทั่วไป & แจ้งปัญหา",
+    });
 
     // The user in the ticket room only sees the Close button
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -319,7 +326,7 @@ export async function handleTicketClaim(
         });
       } catch {}
 
-      const claimEmbed = new EmbedBuilder()
+      const defaultClaimEmbed = new EmbedBuilder()
         .setColor(0x30d158)
         .setTitle("🙋‍♂️  TICKET CLAIMED • เจ้าหน้าที่รับเรื่องแล้ว")
         .setDescription(
@@ -327,6 +334,12 @@ export async function handleTicketClaim(
         )
         .setFooter({ text: "LynnBot Operations System • Tickets" })
         .setTimestamp();
+
+      const claimEmbed = await renderCustomEmbed("ticket_claimed", defaultClaimEmbed, {
+        staff: `<@${interaction.user.id}>`,
+        staff_name: interaction.user.displayName || interaction.user.username,
+        ticket_id: ticket.ticketId.toUpperCase(),
+      });
 
       await ticketChannel.send({ embeds: [claimEmbed] });
 
@@ -488,7 +501,7 @@ export async function handleTicketClose(interaction: ButtonInteraction) {
               name: `transcript-${ticket.ticketId}.txt`,
             });
 
-            const logEmbed = new EmbedBuilder()
+            const defaultLogEmbed = new EmbedBuilder()
               .setColor(0x0071e3)
               .setTitle(`📋  TICKET ARCHIVE • ประวัติทิกเก็ต #${ticket.ticketId.toUpperCase()}`)
               .setDescription(
@@ -503,6 +516,13 @@ export async function handleTicketClose(interaction: ButtonInteraction) {
               )
               .setFooter({ text: "LynnBot Operations System • Tickets" })
               .setTimestamp();
+
+            const logEmbed = await renderCustomEmbed("ticket_closed", defaultLogEmbed, {
+              ticket_id: ticket.ticketId.toUpperCase(),
+              closer: `<@${interaction.user.id}>`,
+              creator: `<@${ticket.creatorId}>`,
+              duration: `${Math.round((Date.now() - new Date(ticket.createdAt).getTime()) / (1000 * 60))} นาที`,
+            });
 
             const filesToSend = [txtFile, ...slipAttachments.slice(0, 9)];
             await logChannel.send({ embeds: [logEmbed], files: filesToSend });

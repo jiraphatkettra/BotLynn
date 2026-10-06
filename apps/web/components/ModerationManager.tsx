@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { formatRelativeTime } from "@/lib/utils";
+import EmbedEditorModal from "@/components/EmbedEditorModal";
 
 interface WarningItem {
   id: string;
@@ -46,6 +47,7 @@ export default function ModerationManager() {
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
@@ -417,6 +419,30 @@ export default function ModerationManager() {
                 ? `ห้องประกาศ: #${channels.find((c) => c.id === notifyChannelId)?.name || notifyChannelId}`
                 : "กำหนดห้องประกาศเตือน"}
             </span>
+          </button>
+
+          {/* Configure Embed Button */}
+          <button
+            type="button"
+            onClick={() => setIsEmbedModalOpen(true)}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "8px 14px",
+              borderRadius: "10px",
+              background: "rgba(41, 151, 255, 0.12)",
+              border: "1px solid rgba(41, 151, 255, 0.3)",
+              color: "#2997ff",
+              fontSize: "12px",
+              fontWeight: 600,
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+            }}
+            title="ตั้งค่าข้อความ Embed การตักเตือน, ใบเตือนสมาชิก และบันทึก Log ลงโทษใน Discord"
+          >
+            <span>🎨</span>
+            <span>ตั้งค่า Embed ใบเตือน</span>
           </button>
 
           {/* Add Warning Button */}
@@ -1122,6 +1148,15 @@ export default function ModerationManager() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Discord Embed Configuration Modal */}
+      {isEmbedModalOpen && (
+        <EmbedEditorModal
+          isOpen={isEmbedModalOpen}
+          onClose={() => setIsEmbedModalOpen(false)}
+          initialCategory="moderation"
+        />
       )}
     </div>
   );

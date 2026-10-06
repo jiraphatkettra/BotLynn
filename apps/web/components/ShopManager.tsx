@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { formatCurrency } from "@/lib/utils";
+import EmbedEditorModal from "@/components/EmbedEditorModal";
 
 interface ShopRoleItem {
   id: string;
@@ -82,6 +83,7 @@ export default function ShopManager({
   const [editingRole, setEditingRole] = useState<ShopRoleItem | null>(null);
 
   // Role Form State
+  const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     price: "99",
     description: "",
@@ -884,6 +886,28 @@ export default function ShopManager({
                 + เลือกยศจาก Discord มาขาย
               </button>
             )}
+
+            {/* Embed Configuration Button */}
+            {isSuperAdmin && (
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setIsEmbedModalOpen(true)}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontSize: 12,
+                  background: "rgba(41, 151, 255, 0.12)",
+                  borderColor: "rgba(41, 151, 255, 0.3)",
+                  color: "#2997ff",
+                }}
+                title="ตั้งค่าข้อความ Embed ร้านค้าใน Discord (แผงร้านค้า, ใบเสร็จ, แจ้งเตือนเงินไม่พอ ฯลฯ)"
+              >
+                <span>🎨</span>
+                <span>ตั้งค่า Embed ร้านค้า</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -1680,6 +1704,15 @@ export default function ShopManager({
             </form>
           </div>
         </div>
+      )}
+
+      {/* Discord Embed Configuration Modal */}
+      {isEmbedModalOpen && (
+        <EmbedEditorModal
+          isOpen={isEmbedModalOpen}
+          onClose={() => setIsEmbedModalOpen(false)}
+          initialCategory="shop"
+        />
       )}
     </>
   );

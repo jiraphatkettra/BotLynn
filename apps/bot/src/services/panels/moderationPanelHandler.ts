@@ -14,6 +14,7 @@ import {
 } from "discord.js";
 import { prisma } from "@lynnbot/database";
 import { THEME_COLORS } from "../../utils/theme.js";
+import { renderCustomEmbed } from "../embedService.js";
 
 function getModerationWebUrl(): string {
   const envUrl = process.env.DASHBOARD_URL || process.env.NEXTAUTH_URL;
@@ -240,7 +241,7 @@ export async function handleWarnModalSubmit(interaction: ModalSubmitInteraction)
   try {
     const targetUserObj = targetMember?.user || (await interaction.client.users.fetch(targetId).catch(() => null));
     if (targetUserObj) {
-      const dmEmbed = new EmbedBuilder()
+      const defaultDmEmbed = new EmbedBuilder()
         .setColor(SEVERITY_COLORS[severity] || THEME_COLORS.danger)
         .setTitle("⚠️  DISCIPLINARY NOTICE • แจ้งเตือนการกระทำผิด")
         .setDescription(
@@ -255,12 +256,23 @@ export async function handleWarnModalSubmit(interaction: ModalSubmitInteraction)
         .setFooter({ text: `LynnBot Operations System • Moderation` })
         .setTimestamp();
 
+      const dmEmbed = await renderCustomEmbed("moderation_warn_member", defaultDmEmbed, {
+        target_user: `<@${targetId}>`,
+        target_name: targetUsername,
+        moderator: `<@${interaction.user.id}>`,
+        reason,
+        severity,
+        action: actionTaken,
+        warn_count: activeWarnsCount,
+        warn_id: `WARN-${warning.id.slice(-4).toUpperCase()}`,
+      });
+
       await targetUserObj.send({ embeds: [dmEmbed] }).catch(() => {});
     }
   } catch {}
 
   // 5. Reply in Channel with Public Embed Log
-  const embed = new EmbedBuilder()
+  const defaultEmbed = new EmbedBuilder()
     .setColor(SEVERITY_COLORS[severity] || THEME_COLORS.danger)
     .setTitle("⚖️  PUNISHMENT LOGGED • บันทึกการลงโทษสมาชิก")
     .setDescription(
@@ -275,6 +287,17 @@ export async function handleWarnModalSubmit(interaction: ModalSubmitInteraction)
     )
     .setFooter({ text: `LynnBot Operations System • Moderation` })
     .setTimestamp();
+
+  const embed = await renderCustomEmbed("moderation_warn_log", defaultEmbed, {
+    target_user: `<@${targetId}>`,
+    target_name: targetUsername,
+    target_id: targetId,
+    moderator: `<@${interaction.user.id}>`,
+    reason,
+    severity,
+    action: actionTaken,
+    warn_count: activeWarnsCount,
+  });
 
   // Check configured announcement channel
   const notifySetting = await prisma.setting.findUnique({

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { formatDate } from "@/lib/utils";
+import EmbedEditorModal from "@/components/EmbedEditorModal";
 
 interface Ticket {
   id: string;
@@ -47,6 +48,7 @@ export default function TicketManager() {
   );
   const [closingId, setClosingId] = useState<string | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false);
 
   const fetchTickets = async () => {
     try {
@@ -243,6 +245,27 @@ export default function TicketManager() {
             style={{ padding: "8px 14px", fontSize: "13px" }}
           >
             ค้นหา
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setIsEmbedModalOpen(true)}
+            style={{
+              padding: "8px 14px",
+              fontSize: "13px",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              background: "rgba(41, 151, 255, 0.12)",
+              borderColor: "rgba(41, 151, 255, 0.3)",
+              color: "#2997ff",
+              whiteSpace: "nowrap",
+            }}
+            title="ตั้งค่าข้อความ Embed แผงทิกเก็ต, ข้อความต้อนรับ, และบันทึกประวัติปิดทิกเก็ตใน Discord"
+          >
+            <span>🎨</span>
+            <span>ตั้งค่า Embed ทิกเก็ต</span>
           </button>
         </form>
       </div>
@@ -709,6 +732,15 @@ export default function TicketManager() {
             }}
           />
         </div>
+      )}
+
+      {/* Discord Embed Configuration Modal */}
+      {isEmbedModalOpen && (
+        <EmbedEditorModal
+          isOpen={isEmbedModalOpen}
+          onClose={() => setIsEmbedModalOpen(false)}
+          initialCategory="tickets"
+        />
       )}
     </div>
   );

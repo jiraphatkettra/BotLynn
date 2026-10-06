@@ -12,6 +12,7 @@ import {
 import { prisma } from "@lynnbot/database";
 import { THEME_COLORS } from "../utils/theme.js";
 import type { BotCommand } from "../index.js";
+import { renderCustomEmbed } from "../services/embedService.js";
 
 function getModerationWebUrl(): string {
   const envUrl = process.env.DASHBOARD_URL || process.env.NEXTAUTH_URL;
@@ -97,7 +98,7 @@ export const warnCommand: BotCommand = {
 
     // 4. Send DM to Target User
     try {
-      const dmEmbed = new EmbedBuilder()
+      const defaultDmEmbed = new EmbedBuilder()
         .setColor(SEVERITY_COLORS[severity] || THEME_COLORS.danger)
         .setTitle("⚠️  WARNING NOTICE • หนังสือเตือนพฤติกรรม")
         .setDescription(
@@ -112,13 +113,24 @@ export const warnCommand: BotCommand = {
         .setFooter({ text: `Warning ID: ${warning.id}` })
         .setTimestamp();
 
+      const dmEmbed = await renderCustomEmbed("moderation_warn_member", defaultDmEmbed, {
+        target_user: `<@${targetUser.id}>`,
+        target_name: targetUser.username,
+        moderator: `<@${interaction.user.id}>`,
+        reason,
+        severity,
+        action: autoActionTaken,
+        warn_count: activeWarnsCount,
+        warn_id: `WARN-${warning.id.slice(-4).toUpperCase()}`,
+      });
+
       await targetUser.send({ embeds: [dmEmbed] });
     } catch (dmErr) {
       // Ignore if user has DMs closed
     }
 
     // 5. Send Channel Embed / Announce to Configured Channel
-    const embed = new EmbedBuilder()
+    const defaultEmbed = new EmbedBuilder()
       .setColor(SEVERITY_COLORS[severity] || THEME_COLORS.danger)
       .setTitle("⚠️  MEMBER WARNED • บันทึกการเตือนสมาชิก")
       .setDescription(
@@ -132,6 +144,17 @@ export const warnCommand: BotCommand = {
       )
       .setFooter({ text: `Warning ID: ${warning.id}` })
       .setTimestamp();
+
+    const embed = await renderCustomEmbed("moderation_warn_log", defaultEmbed, {
+      target_user: `<@${targetUser.id}>`,
+      target_name: targetUser.username,
+      target_id: targetUser.id,
+      moderator: `<@${interaction.user.id}>`,
+      reason,
+      severity,
+      action: autoActionTaken,
+      warn_count: activeWarnsCount,
+    });
 
     // Check configured announcement channel
     const notifySetting = await prisma.setting.findUnique({

@@ -12,6 +12,7 @@ import {
 import { prisma } from "@lynnbot/database";
 import { THEME_COLORS } from "../../utils/theme.js";
 import { ensureUser } from "./common.js";
+import { renderCustomEmbed } from "../embedService.js";
 
 /**
  * ============================================================================
@@ -52,7 +53,7 @@ export async function handleShopBrowse(interaction: ButtonInteraction) {
 
   const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(selectMenu);
 
-  const embed = new EmbedBuilder()
+  const defaultCatalogEmbed = new EmbedBuilder()
     .setColor(THEME_COLORS.surface)
     .setTitle("🛒  AVAILABLE ROLES • รายการยศที่เปิดจำหน่าย")
     .setDescription(
@@ -61,6 +62,13 @@ export async function handleShopBrowse(interaction: ButtonInteraction) {
       "> ระบบจะตรวจสอบยอดเงินในกระเป๋าของคุณก่อนยืนยันการชำระเงิน"
     )
     .setFooter({ text: "LynnBot Operations System • Shop" });
+
+  const embed = await renderCustomEmbed("shop_catalog", defaultCatalogEmbed, {
+    roles_count: roles.length,
+    server_name: interaction.guild?.name || "Server",
+    user: `<@${interaction.user.id}>`,
+    username: interaction.user.username,
+  });
 
   await interaction.editReply({ embeds: [embed], components: [row] });
 }
@@ -149,9 +157,28 @@ export async function handleShopConfirmBuy(interaction: ButtonInteraction, roleI
   }
 
   if (user.balance < shopRole.price) {
-    await interaction.editReply({
-      content: `❌ ยอดเงินของคุณไม่เพียงพอ (ต้องการ ฿${shopRole.price} แต่มี ฿${user.balance})`,
+    const defaultInsufficientEmbed = new EmbedBuilder()
+      .setColor(THEME_COLORS.danger)
+      .setTitle("❌  INSUFFICIENT BALANCE • ยอดเงินไม่เพียงพอ")
+      .setDescription(
+        `ไม่สามารถทำรายการสั่งซื้อยศ **${shopRole.name}** ได้\n\n` +
+        `• **ราคายศ:** ฿${shopRole.price.toLocaleString("th-TH")}\n` +
+        `• **ยอดเงินปัจจุบัน:** ฿${user.balance.toLocaleString("th-TH")}\n` +
+        `• **จำนวนที่ขาด:** ฿${(shopRole.price - user.balance).toLocaleString("th-TH")}\n\n` +
+        `> 💡 คุณสามารถเติมเงินเข้ากระเป๋าได้ที่แผงกระเป๋าเงิน หรือกดปุ่มแจ้งส่งสลิป`
+      )
+      .setFooter({ text: "LynnBot Operations System • Shop" });
+
+    const insufficientEmbed = await renderCustomEmbed("shop_insufficient_funds", defaultInsufficientEmbed, {
+      user: `<@${interaction.user.id}>`,
+      username: interaction.user.username,
+      role_name: shopRole.name,
+      price: shopRole.price.toLocaleString("th-TH"),
+      current_balance: user.balance.toLocaleString("th-TH"),
+      missing_amount: (shopRole.price - user.balance).toLocaleString("th-TH"),
     });
+
+    await interaction.editReply({ embeds: [insufficientEmbed] });
     return;
   }
 
@@ -207,7 +234,7 @@ export async function handleShopConfirmBuy(interaction: ButtonInteraction, roleI
     if (setting?.value && interaction.guild) {
       const logChannel = interaction.guild.channels.cache.get(setting.value) as TextChannel | undefined;
       if (logChannel) {
-        const logEmbed = new EmbedBuilder()
+        const defaultLogEmbed = new EmbedBuilder()
           .setColor(THEME_COLORS.success)
           .setTitle("🎉  NEW SHOP PURCHASE • มีการสั่งซื้อยศใหม่")
           .setDescription(
@@ -217,6 +244,16 @@ export async function handleShopConfirmBuy(interaction: ButtonInteraction, roleI
           )
           .setFooter({ text: "LynnBot Operations System • Shop" })
           .setTimestamp();
+
+        const logEmbed = await renderCustomEmbed("shop_log_notify", defaultLogEmbed, {
+          user: `<@${interaction.user.id}>`,
+          username: interaction.user.username,
+          user_id: interaction.user.id,
+          role_name: shopRole.name,
+          price: shopRole.price.toLocaleString("th-TH"),
+          timestamp: `<t:${Math.floor(Date.now() / 1000)}:f>`,
+        });
+
         await logChannel.send({ embeds: [logEmbed] });
       }
     }
@@ -224,7 +261,7 @@ export async function handleShopConfirmBuy(interaction: ButtonInteraction, roleI
     console.error("Shop log notify error:", err);
   }
 
-  const receiptEmbed = new EmbedBuilder()
+  const defaultReceiptEmbed = new EmbedBuilder()
     .setColor(THEME_COLORS.success)
     .setTitle("🎉  PURCHASE SUCCESSFUL • สั่งซื้อยศสำเร็จ")
     .setDescription(
@@ -239,6 +276,15 @@ export async function handleShopConfirmBuy(interaction: ButtonInteraction, roleI
     )
     .setFooter({ text: "LynnBot Operations System • Shop" })
     .setTimestamp();
+
+  const receiptEmbed = await renderCustomEmbed("shop_purchase_success", defaultReceiptEmbed, {
+    user: `<@${interaction.user.id}>`,
+    username: interaction.user.username,
+    role_name: shopRole.name,
+    price: shopRole.price.toLocaleString("th-TH"),
+    balance_left: (user.balance - shopRole.price).toLocaleString("th-TH"),
+    role_status: roleAssigned ? "มอบยศ Discord เรียบร้อยแล้ว ✨" : "ไม่สามารถมอบยศ Discord ได้อัตโนมัติ (ติดต่อแอดมิน)",
+  });
 
   await interaction.editReply({ embeds: [receiptEmbed] });
 }
