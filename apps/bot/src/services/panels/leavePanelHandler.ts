@@ -62,6 +62,32 @@ export async function showLeaveRequestModal(interaction: ButtonInteraction) {
   await interaction.showModal(modal);
 }
 
+function parseLeaveDate(input: string): Date | null {
+  const trimmed = input.trim();
+  const now = new Date();
+  if (trimmed.includes("วันนี้") || trimmed.toLowerCase() === "today") {
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }
+  if (trimmed.includes("พรุ่งนี้") || trimmed.toLowerCase() === "tomorrow") {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    d.setDate(d.getDate() + 1);
+    return d;
+  }
+  const parts = trimmed.split(/[\/\-\.]/);
+  if (parts.length === 3) {
+    const d = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    let y = parseInt(parts[2], 10);
+    if (y > 2500) y -= 543;
+    else if (y < 100) y += 2000;
+    const parsed = new Date(y, m, d);
+    if (!isNaN(parsed.getTime()) && parsed.getDate() === d && parsed.getMonth() === m) {
+      return parsed;
+    }
+  }
+  return null;
+}
+
 export async function handleLeaveModalSubmit(interaction: ModalSubmitInteraction) {
   await interaction.deferReply({ ephemeral: true });
 
@@ -69,6 +95,15 @@ export async function handleLeaveModalSubmit(interaction: ModalSubmitInteraction
   const rawStartDate = interaction.fields.getTextInputValue("leave_start").trim();
   const rawDays = interaction.fields.getTextInputValue("leave_days").trim();
   const reason = interaction.fields.getTextInputValue("leave_reason").trim();
+
+  // Validate start date
+  const startDate = parseLeaveDate(rawStartDate);
+  if (!startDate) {
+    await interaction.editReply({
+      content: "❌ รูปแบบวันที่ไม่ถูกต้อง\nตัวอย่างที่ใช้ได้: \"วันนี้\", \"พรุ่งนี้\", หรือ \"29/09/2026\" (วัน/เดือน/ปี)",
+    });
+    return;
+  }
 
   let leaveType: "SICK" | "PERSONAL" | "VACATION" | "OTHER" = "OTHER";
   let leaveTypeTh = "📝 อื่นๆ (Other)";
@@ -85,22 +120,6 @@ export async function handleLeaveModalSubmit(interaction: ModalSubmitInteraction
   }
 
   const days = Math.max(1, Math.min(30, parseInt(rawDays, 10) || 1));
-
-  // Determine start date
-  const now = new Date();
-  let startDate = new Date();
-  if (rawStartDate.includes("พรุ่งนี้")) {
-    startDate.setDate(now.getDate() + 1);
-  } else if (!rawStartDate.includes("วันนี้")) {
-    const parts = rawStartDate.split(/[\/\-\.]/);
-    if (parts.length === 3) {
-      const d = parseInt(parts[0], 10);
-      const m = parseInt(parts[1], 10) - 1;
-      const y = parseInt(parts[2], 10);
-      const parsed = new Date(y < 100 ? y + 2000 : y, m, d);
-      if (!isNaN(parsed.getTime())) startDate = parsed;
-    }
-  }
 
   const endDate = new Date(startDate);
   endDate.setDate(startDate.getDate() + (days - 1));
@@ -203,7 +222,7 @@ export async function handleMyLeavesStatus(interaction: ButtonInteraction) {
       .setColor(THEME_COLORS.surface)
       .setTitle("📋  MY LEAVE REQUESTS • ประวัติการลางานของฉัน")
       .setDescription("คุณยังไม่มีประวัติการยื่นคำขอลางานในระบบ")
-      .setFooter({ text: "LynnBot Operations System" });
+      .setFooter({ text: "LynnBot Operations System • Leave Service" });
 
     await interaction.editReply({ embeds: [embed] });
     return;
@@ -235,7 +254,7 @@ export async function handleMyLeavesStatus(interaction: ButtonInteraction) {
       lines.join("\n\n") +
       `\n\n> หากต้องการยื่นคำขอใหม่ สามารถกดปุ่ม **ยื่นคำขอลางาน** ได้ตลอดเวลา`
     )
-    .setFooter({ text: "LynnBot Operations System" })
+    .setFooter({ text: "LynnBot Operations System • Leave Service" })
     .setTimestamp();
 
   // If there's an active pending leave, offer a cancel button
@@ -365,7 +384,7 @@ export async function handleLeaveDecisionWithDM(interaction: ButtonInteraction, 
             `• **เหตุผลเดิม:** ${leave.reason}\n\n` +
             `-# LynnBot Operations System • ติดต่อผู้ดูแลหากมีข้อสงสัยเพิ่มเติม`
           )
-          .setFooter({ text: "LynnBot Operations System" })
+          .setFooter({ text: "LynnBot Operations System • Leave Service" })
           .setTimestamp();
 
         await applicantDiscordUser.send({ embeds: [dmEmbed] });

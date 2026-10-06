@@ -6,6 +6,9 @@ export default function CyberBackground() {
   const [mousePos, setMousePos] = useState({ x: 50, y: 30 });
 
   useEffect(() => {
+    const isTouchOnly = typeof window !== "undefined" && window.matchMedia("(hover: none)").matches;
+    if (isTouchOnly) return; // skip on touch-only devices
+
     let ticking = false;
     function handleMouseMove(e: MouseEvent) {
       if (!ticking) {

@@ -106,6 +106,15 @@ export default function Leaderboard() {
         ))}
       </div>
 
+      {/* Empty State */}
+      {!loading && currentList.length === 0 && (
+        <div className="empty-state" style={{ margin: "40px auto" }}>
+          <div className="empty-state-icon">🏆</div>
+          <p className="empty-state-title">ยังไม่มีข้อมูลอันดับทีมงาน</p>
+          <p className="empty-state-text">ข้อมูลจะแสดงที่นี่เมื่อมีการบันทึกเวลาทำงาน ทิกเก็ต หรือการเข้างาน</p>
+        </div>
+      )}
+
       {/* Top 3 Podium Cards */}
       {currentList.length > 0 && (
         <div
@@ -135,6 +144,8 @@ export default function Leaderboard() {
               <img
                 src={getDiscordAvatarUrl(top2.discordId, top2.avatar)}
                 alt={top2.displayName}
+                loading="lazy"
+                decoding="async"
                 style={{ width: "64px", height: "64px", borderRadius: "50%", marginBottom: "12px", border: "2px solid #c0c0c0" }}
               />
               <div style={{ fontSize: "16px", fontWeight: 700, color: "#ffffff" }}>{top2.displayName}</div>
@@ -163,6 +174,8 @@ export default function Leaderboard() {
               <img
                 src={getDiscordAvatarUrl(top1.discordId, top1.avatar)}
                 alt={top1.displayName}
+                loading="lazy"
+                decoding="async"
                 style={{ width: "76px", height: "76px", borderRadius: "50%", marginBottom: "12px", border: "3px solid #ffd700", boxShadow: "0 0 20px rgba(255, 215, 0, 0.5)" }}
               />
               <div style={{ fontSize: "18px", fontWeight: 800, color: "#ffffff" }}>{top1.displayName}</div>
@@ -190,6 +203,8 @@ export default function Leaderboard() {
               <img
                 src={getDiscordAvatarUrl(top3.discordId, top3.avatar)}
                 alt={top3.displayName}
+                loading="lazy"
+                decoding="async"
                 style={{ width: "64px", height: "64px", borderRadius: "50%", marginBottom: "12px", border: "2px solid #cd7f32" }}
               />
               <div style={{ fontSize: "16px", fontWeight: 700, color: "#ffffff" }}>{top3.displayName}</div>
@@ -242,6 +257,8 @@ export default function Leaderboard() {
                   <img
                     src={getDiscordAvatarUrl(item.discordId, item.avatar)}
                     alt={item.displayName}
+                    loading="lazy"
+                    decoding="async"
                     style={{ width: "36px", height: "36px", borderRadius: "50%" }}
                   />
                   <div>

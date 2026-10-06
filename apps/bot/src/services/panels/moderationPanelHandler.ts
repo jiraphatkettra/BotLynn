@@ -125,13 +125,16 @@ export async function handleWarnModalSubmit(interaction: ModalSubmitInteraction)
 
   const rawUser = interaction.fields.getTextInputValue("warn_user_id").trim();
   const reason = interaction.fields.getTextInputValue("warn_reason").trim();
-  let severity = interaction.fields.getTextInputValue("warn_severity").trim().toUpperCase();
-  const rawAction = (interaction.fields.getTextInputValue("warn_action") || "WARN").trim().toUpperCase();
-
-  // Validate severity
-  if (!["LOW", "MEDIUM", "HIGH", "CRITICAL"].includes(severity)) {
-    severity = "LOW";
+  const severityRaw = interaction.fields.getTextInputValue("warn_severity").trim();
+  const severity = severityRaw.toUpperCase();
+  const validSeverities = ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
+  if (!validSeverities.includes(severity)) {
+    await interaction.editReply({
+      content: "❌ ระดับความรุนแรงไม่ถูกต้อง\nรองรับเฉพาะ: **LOW** / **MEDIUM** / **HIGH** / **CRITICAL**",
+    });
+    return;
   }
+  const rawAction = (interaction.fields.getTextInputValue("warn_action") || "WARN").trim().toUpperCase();
 
   // Extract clean Discord ID
   const idMatch = rawUser.match(/\d{17,20}/);
@@ -186,6 +189,24 @@ export async function handleWarnModalSubmit(interaction: ModalSubmitInteraction)
     },
   });
 
+  // Audit Log
+  try {
+    const adminDbUser = await prisma.user.findUnique({
+      where: { discordId: interaction.user.id },
+    });
+    await prisma.auditLog.create({
+      data: {
+        action: "WARN_CREATE",
+        category: "MODERATION",
+        details: `สร้างใบเตือน #${warning.id} สำหรับ ${targetUsername} (${targetId}) ระดับ ${severity}`,
+        userId: adminDbUser?.id || null,
+        metadata: { warningId: warning.id, targetId, severity, reason },
+      },
+    });
+  } catch (auditErr) {
+    console.warn("⚠️ Failed to create audit log for warning:", auditErr);
+  }
+
   // 2. Count Active Warnings for target
   const activeWarnsCount = await prisma.warning.count({
     where: { discordId: targetId, isActive: true },
@@ -231,7 +252,7 @@ export async function handleWarnModalSubmit(interaction: ModalSubmitInteraction)
           `• **การเตือนสะสมที่ยังมีผล:** **${activeWarnsCount} ครั้ง**\n\n` +
           `> *โปรดศึกษากฎระเบียบและแนวทางปฏิบัติของเซิร์ฟเวอร์เพื่อหลีกเลี่ยงการถูกระงับสิทธิ์ถาวร*`
         )
-        .setFooter({ text: `Warning ID: ${warning.id} • LynnBot Security` })
+        .setFooter({ text: `LynnBot Operations System • Moderation` })
         .setTimestamp();
 
       await targetUserObj.send({ embeds: [dmEmbed] }).catch(() => {});
@@ -252,7 +273,7 @@ export async function handleWarnModalSubmit(interaction: ModalSubmitInteraction)
       `📊 **การเตือนสะสม:** **${activeWarnsCount} ครั้ง**\n\n` +
       `-# ข้อมูลถูกซิงค์เข้าสู่ระบบ Dashboard เรียบร้อยแล้ว`
     )
-    .setFooter({ text: `Warning ID: ${warning.id}` })
+    .setFooter({ text: `LynnBot Operations System • Moderation` })
     .setTimestamp();
 
   // Check configured announcement channel
@@ -323,7 +344,7 @@ export async function handleWarnCheckModalSubmit(interaction: ModalSubmitInterac
             )
             .join("\n\n"))
     )
-    .setFooter({ text: "LynnBot Security & Discipline" })
+    .setFooter({ text: "LynnBot Operations System • Moderation" })
     .setTimestamp();
 
   await interaction.editReply({ embeds: [embed] });

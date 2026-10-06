@@ -74,7 +74,7 @@ export const balanceCommand: BotCommand = {
 
       await interaction.editReply({ embeds: [embed], components: [row] });
     } catch (err: any) {
-      console.error("Error in /balance:", err);
+      console.error("❌ [Wallet] Error in /balance:", err);
       await interaction.editReply({ content: `❌ เกิดข้อผิดพลาด: ${err.message}` });
     }
   },
@@ -130,7 +130,7 @@ export const topupCommand: BotCommand = {
 
       await interaction.editReply({ embeds: [embed], files: [attachment], components: [row] });
     } catch (err: any) {
-      console.error("Error in /topup:", err);
+      console.error("❌ [Wallet] Error in /topup:", err);
       await interaction.editReply({ content: `❌ เกิดข้อผิดพลาด: ${err.message}` });
     }
   },
@@ -214,7 +214,7 @@ export const giveBalanceCommand: BotCommand = {
 
       await interaction.editReply({ embeds: [embed] });
     } catch (err: any) {
-      console.error("Error in /give-balance:", err);
+      console.error("❌ [Wallet] Error in /give-balance:", err);
       await interaction.editReply({ content: `❌ เกิดข้อผิดพลาด: ${err.message}` });
     }
   },

@@ -89,6 +89,13 @@ export async function PATCH(
       return NextResponse.json({ error: "ไม่พบข้อมูลสลิปนี้" }, { status: 404 });
     }
 
+    if (slip.status !== "PENDING") {
+      return NextResponse.json(
+        { error: "สลิปนี้ถูกตรวจสอบไปแล้วโดยแอดมินท่านอื่น" },
+        { status: 409 }
+      );
+    }
+
     const reviewer = await prisma.user.findUnique({
       where: { id: (session.user as any).id },
     });
@@ -104,6 +111,12 @@ export async function PATCH(
       if (isNaN(parsedAmount) || parsedAmount <= 0) {
         return NextResponse.json(
           { error: "กรุณาระบุจำนวนเงินเป็นตัวเลขที่ถูกต้อง (> 0)" },
+          { status: 400 }
+        );
+      }
+      if (parsedAmount > 10_000_000) {
+        return NextResponse.json(
+          { error: "จำนวนเงินเกินขีดจำกัดที่อนุญาต (สูงสุดไม่เกิน 10,000,000)" },
           { status: 400 }
         );
       }

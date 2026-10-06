@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { formatDate, formatCurrency, getDiscordAvatarUrl } from "@/lib/utils";
 import { triggerCelebration } from "@/lib/confetti";
 
@@ -53,6 +54,10 @@ interface SlipStats {
 }
 
 export default function SlipManager() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialTab = (searchParams?.get("status") as any) || "ALL";
+
   const [slips, setSlips] = useState<Slip[]>([]);
   const [stats, setStats] = useState<SlipStats>({
     total: 0,
@@ -65,7 +70,25 @@ export default function SlipManager() {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState<"ALL" | "PENDING" | "APPROVED" | "REJECTED">("ALL");
+  const [activeTab, setActiveTab] = useState<"ALL" | "PENDING" | "APPROVED" | "REJECTED">(initialTab);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 20;
+  const totalPages = Math.ceil(slips.length / pageSize) || 1;
+  const paginatedSlips = slips.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const handleTabChange = (tab: "ALL" | "PENDING" | "APPROVED" | "REJECTED") => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+    const params = new URLSearchParams(searchParams ? searchParams.toString() : "");
+    if (tab === "ALL") {
+      params.delete("status");
+    } else {
+      params.set("status", tab);
+    }
+    const query = params.toString();
+    router.replace(query ? `?${query}` : window.location.pathname, { scroll: false });
+  };
 
   // Modals & Actions
   const [previewSlip, setPreviewSlip] = useState<Slip | null>(null);
@@ -122,6 +145,15 @@ export default function SlipManager() {
   useEffect(() => {
     fetchSlips();
   }, [activeTab]);
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCurrentPage(1);
+      fetchSlips();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -353,14 +385,14 @@ export default function SlipManager() {
             <button
               type="button"
               className={`apple-segmented-item ${activeTab === "ALL" ? "active" : ""}`}
-              onClick={() => setActiveTab("ALL")}
+              onClick={() => handleTabChange("ALL")}
             >
               ทั้งหมด ({stats.total})
             </button>
             <button
               type="button"
               className={`apple-segmented-item ${activeTab === "PENDING" ? "active" : ""}`}
-              onClick={() => setActiveTab("PENDING")}
+              onClick={() => handleTabChange("PENDING")}
               style={activeTab === "PENDING" ? { background: "#ff9f0a", color: "#000" } : undefined}
             >
               ⏳ รอตรวจสอบ ({stats.pending})
@@ -368,14 +400,14 @@ export default function SlipManager() {
             <button
               type="button"
               className={`apple-segmented-item ${activeTab === "APPROVED" ? "active" : ""}`}
-              onClick={() => setActiveTab("APPROVED")}
+              onClick={() => handleTabChange("APPROVED")}
             >
               ✓ อนุมัติแล้ว ({stats.approved})
             </button>
             <button
               type="button"
               className={`apple-segmented-item ${activeTab === "REJECTED" ? "active" : ""}`}
-              onClick={() => setActiveTab("REJECTED")}
+              onClick={() => handleTabChange("REJECTED")}
             >
               ✕ ปฏิเสธ ({stats.rejected})
             </button>
@@ -455,7 +487,8 @@ export default function SlipManager() {
               </p>
             </div>
           ) : (
-            <div className="data-table-wrapper">
+            <>
+              <div className="data-table-wrapper">
               <table className="data-table">
                 <thead>
                   <tr>
@@ -470,7 +503,7 @@ export default function SlipManager() {
                   </tr>
                 </thead>
                 <tbody>
-                  {slips.map((slip) => (
+                  {paginatedSlips.map((slip) => (
                     <tr key={slip.id}>
                       {/* Image Thumbnail */}
                       <td style={{ width: "90px" }}>
@@ -554,6 +587,8 @@ export default function SlipManager() {
                             <img
                               src={getDiscordAvatarUrl(slip.discordId, slip.user?.avatar || null)}
                               alt={slip.discordName}
+                              loading="lazy"
+                              decoding="async"
                             />
                           </div>
                           <div>
@@ -720,6 +755,44 @@ export default function SlipManager() {
                 </tbody>
               </table>
             </div>
+
+            {totalPages > 1 && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "16px 20px",
+                  borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+                  flexWrap: "wrap",
+                  gap: "12px",
+                }}
+              >
+                <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                  แสดง {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, slips.length)} จาก {slips.length} รายการ
+                </div>
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    disabled={currentPage <= 1}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  >
+                    ◀ ก่อนหน้า
+                  </button>
+                  <span style={{ fontSize: "13px", color: "var(--text-secondary)", padding: "0 8px" }}>
+                    หน้า {currentPage} / {totalPages}
+                  </span>
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  >
+                    ถัดไป ▶
+                  </button>
+                </div>
+              </div>
+            )}
+            </>
           )}
         </div>
       </div>

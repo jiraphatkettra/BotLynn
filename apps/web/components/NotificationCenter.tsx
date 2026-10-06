@@ -59,7 +59,7 @@ export default function NotificationCenter() {
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(() => fetchNotifications(false), 30000);
+    const interval = setInterval(() => fetchNotifications(true), 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -162,6 +162,7 @@ export default function NotificationCenter() {
         }}
       >
         <svg
+          className={`notification-bell ${isRefreshing ? "refreshing" : ""}`}
           width="17"
           height="17"
           viewBox="0 0 24 24"

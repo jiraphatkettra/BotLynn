@@ -150,7 +150,7 @@ export async function handleTicketCreate(interaction: ButtonInteraction) {
         `-# คลิกปุ่มด้านล่างเพื่อปิดทิกเก็ตเมื่อเสร็จสิ้นการสนทนา (Close Ticket)`
       )
       .setFooter({
-        text: "LynnBot Operations System • Ticket Helpdesk",
+        text: "LynnBot Operations System • Tickets",
       })
       .setTimestamp();
 
@@ -188,7 +188,7 @@ export async function handleTicketCreate(interaction: ButtonInteraction) {
               `• **เวลาเปิด:** <t:${Math.floor(Date.now() / 1000)}:R>\n\n` +
               `> แอดมินสามารถกดปุ่ม **"รับเรื่อง • Claim"** ด้านล่างนี้ หรือคลิกเข้าไปยังห้องทิกเก็ตได้ทันที`
             )
-            .setFooter({ text: "LynnBot Operations System • Ticket Alert" })
+            .setFooter({ text: "LynnBot Operations System • Tickets" })
             .setTimestamp();
 
           const alertRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -325,7 +325,7 @@ export async function handleTicketClaim(
         .setDescription(
           `เจ้าหน้าที่ <@${interaction.user.id}> (${interaction.user.displayName || interaction.user.username}) ได้ทำการรับเรื่องและกำลังเข้าดูแลทิกเก็ตนี้ให้กับคุณครับ`
         )
-        .setFooter({ text: "LynnBot Operations System" })
+        .setFooter({ text: "LynnBot Operations System • Tickets" })
         .setTimestamp();
 
       await ticketChannel.send({ embeds: [claimEmbed] });
@@ -501,7 +501,7 @@ export async function handleTicketClose(interaction: ButtonInteraction) {
                 `• **เวลาปิด:** <t:${Math.floor(Date.now() / 1000)}:f>\n\n` +
                 `> 📁 แนบไฟล์ประวัติบทสนทนา (.txt) และสำเนารูปภาพสลิปทั้งหมดด้านล่าง`
               )
-              .setFooter({ text: "LynnBot Operations System • Ticket Archive" })
+              .setFooter({ text: "LynnBot Operations System • Tickets" })
               .setTimestamp();
 
             const filesToSend = [txtFile, ...slipAttachments.slice(0, 9)];
@@ -535,7 +535,7 @@ export async function handleTicketClose(interaction: ButtonInteraction) {
         `บันทึกประวัติการสนทนาถูกจัดเก็บลง Web Dashboard เรียบร้อยแล้ว\n\n` +
         `> ห้องสนทนานี้จะถูกลบโดยอัตโนมัติภายใน 5 วินาที...`
       )
-      .setFooter({ text: "LynnBot Operations System" })
+      .setFooter({ text: "LynnBot Operations System • Tickets" })
       .setTimestamp();
 
     await interaction.editReply({ embeds: [closeEmbed] });

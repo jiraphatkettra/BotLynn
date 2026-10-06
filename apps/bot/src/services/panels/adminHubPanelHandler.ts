@@ -42,7 +42,7 @@ export async function handleAdminStaffList(interaction: ButtonInteraction) {
       (staffLines.length > 0 ? staffLines.join("\n") : "ยังไม่มีข้อมูลทีมงาน") +
       `\n\n> ซิงค์ข้อมูลกับสิทธิ์การเข้าถึงใน Web Dashboard`
     )
-    .setFooter({ text: "LynnBot Operations System • Staff Operations" })
+    .setFooter({ text: "LynnBot Operations System • Admin Hub" })
     .setTimestamp();
 
   await interaction.editReply({ embeds: [embed] });
@@ -63,7 +63,7 @@ export async function handleAdminPendingLeaves(interaction: ButtonInteraction) {
       .setColor(THEME_COLORS.surface)
       .setTitle("⏳  PENDING LEAVES • คำขอลารออนุมัติ")
       .setDescription("✅ ขณะนี้ไม่มีคำขอลางานที่รอดำเนินการ")
-      .setFooter({ text: "LynnBot Operations System" });
+      .setFooter({ text: "LynnBot Operations System • Admin Hub" });
 
     await interaction.editReply({ embeds: [embed] });
     return;
@@ -81,7 +81,7 @@ export async function handleAdminPendingLeaves(interaction: ButtonInteraction) {
       lines.join("\n\n") +
       `\n\n> ท่านสามารถตรวจสอบและกดอนุมัติ/ปฏิเสธได้จากการ์ดแจ้งเตือนในห้อง Staff หรือใน Web Dashboard`
     )
-    .setFooter({ text: "LynnBot Operations System" })
+    .setFooter({ text: "LynnBot Operations System • Admin Hub" })
     .setTimestamp();
 
   await interaction.editReply({ embeds: [embed] });

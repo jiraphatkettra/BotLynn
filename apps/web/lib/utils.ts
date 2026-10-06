@@ -22,6 +22,7 @@ export function isRootOwner(discordId?: string | null): boolean {
 // Format date to Thai locale
 export function formatDate(date: Date | string): string {
   return new Date(date).toLocaleDateString("th-TH", {
+    timeZone: "Asia/Bangkok",
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -31,6 +32,7 @@ export function formatDate(date: Date | string): string {
 // Format time
 export function formatTime(date: Date | string): string {
   return new Date(date).toLocaleTimeString("th-TH", {
+    timeZone: "Asia/Bangkok",
     hour: "2-digit",
     minute: "2-digit",
   });

@@ -3,89 +3,96 @@
 import React, { useEffect, useState } from "react";
 
 export default function LiveStatusPulse() {
-  const [latency, setLatency] = useState(24);
+  const [isOnline, setIsOnline] = useState<boolean | null>(null);
+  const [latency, setLatency] = useState<number | null>(null);
 
-  // Subtle realistic latency fluctuation every 3s
   useEffect(() => {
-    const interval = setInterval(() => {
-      setLatency(Math.floor(22 + Math.random() * 8));
-    }, 3200);
-    return () => clearInterval(interval);
+    let isMounted = true;
+
+    async function checkStatus() {
+      try {
+        const res = await fetch("/api/bot", { cache: "no-store" });
+        if (!res.ok) throw new Error("Failed to fetch");
+        const data = await res.json();
+        if (isMounted) {
+          setIsOnline(Boolean(data.isOnline ?? data.online));
+          if (typeof data.latency === "number") {
+            setLatency(data.latency);
+          } else {
+            setLatency(null);
+          }
+        }
+      } catch {
+        if (isMounted) {
+          setIsOnline(false);
+          setLatency(null);
+        }
+      }
+    }
+
+    checkStatus();
+    const interval = setInterval(checkStatus, 15000); // Check every 15s
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
+
+  if (isOnline === null) {
+    return null; // Don't render while determining initial status
+  }
 
   return (
     <div
-      className="apple-bot-status"
-      title={`ระบบบอทออนไลน์สมบูรณ์ • ความหน่วงเครือข่าย: ${latency}ms`}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "8px",
-        padding: "4px 10px",
-        borderRadius: "9999px",
-        background: "rgba(10, 10, 16, 0.7)",
-        border: "1px solid rgba(48, 209, 88, 0.3)",
-        backdropFilter: "blur(12px)",
-        boxShadow: "0 0 12px rgba(48, 209, 88, 0.15)",
-        userSelect: "none",
-      }}
+      className={`apple-bot-status ${isOnline ? "online" : "offline"}`}
+      title={
+        isOnline
+          ? `ระบบบอทออนไลน์สมบูรณ์ • ความหน่วง: ${latency !== null ? `${latency}ms` : "ปกติ"}`
+          : "ระบบบอทออฟไลน์ กรุณาตรวจสอบเซิร์ฟเวอร์"
+      }
     >
-      {/* Radar Concentric Rings */}
+      {/* Radar Status Dot */}
       <div style={{ position: "relative", width: "10px", height: "10px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <span
-          className="radar-pulse-ring"
-          style={{
-            position: "absolute",
-            width: "100%",
-            height: "100%",
-            borderRadius: "50%",
-            background: "rgba(48, 209, 88, 0.4)",
-          }}
-        />
-        <span
-          style={{
-            position: "relative",
-            width: "6px",
-            height: "6px",
-            borderRadius: "50%",
-            background: "#30d158",
-            boxShadow: "0 0 8px #30d158",
-          }}
-        />
+        {isOnline && (
+          <span
+            className="radar-pulse-ring"
+            style={{
+              position: "absolute",
+              width: "100%",
+              height: "100%",
+              borderRadius: "50%",
+              background: "rgba(48, 209, 88, 0.4)",
+            }}
+          />
+        )}
+        <span className="apple-status-dot" />
       </div>
 
-      {/* Mini ECG Heartbeat Line */}
-      <svg
-        width="28"
-        height="12"
-        viewBox="0 0 40 16"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        style={{ opacity: 0.85 }}
-        className="live-status-ecg"
-      >
-        <path
-          d="M0 8 H10 L13 2 L17 14 L21 6 L24 10 L27 8 H40"
-          stroke="#30d158"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="ecg-line-sweep"
-        />
-      </svg>
+      {/* Mini ECG Heartbeat Line (only if online) */}
+      {isOnline && (
+        <svg
+          width="28"
+          height="12"
+          viewBox="0 0 40 16"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          style={{ opacity: 0.85 }}
+          className="live-status-ecg"
+        >
+          <path
+            d="M0 8 H10 L13 2 L17 14 L21 6 L24 10 L27 8 H40"
+            stroke="var(--success, #30d158)"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="ecg-line-sweep"
+          />
+        </svg>
+      )}
 
-      {/* Ping text */}
-      <span
-        className="live-status-text"
-        style={{
-          fontSize: "11px",
-          fontWeight: 600,
-          color: "#30d158",
-          fontFamily: "var(--font-mono, monospace)",
-          letterSpacing: "-0.01em",
-        }}
-      >
-        {latency}ms
+      {/* Status text */}
+      <span className="live-status-text">
+        {isOnline ? (latency !== null ? `${latency}ms` : "ออนไลน์") : "ออฟไลน์"}
       </span>
     </div>
   );

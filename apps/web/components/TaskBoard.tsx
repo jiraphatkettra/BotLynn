@@ -464,8 +464,10 @@ export default function TaskBoard() {
             <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
               {todoTasks.map(renderTaskCard)}
               {todoTasks.length === 0 && (
-                <div style={{ textAlign: "center", padding: "2rem 1rem", color: "var(--text-muted)", fontSize: "0.85rem" }}>
-                  ไม่มีงานที่รอดำเนินการ
+                <div className="empty-state" style={{ padding: "2rem 1rem" }}>
+                  <div className="empty-state-icon" style={{ fontSize: "24px" }}>📋</div>
+                  <p className="empty-state-title" style={{ fontSize: "13px" }}>ไม่มีงานรอดำเนินการ</p>
+                  <p className="empty-state-text" style={{ fontSize: "11px" }}>กดปุ่มสร้างงานใหม่เพื่อเพิ่มงาน</p>
                 </div>
               )}
             </div>
@@ -514,8 +516,10 @@ export default function TaskBoard() {
             <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
               {inProgressTasks.map(renderTaskCard)}
               {inProgressTasks.length === 0 && (
-                <div style={{ textAlign: "center", padding: "2rem 1rem", color: "var(--text-muted)", fontSize: "0.85rem" }}>
-                  ไม่มีงานที่กำลังดำเนินการ
+                <div className="empty-state" style={{ padding: "2rem 1rem" }}>
+                  <div className="empty-state-icon" style={{ fontSize: "24px" }}>⚡</div>
+                  <p className="empty-state-title" style={{ fontSize: "13px" }}>ไม่มีงานกำลังทำ</p>
+                  <p className="empty-state-text" style={{ fontSize: "11px" }}>ย้ายงานจากรอดำเนินการมาที่นี่</p>
                 </div>
               )}
             </div>
@@ -564,8 +568,10 @@ export default function TaskBoard() {
             <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
               {doneTasks.map(renderTaskCard)}
               {doneTasks.length === 0 && (
-                <div style={{ textAlign: "center", padding: "2rem 1rem", color: "var(--text-muted)", fontSize: "0.85rem" }}>
-                  ยังไม่มีงานที่เสร็จสิ้น
+                <div className="empty-state" style={{ padding: "2rem 1rem" }}>
+                  <div className="empty-state-icon" style={{ fontSize: "24px" }}>✅</div>
+                  <p className="empty-state-title" style={{ fontSize: "13px" }}>ยังไม่มีงานที่เสร็จสิ้น</p>
+                  <p className="empty-state-text" style={{ fontSize: "11px" }}>งานที่เสร็จแล้วจะมาแสดงที่นี่</p>
                 </div>
               )}
             </div>

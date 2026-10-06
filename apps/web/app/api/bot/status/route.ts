@@ -106,7 +106,9 @@ export async function GET() {
     });
 
     return NextResponse.json({
+      isOnline: !!currentSession,
       online: !!currentSession,
+      latency: currentSession?.ping || null,
       session: currentSession,
     });
   } catch (error) {

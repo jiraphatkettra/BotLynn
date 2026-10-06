@@ -351,6 +351,8 @@ export default function LeaveManager() {
                           <img
                             src={getDiscordAvatarUrl(l.user.discordId, l.user.avatar)}
                             alt={l.user.displayName || l.user.username}
+                            loading="lazy"
+                            decoding="async"
                             style={{ width: "30px", height: "30px", borderRadius: "50%", objectFit: "cover" }}
                             onError={(e) => {
                               (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";

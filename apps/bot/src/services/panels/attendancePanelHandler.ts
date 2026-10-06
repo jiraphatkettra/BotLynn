@@ -31,7 +31,7 @@ export async function handleAttendanceClockIn(interaction: ButtonInteraction) {
         `> สถานะปัจจุบัน: กำลังปฏิบัติหน้าที่ (On Duty)\n\n` +
         `-# หากเสร็จสิ้นการปฏิบัติหน้าที่แล้ว กรุณากดปุ่ม "ออกงาน" บนแผงควบคุม`
       )
-      .setFooter({ text: "LynnBot Operations System" });
+      .setFooter({ text: "LynnBot Operations System • Attendance" });
 
     await interaction.editReply({ embeds: [embed] });
     return;
@@ -87,7 +87,7 @@ export async function handleAttendanceClockIn(interaction: ButtonInteraction) {
       `> ระบบกำลังบันทึกเวลาปฏิบัติหน้าที่ของคุณและซิงค์เข้าสู่ Dashboard\n\n` +
       `-# เมื่อเสร็จสิ้นภารกิจ กรุณากดปุ่ม "ออกงาน • Clock Out" บนแผงควบคุม`
     )
-    .setFooter({ text: "LynnBot Operations System • ขอให้เป็นการทำงานที่ราบรื่นครับ" })
+    .setFooter({ text: "LynnBot Operations System • Attendance" })
     .setTimestamp();
 
   await interaction.editReply({ embeds: [embed] });
@@ -110,7 +110,7 @@ export async function handleAttendanceClockOut(interaction: ButtonInteraction) {
         `ไม่พบประวัติการตอกบัตรเข้างานของคุณในระบบขณะนี้\n\n` +
         `> กรุณากดปุ่ม **เข้างาน • Clock In** ก่อนเพื่อเริ่มบันทึกเวลาปฏิบัติงาน`
       )
-      .setFooter({ text: "LynnBot Operations System" });
+      .setFooter({ text: "LynnBot Operations System • Attendance" });
 
     await interaction.editReply({ embeds: [embed] });
     return;
@@ -161,7 +161,7 @@ export async function handleAttendanceClockOut(interaction: ButtonInteraction) {
   }
 
   const embed = new EmbedBuilder()
-    .setColor(THEME_COLORS.accent)
+    .setColor(THEME_COLORS.success)
     .setTitle("🏁  CLOCK-OUT RECORDED • บันทึกเวลาออกงานเรียบร้อย")
     .setDescription(
       `บันทึกการสิ้นสุดกะการทำงานเรียบร้อยแล้ว\n\n` +
@@ -171,7 +171,7 @@ export async function handleAttendanceClockOut(interaction: ButtonInteraction) {
       `> สรุป: ข้อมูลเวลาการทำงานถูกบันทึกลงฐานข้อมูลและแดชบอร์ดเรียบร้อยแล้ว\n\n` +
       `-# LynnBot Operations System • ขอบคุณสำหรับความทุ่มเทในการปฏิบัติหน้าที่`
     )
-    .setFooter({ text: "LynnBot Operations System" })
+    .setFooter({ text: "LynnBot Operations System • Attendance" })
     .setTimestamp();
 
   await interaction.editReply({ embeds: [embed] });
@@ -203,7 +203,7 @@ export async function handleAttendanceStatus(interaction: ButtonInteraction) {
   const remMinutes = totalMinutes % 60;
 
   const embed = new EmbedBuilder()
-    .setColor(THEME_COLORS.surface)
+    .setColor(activeAttendance ? THEME_COLORS.success : THEME_COLORS.accent)
     .setTitle("📊  MY ATTENDANCE SUMMARY • สถิติการปฏิบัติงานของฉัน")
     .setDescription(
       `ข้อมูลการลงเวลาปฏิบัติหน้าที่ส่วนบุคคล (<@${interaction.user.id}>)\n\n` +
@@ -215,7 +215,7 @@ export async function handleAttendanceStatus(interaction: ButtonInteraction) {
       `• **ชั่วโมงทำงานสะสม:** **${totalHours} ชั่วโมง ${remMinutes} นาที**\n\n` +
       `> ข้อมูลอัปเดตแบบเรียลไทม์ ซิงค์ตรงกับฐานข้อมูลส่วนกลาง`
     )
-    .setFooter({ text: "LynnBot Operations System • Time Summary" })
+    .setFooter({ text: "LynnBot Operations System • Attendance" })
     .setTimestamp();
 
   await interaction.editReply({ embeds: [embed] });

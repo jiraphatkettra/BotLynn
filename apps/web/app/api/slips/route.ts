@@ -37,7 +37,15 @@ export async function GET(req: Request) {
         where,
         orderBy: { createdAt: "desc" },
         include: {
-          user: true,
+          user: {
+            select: {
+              id: true,
+              username: true,
+              displayName: true,
+              avatar: true,
+              discordId: true,
+            },
+          },
           reviewedBy: {
             select: {
               id: true,

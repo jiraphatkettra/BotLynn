@@ -209,7 +209,7 @@ export default function CommandPalette() {
   // Global Keyboard Shortcut: ⌘K or Ctrl+K or custom event
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+      if ((e.metaKey || e.ctrlKey) && (e.code === "KeyK" || e.key.toLowerCase() === "k")) {
         e.preventDefault();
         setIsOpen((prev) => !prev);
       } else if (e.key === "Escape" && isOpen) {

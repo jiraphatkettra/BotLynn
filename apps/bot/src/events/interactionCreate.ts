@@ -192,6 +192,13 @@ export async function handleInteraction(
           await handlePollVote(btn, pollId, optionId);
           return;
         }
+        // Unmatched button fallthrough
+        if (!btn.replied && !btn.deferred) {
+          await btn.reply({
+            content: "❌ ระบบไม่รู้จักการกระทำนี้ กรุณาติดต่อแอดมิน",
+            ephemeral: true,
+          });
+        }
       } catch (btnError: any) {
         console.error(`❌ Error executing button ${btn.customId}:`, btnError);
         const errMsg = `❌ เกิดข้อผิดพลาดในการประมวลผลปุ่มกด: ${btnError.message || "กรุณาลองใหม่อีกครั้ง"}`;
@@ -212,6 +219,14 @@ export async function handleInteraction(
         if (select.customId === "shop_select_role") {
           await handleShopSelectRole(select);
           return;
+        }
+
+        // Unmatched select menu fallthrough
+        if (!select.replied && !select.deferred) {
+          await select.reply({
+            content: "❌ ไม่พบตัวเลือกที่ระบบรองรับ กรุณาติดต่อแอดมิน",
+            ephemeral: true,
+          });
         }
       } catch (selError: any) {
         console.error(`❌ Error executing select menu ${select.customId}:`, selError);
@@ -260,6 +275,14 @@ export async function handleInteraction(
         if (modal.customId === "modal_warn_check") {
           await handleWarnCheckModalSubmit(modal);
           return;
+        }
+
+        // Unmatched modal fallthrough
+        if (!modal.replied && !modal.deferred) {
+          await modal.reply({
+            content: "❌ ไม่พบ handler สำหรับ modal นี้ กรุณาติดต่อแอดมิน",
+            ephemeral: true,
+          });
         }
       } catch (modalError: any) {
         console.error(`❌ Error executing modal ${modal.customId}:`, modalError);

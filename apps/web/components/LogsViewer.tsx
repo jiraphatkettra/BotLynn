@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { formatDateTime, formatRelativeTime, getDiscordAvatarUrl } from "@/lib/utils";
 
 interface LogItem {
@@ -38,25 +39,41 @@ const CATEGORY_MAP: Record<string, { label: string; icon: string; badgeClass: st
 };
 
 export default function LogsViewer() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
   const [logs, setLogs] = useState<LogItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
 
-  // Filters
-  const [category, setCategory] = useState("ALL");
+  // Filters from URL
+  const initialCategory = searchParams.get("category") || "ALL";
+  const [category, setCategory] = useState(initialCategory);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // Debounce search
+  const handleCategoryChange = (newCat: string) => {
+    setCategory(newCat);
+    setPage(1);
+    const params = new URLSearchParams(searchParams.toString());
+    if (newCat && newCat !== "ALL") {
+      params.set("category", newCat);
+    } else {
+      params.delete("category");
+    }
+    router.replace(`?${params.toString()}`, { scroll: false });
+  };
+
+  // Debounce search - standardized to 300ms
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(search);
       setPage(1);
-    }, 400);
+    }, 300);
     return () => clearTimeout(handler);
   }, [search]);
 
@@ -99,7 +116,7 @@ export default function LogsViewer() {
   }, [fetchLogs]);
 
   const handleResetFilters = () => {
-    setCategory("ALL");
+    handleCategoryChange("ALL");
     setSearch("");
     setDebouncedSearch("");
     setStartDate("");
@@ -159,10 +176,7 @@ export default function LogsViewer() {
             </label>
             <select
               value={category}
-              onChange={(e) => {
-                setCategory(e.target.value);
-                setPage(1);
-              }}
+              onChange={(e) => handleCategoryChange(e.target.value)}
               style={{
                 width: "100%",
                 padding: "8px 12px",
@@ -330,6 +344,8 @@ export default function LogsViewer() {
                               <img
                                 src={getDiscordAvatarUrl(log.user.discordId, log.user.avatar)}
                                 alt={log.user.displayName || log.user.username}
+                                loading="lazy"
+                                decoding="async"
                               />
                             </div>
                             <div>

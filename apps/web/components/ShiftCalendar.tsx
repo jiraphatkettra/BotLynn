@@ -265,7 +265,7 @@ export default function ShiftCalendar() {
             alignItems: "center",
             gap: "8px",
             padding: "8px 18px",
-            borderRadius: "9999px",
+            borderRadius: "var(--radius-pill)",
             background: "#2997ff",
             color: "#ffffff",
             border: "none",
@@ -452,6 +452,14 @@ export default function ShiftCalendar() {
         </div>
       </div>
 
+      {!loading && schedules.length === 0 && (
+        <div className="empty-state" style={{ marginTop: "20px" }}>
+          <div className="empty-state-icon">📅</div>
+          <p className="empty-state-title">ยังไม่มีตารางเวรในเดือนนี้</p>
+          <p className="empty-state-text">กดปุ่ม "+ จัดตารางเวร" หรือคลิกที่ช่องวันที่เพื่อกำหนดเวรให้ทีมงาน</p>
+        </div>
+      )}
+
       {/* Add / Edit Modal */}
       {modalOpen && (
         <div
@@ -463,7 +471,7 @@ export default function ShiftCalendar() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            zIndex: 1100,
+            zIndex: "var(--z-modal, 2000)",
             padding: "16px",
           }}
           onClick={() => setModalOpen(false)}

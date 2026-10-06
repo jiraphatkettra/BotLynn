@@ -71,8 +71,11 @@ export async function POST(
       return NextResponse.json({ error: "ไม่พบข้อมูลสลิปนี้" }, { status: 404 });
     }
 
-    if (slip.status === "APPROVED") {
-      return NextResponse.json({ error: "สลิปนี้ได้รับการอนุมัติไปแล้ว" }, { status: 400 });
+    if (slip.status !== "PENDING") {
+      return NextResponse.json(
+        { error: "สลิปนี้ถูกตรวจสอบไปแล้วโดยแอดมินท่านอื่น" },
+        { status: 409 }
+      );
     }
 
     const reviewer = await prisma.user.findUnique({

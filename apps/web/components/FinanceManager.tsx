@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
+import { useSearchParams, useRouter } from "next/navigation";
 
 interface FinanceRecord {
   id: string;
@@ -53,6 +54,8 @@ const PAYMENT_METHODS = [
 export default function FinanceManager() {
   const { data: session } = useSession();
   const user = session?.user as any;
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [records, setRecords] = useState<FinanceRecord[]>([]);
   const [stats, setStats] = useState<FinanceStats>({
@@ -66,9 +69,33 @@ export default function FinanceManager() {
   });
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<"ALL" | "INCOME" | "EXPENSE">("ALL");
-  const [timeframeFilter, setTimeframeFilter] = useState<"ALL" | "TODAY" | "THIS_MONTH" | "THIS_YEAR">("ALL");
-  const [categoryFilter, setCategoryFilter] = useState("ALL");
+  const [typeFilter, setTypeFilter] = useState<"ALL" | "INCOME" | "EXPENSE">(
+    (searchParams?.get("type") as any) || "ALL"
+  );
+  const [timeframeFilter, setTimeframeFilter] = useState<"ALL" | "TODAY" | "THIS_MONTH" | "THIS_YEAR">(
+    (searchParams?.get("timeframe") as any) || "ALL"
+  );
+  const [categoryFilter, setCategoryFilter] = useState(
+    searchParams?.get("category") || "ALL"
+  );
+
+  // Toast State
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const showToast = (message: string, type: "success" | "error" = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const updateUrlParam = (key: string, value: string) => {
+    const params = new URLSearchParams(searchParams ? searchParams.toString() : "");
+    if (value === "ALL" || !value) {
+      params.delete(key);
+    } else {
+      params.set(key, value);
+    }
+    const query = params.toString();
+    router.replace(query ? `?${query}` : window.location.pathname, { scroll: false });
+  };
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -156,8 +183,17 @@ export default function FinanceManager() {
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title.trim() || !formData.amount || parseFloat(formData.amount) <= 0) {
-      alert("กรุณากรอกชื่อรายการและจำนวนเงินที่ถูกต้อง");
+    if (!formData.title.trim()) {
+      showToast("กรุณากรอกชื่อรายการ", "error");
+      return;
+    }
+    const amount = parseFloat(formData.amount);
+    if (isNaN(amount) || amount <= 0) {
+      showToast("กรุณาระบุจำนวนเงินที่ถูกต้อง (มากกว่า 0)", "error");
+      return;
+    }
+    if (amount > 10_000_000) {
+      showToast("จำนวนเงินเกินขีดจำกัดที่อนุญาต (สูงสุด 10,000,000 บาท)", "error");
       return;
     }
 
@@ -174,13 +210,14 @@ export default function FinanceManager() {
 
       if (res.ok) {
         setIsModalOpen(false);
+        showToast(editingRecord ? "แก้ไขรายการสำเร็จ" : "บันทึกรายการสำเร็จ", "success");
         fetchFinance();
       } else {
         const err = await res.json();
-        alert(err.error || "เกิดข้อผิดพลาดในการบันทึก");
+        showToast(err.error || "เกิดข้อผิดพลาดในการบันทึก", "error");
       }
     } catch (err) {
-      alert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
+      showToast("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้", "error");
     } finally {
       setSubmitting(false);
     }
@@ -191,18 +228,19 @@ export default function FinanceManager() {
       const res = await fetch(`/api/finance/${id}`, { method: "DELETE" });
       if (res.ok) {
         setDeleteConfirmId(null);
+        showToast("ลบรายการเรียบร้อยแล้ว", "success");
         fetchFinance();
       } else {
-        alert("ไม่สามารถลบรายการได้");
+        showToast("ไม่สามารถลบรายการได้", "error");
       }
     } catch (err) {
-      alert("เกิดข้อผิดพลาดในการลบรายการ");
+      showToast("เกิดข้อผิดพลาดในการลบรายการ", "error");
     }
   };
 
   const handleExportCSV = () => {
     if (records.length === 0) {
-      alert("ไม่มีข้อมูลที่จะส่งออก");
+      showToast("ไม่มีข้อมูลที่จะส่งออก", "error");
       return;
     }
 
@@ -241,6 +279,16 @@ export default function FinanceManager() {
 
   return (
     <div className="finance-manager-root">
+      {/* Standardized Toast Notification */}
+      {toast && (
+        <div className="apple-toast-container">
+          <div className={`apple-toast ${toast.type}`}>
+            <span>{toast.type === "success" ? "✓" : "⚠"}</span>
+            <span>{toast.message}</span>
+          </div>
+        </div>
+      )}
+
       {/* 1. Summary Bento Grid Cards */}
       <div className="stats-grid" style={{ marginBottom: 24 }}>
         {/* Income Card */}
@@ -388,14 +436,20 @@ export default function FinanceManager() {
                 <button
                   type="button"
                   className={`apple-segmented-item ${typeFilter === "ALL" ? "active" : ""}`}
-                  onClick={() => setTypeFilter("ALL")}
+                  onClick={() => {
+                    setTypeFilter("ALL");
+                    updateUrlParam("type", "ALL");
+                  }}
                 >
                   ทั้งหมด
                 </button>
                 <button
                   type="button"
                   className={`apple-segmented-item ${typeFilter === "INCOME" ? "active" : ""}`}
-                  onClick={() => setTypeFilter("INCOME")}
+                  onClick={() => {
+                    setTypeFilter("INCOME");
+                    updateUrlParam("type", "INCOME");
+                  }}
                   style={{ color: typeFilter === "INCOME" ? "#000" : "#30d158" }}
                 >
                   รายรับ
@@ -403,7 +457,10 @@ export default function FinanceManager() {
                 <button
                   type="button"
                   className={`apple-segmented-item ${typeFilter === "EXPENSE" ? "active" : ""}`}
-                  onClick={() => setTypeFilter("EXPENSE")}
+                  onClick={() => {
+                    setTypeFilter("EXPENSE");
+                    updateUrlParam("type", "EXPENSE");
+                  }}
                   style={{ color: typeFilter === "EXPENSE" ? "#000" : "#ff453a" }}
                 >
                   รายจ่าย
@@ -414,7 +471,11 @@ export default function FinanceManager() {
               <select
                 className="select"
                 value={timeframeFilter}
-                onChange={(e) => setTimeframeFilter(e.target.value as any)}
+                onChange={(e) => {
+                  const val = e.target.value as any;
+                  setTimeframeFilter(val);
+                  updateUrlParam("timeframe", val);
+                }}
                 style={{ height: 36, padding: "0 12px", fontSize: 12.5 }}
               >
                 <option value="ALL">ช่วงเวลาทั้งหมด</option>
@@ -427,7 +488,11 @@ export default function FinanceManager() {
               <select
                 className="select"
                 value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setCategoryFilter(val);
+                  updateUrlParam("category", val);
+                }}
                 style={{ height: 36, padding: "0 12px", fontSize: 12.5 }}
               >
                 <option value="ALL">หมวดหมู่ทั้งหมด</option>
@@ -579,6 +644,7 @@ export default function FinanceManager() {
                         <td style={{ whiteSpace: "nowrap" }}>
                           <div style={{ fontWeight: 500, color: "#ffffff" }}>
                             {new Date(rec.date).toLocaleDateString("th-TH", {
+                              timeZone: "Asia/Bangkok",
                               day: "2-digit",
                               month: "short",
                               year: "numeric",
@@ -586,6 +652,7 @@ export default function FinanceManager() {
                           </div>
                           <div style={{ fontSize: 10, color: "var(--text-muted)" }}>
                             {new Date(rec.createdAt).toLocaleTimeString("th-TH", {
+                              timeZone: "Asia/Bangkok",
                               hour: "2-digit",
                               minute: "2-digit",
                             })}
@@ -820,7 +887,7 @@ export default function FinanceManager() {
                 {/* Title & Amount */}
                 <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 12 }}>
                   <div>
-                    <label className="form-label">ชื่อรายการ *</label>
+                    <label className="form-label required">ชื่อรายการ</label>
                     <input
                       type="text"
                       className="input"
@@ -831,7 +898,7 @@ export default function FinanceManager() {
                     />
                   </div>
                   <div>
-                    <label className="form-label">จำนวนเงิน (THB) *</label>
+                    <label className="form-label required">จำนวนเงิน (THB)</label>
                     <input
                       type="number"
                       step="any"

@@ -37,7 +37,7 @@ export async function handleWalletBalance(interaction: ButtonInteraction) {
       `• **สิทธิประโยชน์:** ใช้ซื้อยศและบริการเสริมในร้านค้าได้ทันที\n\n` +
       `> ต้องการเติมเงิน สามารถกดปุ่ม **วิธีเติมเงิน** ด้านล่างได้เลยครับ`
     )
-    .setFooter({ text: "LynnBot Operations System • Wallet System" })
+    .setFooter({ text: "LynnBot Operations System • Wallet" })
     .setTimestamp();
 
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -76,7 +76,7 @@ export async function handleWalletTopupInfo(interaction: ButtonInteraction) {
       "• สร้างซองของขวัญในแอป TrueMoney แล้วกดปุ่ม **เติมเงินด้วยซอง TrueMoney** เพื่อรับเงินเข้ากระเป๋าอัตโนมัติทันที\n\n" +
       "> หลังจากโอนเงินผ่าน PromptPay สามารถกดปุ่ม **แจ้งส่งสลิป** เพื่อส่งหลักฐานให้แอดมินได้ตลอดเวลา"
     )
-    .setFooter({ text: "LynnBot Operations System • Wallet Payment Hub" })
+    .setFooter({ text: "LynnBot Operations System • Wallet" })
     .setTimestamp();
 
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -195,7 +195,7 @@ export async function handleTrueMoneyModalSubmit(interaction: ModalSubmitInterac
         "ระบบ TrueMoney Wallet ยังไม่ได้ตั้งค่าเบอร์รับเงิน\n" +
         "กรุณาแจ้งแอดมินหรือผู้ดูแลให้เข้าไปกำหนด **เบอร์ TrueMoney Wallet** ในหน้า Web Dashboard"
       )
-      .setFooter({ text: "LynnBot Operations System" });
+      .setFooter({ text: "LynnBot Operations System • Wallet" });
 
     await interaction.editReply({ embeds: [errorEmbed] });
     return;
@@ -212,7 +212,7 @@ export async function handleTrueMoneyModalSubmit(interaction: ModalSubmitInterac
         "• ตัวอย่างลิงก์ที่ถูกต้อง: `https://gift.truemoney.com/campaign/?v=xxxxxx`\n" +
         "• กรุณาคัดลอกลิงก์ซองของขวัญที่สร้างจากแอป TrueMoney แล้วลองใหม่อีกครั้ง"
       )
-      .setFooter({ text: "LynnBot Operations System" });
+      .setFooter({ text: "LynnBot Operations System • Wallet" });
 
     await interaction.editReply({ embeds: [errorEmbed] });
     return;
@@ -231,7 +231,7 @@ export async function handleTrueMoneyModalSubmit(interaction: ModalSubmitInterac
         (result.errorCode ? `• **รหัสข้อผิดพลาด:** \`${result.errorCode}\`\n\n` : "\n") +
         `> คำแนะนำ: ตรวจสอบว่าซองของขวัญถูกใช้งานไปแล้วหรือไม่ หรือสร้างจากเบอร์เดียวกันกับเบอร์รับเงินของระบบ`
       )
-      .setFooter({ text: "LynnBot Operations System • TrueMoney Gateway" });
+      .setFooter({ text: "LynnBot Operations System • Wallet" });
 
     await interaction.editReply({ embeds: [errorEmbed] });
     return;
@@ -301,7 +301,7 @@ export async function handleTrueMoneyModalSubmit(interaction: ModalSubmitInterac
       `> ยอดเงินพร้อมใช้งานในระบบ สามารถใช้สั่งซื้อยศในเซิร์ฟเวอร์ได้ทันที\n\n` +
       `-# LynnBot Wallet System • ขอขอบคุณสำหรับการสนับสนุนครับ`
     )
-    .setFooter({ text: "LynnBot Operations System • TrueMoney Gateway" })
+    .setFooter({ text: "LynnBot Operations System • Wallet" })
     .setTimestamp();
 
   await interaction.editReply({ embeds: [successEmbed] });

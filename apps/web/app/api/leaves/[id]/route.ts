@@ -36,8 +36,15 @@ export async function PATCH(
 
     if (!leave) {
       return NextResponse.json(
-        { error: "Leave request not found" },
+        { error: "ไม่พบคำขอลางานนี้ในระบบ" },
         { status: 404 }
+      );
+    }
+
+    if (leave.status !== "PENDING") {
+      return NextResponse.json(
+        { error: "คำขอลานี้ได้รับการพิจารณาไปแล้วโดยแอดมินท่านอื่น" },
+        { status: 409 }
       );
     }
 

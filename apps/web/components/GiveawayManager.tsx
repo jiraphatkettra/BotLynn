@@ -101,18 +101,10 @@ export default function GiveawayManager() {
         }}
       >
         {giveaways.length === 0 ? (
-          <div
-            style={{
-              gridColumn: "1 / -1",
-              padding: "48px",
-              textAlign: "center",
-              color: "var(--text-muted)",
-              background: "rgba(255, 255, 255, 0.02)",
-              borderRadius: "16px",
-              border: "1px solid rgba(255, 255, 255, 0.06)",
-            }}
-          >
-            ยังไม่มีกิจกรรม Giveaway ในระบบ
+          <div className="empty-state" style={{ gridColumn: "1 / -1" }}>
+            <div className="empty-state-icon">🎉</div>
+            <p className="empty-state-title">ยังไม่มีกิจกรรม Giveaway</p>
+            <p className="empty-state-text">ใช้คำสั่ง /giveaway create ใน Discord เพื่อเริ่มกิจกรรมแจกรางวัล</p>
           </div>
         ) : (
           giveaways.map((g) => {

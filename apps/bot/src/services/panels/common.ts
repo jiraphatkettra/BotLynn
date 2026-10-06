@@ -4,25 +4,34 @@ import { prisma } from "@lynnbot/database";
 /**
  * Ensures user exists in database and returns the record
  */
-export async function ensureUser(discordUser: {
-  id: string;
-  username: string;
-  displayName?: string;
-  displayAvatarURL: () => string;
-}) {
+export async function ensureUser(
+  discordUser: {
+    id: string;
+    username: string;
+    displayName?: string;
+    avatar?: string | null;
+    displayAvatarURL?: () => string;
+  },
+  defaultRole: "MEMBER" | "ADMIN" = "MEMBER"
+) {
+  const avatarUrl =
+    typeof discordUser.displayAvatarURL === "function"
+      ? discordUser.displayAvatarURL()
+      : discordUser.avatar || null;
+
   return await prisma.user.upsert({
     where: { discordId: discordUser.id },
     update: {
       username: discordUser.username,
       displayName: discordUser.displayName || discordUser.username,
-      avatar: discordUser.displayAvatarURL(),
+      avatar: avatarUrl,
     },
     create: {
       discordId: discordUser.id,
       username: discordUser.username,
       displayName: discordUser.displayName || discordUser.username,
-      avatar: discordUser.displayAvatarURL(),
-      role: "ADMIN",
+      avatar: avatarUrl,
+      role: defaultRole,
     },
   });
 }

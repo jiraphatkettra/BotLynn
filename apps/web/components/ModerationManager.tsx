@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { formatRelativeTime } from "@/lib/utils";
 
 interface WarningItem {
@@ -35,8 +36,12 @@ const SEVERITY_MAP: Record<string, { label: string; color: string; bg: string }>
 };
 
 export default function ModerationManager() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialSeverity = searchParams?.get("severity") || "ALL";
+
   const [warnings, setWarnings] = useState<WarningItem[]>([]);
-  const [selectedSeverity, setSelectedSeverity] = useState("ALL");
+  const [selectedSeverity, setSelectedSeverity] = useState(initialSeverity);
   const [loading, setLoading] = useState(true);
 
   // Modal State
@@ -87,7 +92,7 @@ export default function ModerationManager() {
       } finally {
         setIsSearching(false);
       }
-    }, 250);
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [searchQuery, isModalOpen, selectedMember]);
@@ -297,26 +302,11 @@ export default function ModerationManager() {
     <div style={{ width: "100%", maxWidth: "1100px", margin: "0 auto", position: "relative" }}>
       {/* Toast Notification */}
       {toast && (
-        <div
-          style={{
-            position: "fixed",
-            bottom: "24px",
-            right: "24px",
-            zIndex: 9999,
-            padding: "12px 20px",
-            borderRadius: "10px",
-            backgroundColor: toast.type === "success" ? "#30d158" : "#ff453a",
-            color: "#ffffff",
-            fontSize: "14px",
-            fontWeight: 600,
-            boxShadow: "0 6px 20px rgba(0,0,0,0.35)",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-          }}
-        >
-          <span>{toast.type === "success" ? "✓" : "⚠"}</span>
-          <span>{toast.message}</span>
+        <div className="apple-toast-container">
+          <div className={`apple-toast ${toast.type}`}>
+            <span>{toast.type === "success" ? "✓" : "⚠"}</span>
+            <span>{toast.message}</span>
+          </div>
         </div>
       )}
 
@@ -368,10 +358,20 @@ export default function ModerationManager() {
             <button
               key={sev}
               type="button"
-              onClick={() => setSelectedSeverity(sev)}
+              onClick={() => {
+                setSelectedSeverity(sev);
+                const params = new URLSearchParams(searchParams ? searchParams.toString() : "");
+                if (sev === "ALL") {
+                  params.delete("severity");
+                } else {
+                  params.set("severity", sev);
+                }
+                const query = params.toString();
+                router.replace(query ? `?${query}` : window.location.pathname, { scroll: false });
+              }}
               style={{
                 padding: "6px 14px",
-                borderRadius: "9999px",
+                borderRadius: "var(--radius-pill)",
                 border: "none",
                 fontSize: "12px",
                 fontWeight: 600,

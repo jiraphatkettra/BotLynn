@@ -15,17 +15,17 @@ async function getDashboardData() {
   weekStart.setDate(weekStart.getDate() - 7);
 
   const [
-    totalAdmins,
-    activeToday,
-    totalTransactions,
-    weeklyRevenue,
-    recentAttendance,
-    recentTransactions,
-    recentLogs,
-    pendingSlipsCount,
-    openTicketsCount,
-    financeRecordsCount,
-  ] = await Promise.all([
+    totalAdminsRes,
+    activeTodayRes,
+    totalTransactionsRes,
+    weeklyRevenueRes,
+    recentAttendanceRes,
+    recentTransactionsRes,
+    recentLogsRes,
+    pendingSlipsCountRes,
+    openTicketsCountRes,
+    financeRecordsCountRes,
+  ] = await Promise.allSettled([
     prisma.user.count({
       where: {
         isActive: true,
@@ -48,28 +48,52 @@ async function getDashboardData() {
     prisma.attendance.findMany({
       take: 5,
       orderBy: { clockIn: "desc" },
-      include: { user: true },
+      include: {
+        user: {
+          select: { id: true, username: true, displayName: true, avatar: true, discordId: true },
+        },
+      },
     }),
     prisma.transaction.findMany({
       take: 5,
       orderBy: { createdAt: "desc" },
-      include: { user: true, role: true },
+      include: {
+        user: {
+          select: { id: true, username: true, displayName: true, avatar: true, discordId: true },
+        },
+        role: true,
+      },
     }),
     prisma.auditLog.findMany({
       take: 6,
       orderBy: { createdAt: "desc" },
-      include: { user: true },
+      include: {
+        user: {
+          select: { id: true, username: true, displayName: true, avatar: true, discordId: true },
+        },
+      },
     }),
     prisma.slip.count({ where: { status: "PENDING" } }),
     prisma.ticket.count({ where: { status: { in: ["OPEN", "CLAIMED"] } } }),
     prisma.financeRecord.count(),
   ]);
 
+  const totalAdmins = totalAdminsRes.status === "fulfilled" ? totalAdminsRes.value : 0;
+  const activeToday = activeTodayRes.status === "fulfilled" ? activeTodayRes.value : 0;
+  const totalTransactions = totalTransactionsRes.status === "fulfilled" ? totalTransactionsRes.value : 0;
+  const weeklyRevenue = weeklyRevenueRes.status === "fulfilled" ? (weeklyRevenueRes.value._sum.price || 0) : 0;
+  const recentAttendance = recentAttendanceRes.status === "fulfilled" ? recentAttendanceRes.value : [];
+  const recentTransactions = recentTransactionsRes.status === "fulfilled" ? recentTransactionsRes.value : [];
+  const recentLogs = recentLogsRes.status === "fulfilled" ? recentLogsRes.value : [];
+  const pendingSlipsCount = pendingSlipsCountRes.status === "fulfilled" ? pendingSlipsCountRes.value : 0;
+  const openTicketsCount = openTicketsCountRes.status === "fulfilled" ? openTicketsCountRes.value : 0;
+  const financeRecordsCount = financeRecordsCountRes.status === "fulfilled" ? financeRecordsCountRes.value : 0;
+
   return {
     totalAdmins,
     activeToday,
     totalTransactions,
-    weeklyRevenue: weeklyRevenue._sum.price || 0,
+    weeklyRevenue,
     recentAttendance,
     recentTransactions,
     recentLogs,
@@ -697,6 +721,8 @@ export default async function DashboardPage() {
                       <img
                         src={getDiscordAvatarUrl(tx.user.discordId, tx.user.avatar)}
                         alt={tx.user.displayName || tx.user.username}
+                        loading="lazy"
+                        decoding="async"
                         style={{ width: "34px", height: "34px", borderRadius: "50%" }}
                       />
                       <div>

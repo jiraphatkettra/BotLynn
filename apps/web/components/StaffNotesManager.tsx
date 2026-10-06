@@ -217,7 +217,7 @@ export default function StaffNotesManager() {
               onClick={() => setActiveCategory(key)}
               style={{
                 padding: "6px 14px",
-                borderRadius: "9999px",
+                borderRadius: "var(--radius-pill)",
                 border: "none",
                 fontSize: "12px",
                 fontWeight: 600,
@@ -240,7 +240,14 @@ export default function StaffNotesManager() {
           gap: "16px",
         }}
       >
-        {filteredNotes.map((note) => {
+        {filteredNotes.length === 0 ? (
+          <div className="empty-state" style={{ gridColumn: "1 / -1" }}>
+            <div className="empty-state-icon">📝</div>
+            <p className="empty-state-title">ไม่พบบันทึกหรือคู่มือ</p>
+            <p className="empty-state-text">ยังไม่มีบันทึกในหมวดหมู่นี้ หรือลองปรับคำค้นหาใหม่</p>
+          </div>
+        ) : (
+          filteredNotes.map((note) => {
           const cat = CATEGORIES[note.category] || CATEGORIES.GENERAL;
           return (
             <div
@@ -345,7 +352,7 @@ export default function StaffNotesManager() {
               </div>
             </div>
           );
-        })}
+        }))}
       </div>
 
       {/* Create Modal */}

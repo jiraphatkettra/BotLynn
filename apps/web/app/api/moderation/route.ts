@@ -18,6 +18,9 @@ export async function GET(req: Request) {
     // Member search endpoint for live typing / auto-complete
     if (search !== null) {
       const query = search.trim();
+      if (query.length < 2) {
+        return NextResponse.json({ members: [] });
+      }
       const token = process.env.DISCORD_TOKEN;
       const guildId = process.env.DISCORD_GUILD_ID;
 
@@ -439,6 +442,17 @@ export async function PUT(req: Request) {
       data: { isActive },
     });
 
+    if (session.user) {
+      await prisma.auditLog.create({
+        data: {
+          userId: (session.user as any).id,
+          action: "WARN_STATUS_UPDATE",
+          category: "MODERATION",
+          details: `อัปเดตสถานะใบเตือน #${id} เป็น ${isActive ? "กำลังมีผล (ACTIVE)" : "ยกเลิกแล้ว (INACTIVE)"}`,
+        },
+      }).catch(() => {});
+    }
+
     return NextResponse.json({ success: true, warning: updated });
   } catch (error: any) {
     console.error("Error in PUT /api/moderation:", error);
@@ -460,9 +474,22 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "ID required" }, { status: 400 });
     }
 
+    const existing = await prisma.warning.findUnique({ where: { id } });
+
     await prisma.warning.delete({
       where: { id },
     });
+
+    if (session.user) {
+      await prisma.auditLog.create({
+        data: {
+          userId: (session.user as any).id,
+          action: "WARN_DELETE",
+          category: "MODERATION",
+          details: `ลบใบเตือน #${id} ของ ${existing?.discordName || existing?.discordId || id}`,
+        },
+      }).catch(() => {});
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

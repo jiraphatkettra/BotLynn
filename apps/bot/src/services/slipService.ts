@@ -18,27 +18,7 @@ import { prisma } from "@lynnbot/database";
 import { THEME_COLORS } from "../utils/theme.js";
 import { uploadToR2 } from "./r2Service.js";
 import { executeSlipVerification } from "./slipVerificationService.js";
-
-/**
- * Ensures user exists in database and returns the record
- */
-async function ensureUser(discordUser: DiscordUser) {
-  return await prisma.user.upsert({
-    where: { discordId: discordUser.id },
-    update: {
-      username: discordUser.username,
-      displayName: discordUser.displayName || discordUser.username,
-      avatar: discordUser.avatar,
-    },
-    create: {
-      discordId: discordUser.id,
-      username: discordUser.username,
-      displayName: discordUser.displayName || discordUser.username,
-      avatar: discordUser.avatar,
-      role: "MEMBER",
-    },
-  });
-}
+import { ensureUser } from "./panels/common.js";
 
 /**
  * Records an incoming slip attachment to database, uploads to R2 if configured,
@@ -220,6 +200,7 @@ export async function recordIncomingSlip({
               `• **ยอดเงินคงเหลือในกระเป๋า:** **฿${updatedUser.balance.toLocaleString("th-TH", { minimumFractionDigits: 2 })}**\n\n` +
               `> คุณสามารถพิมพ์ \`/shop\` หรือกดซื้อสินค้า/ยศในดิสคอร์ดได้ทันที!`
             )
+            .setFooter({ text: "LynnBot Operations System • Slip Verification" })
             .setTimestamp();
 
           await subChannel.send({
@@ -305,7 +286,7 @@ export async function recordIncomingSlip({
               `> ระบบได้ปรับยอดเงินเข้ากระเป๋าของสมาชิกเรียบร้อยแล้ว`
             )
             .setImage(imageUrl)
-            .setFooter({ text: "LynnBot Operations System • Automatic Slip Verification" })
+            .setFooter({ text: "LynnBot Operations System • Slip Verification" })
             .setTimestamp();
 
           const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -589,6 +570,7 @@ export async function handleSlipApproveModalSubmit(
           `> คุณสามารถใช้ยอดเงินคงเหลือเพื่อซื้อยศในเซิร์ฟเวอร์ได้ทันทีครับ\n\n` +
           `-# LynnBot Security Payment • ขอขอบคุณสำหรับการสนับสนุนครับ`
         )
+        .setFooter({ text: "LynnBot Operations System • Slip Verification" })
         .setTimestamp();
       await targetUser.send({ embeds: [dmEmbed] });
     }
@@ -726,6 +708,7 @@ export async function handleSlipRejectModalSubmit(
           `• **ผู้ตรวจสอบ:** ${interaction.user.displayName || interaction.user.username}\n\n` +
           `> หากคุณคิดว่านี่เป็นข้อผิดพลาด กรุณาเปิดทิกเก็ตเพื่อติดต่อแอดมินโดยตรงครับ`
         )
+        .setFooter({ text: "LynnBot Operations System • Slip Verification" })
         .setTimestamp();
       await targetUser.send({ embeds: [dmEmbed] });
     }

@@ -1337,7 +1337,7 @@ export default function ShopManager({
 
                   {/* Price Setting */}
                   <div className="form-group" style={{ marginTop: 14 }}>
-                    <label className="form-label">ราคาขาย (บาท) *</label>
+                    <label className="form-label required">ราคาขาย (บาท)</label>
                     <div className="flex gap-10 items-center">
                       <input
                         type="number"
@@ -1531,7 +1531,7 @@ export default function ShopManager({
 
                 {/* Price Setting */}
                 <div className="form-group">
-                  <label className="form-label">ราคาขาย (บาท) *</label>
+                  <label className="form-label required">ราคาขาย (บาท)</label>
                   <div className="flex gap-10 items-center">
                     <input
                       type="number"

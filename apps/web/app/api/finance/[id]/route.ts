@@ -59,6 +59,12 @@ export async function PUT(
           { status: 400 }
         );
       }
+      if (parsedAmount > 10_000_000) {
+        return NextResponse.json(
+          { error: "จำนวนเงินเกินขีดจำกัดที่อนุญาต (สูงสุด 10,000,000 บาท)" },
+          { status: 400 }
+        );
+      }
       dataToUpdate.amount = parsedAmount;
     }
     if (category !== undefined) {

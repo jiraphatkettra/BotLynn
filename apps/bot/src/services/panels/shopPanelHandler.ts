@@ -32,7 +32,7 @@ export async function handleShopBrowse(interaction: ButtonInteraction) {
       .setColor(THEME_COLORS.warning)
       .setTitle("🛒  SERVER SHOP • ร้านค้ายศ")
       .setDescription("ขณะนี้ยังไม่มียศเปิดจำหน่ายในระบบ")
-      .setFooter({ text: "LynnBot Operations System" });
+      .setFooter({ text: "LynnBot Operations System • Shop" });
 
     await interaction.editReply({ embeds: [embed] });
     return;
@@ -60,7 +60,7 @@ export async function handleShopBrowse(interaction: ButtonInteraction) {
       `กรุณาคลิกเลือกยศจากเมนูด้านล่าง เพื่อดูข้อมูลและยืนยันการสั่งซื้อ\n\n` +
       "> ระบบจะตรวจสอบยอดเงินในกระเป๋าของคุณก่อนยืนยันการชำระเงิน"
     )
-    .setFooter({ text: "LynnBot Operations System • Role Shop" });
+    .setFooter({ text: "LynnBot Operations System • Shop" });
 
   await interaction.editReply({ embeds: [embed], components: [row] });
 }
@@ -88,7 +88,7 @@ export async function handleShopSelectRole(interaction: StringSelectMenuInteract
   const balanceAfter = user.balance - shopRole.price;
 
   const embed = new EmbedBuilder()
-    .setColor(hasEnough ? THEME_COLORS.accent : THEME_COLORS.warning)
+    .setColor(hasEnough ? THEME_COLORS.accent : THEME_COLORS.danger)
     .setTitle("💳  ORDER CHECKOUT • สรุปรายการสั่งซื้อยศ")
     .setDescription(
       `คุณได้เลือกยศ: **${shopRole.name}**\n\n` +
@@ -101,7 +101,7 @@ export async function handleShopSelectRole(interaction: StringSelectMenuInteract
         : `> ⚠️ **ยอดเงินของคุณไม่เพียงพอ** กรุณาเติมเงินเข้าระบบก่อนทำรายการสั่งซื้อ\n\n`) +
       `-# กรุณากดยืนยันเพื่อชำระเงิน หรือกดยกเลิกเพื่อเปลี่ยนรายการ`
     )
-    .setFooter({ text: "LynnBot Operations System • Checkout Confirmation" });
+    .setFooter({ text: "LynnBot Operations System • Shop" });
 
   const buttonsRow = new ActionRowBuilder<ButtonBuilder>();
 
@@ -208,14 +208,14 @@ export async function handleShopConfirmBuy(interaction: ButtonInteraction, roleI
       const logChannel = interaction.guild.channels.cache.get(setting.value) as TextChannel | undefined;
       if (logChannel) {
         const logEmbed = new EmbedBuilder()
-          .setColor(THEME_COLORS.accent)
+          .setColor(THEME_COLORS.success)
           .setTitle("🎉  NEW SHOP PURCHASE • มีการสั่งซื้อยศใหม่")
           .setDescription(
             `<@${interaction.user.id}> ได้สั่งซื้อยศ **${shopRole.name}**\n` +
             `• ราคา: ฿${shopRole.price.toLocaleString("th-TH")}\n` +
             `• วันที่ทำรายการ: <t:${Math.floor(Date.now() / 1000)}:f>`
           )
-          .setFooter({ text: "LynnBot Shop System" })
+          .setFooter({ text: "LynnBot Operations System • Shop" })
           .setTimestamp();
         await logChannel.send({ embeds: [logEmbed] });
       }
@@ -237,7 +237,7 @@ export async function handleShopConfirmBuy(interaction: ButtonInteraction, roleI
         : `> ⚠️ ไม่สามารถมอบยศ Discord ได้อัตโนมัติ (กรุณาแจ้งแอดมินเพื่อรับยศ)\n\n`) +
       `-# LynnBot Operations System • ขอให้สนุกกับการใช้งานเซิร์ฟเวอร์ครับ`
     )
-    .setFooter({ text: "LynnBot Operations System • Purchase Receipt" })
+    .setFooter({ text: "LynnBot Operations System • Shop" })
     .setTimestamp();
 
   await interaction.editReply({ embeds: [receiptEmbed] });

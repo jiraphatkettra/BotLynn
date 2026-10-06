@@ -443,6 +443,8 @@ export default function AttendanceContainer({
                               <img
                                 src={getDiscordAvatarUrl(att.user.discordId, att.user.avatar)}
                                 alt={att.user.displayName || att.user.username}
+                                loading="lazy"
+                                decoding="async"
                                 style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }}
                                 onError={(e) => {
                                   (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
