@@ -65,28 +65,25 @@ export async function handleVoiceStateUpdate(
       });
 
       if (user) {
-        const activeSession = await prisma.voiceSession.findFirst({
+        const activeSessions = await prisma.voiceSession.findMany({
           where: {
             userId: user.id,
-            channelId: oldState.channelId,
             leftAt: null,
           },
-          orderBy: { joinedAt: "desc" },
         });
 
-        if (activeSession) {
+        for (const session of activeSessions) {
           const duration = Math.max(
             1,
-            Math.floor((now.getTime() - activeSession.joinedAt.getTime()) / 1000)
+            Math.floor((now.getTime() - session.joinedAt.getTime()) / 1000)
           );
           await prisma.voiceSession.update({
-            where: { id: activeSession.id },
+            where: { id: session.id },
             data: {
               leftAt: now,
               duration,
             },
           });
-
           const mins = Math.floor(duration / 60);
           console.log(`🎙️ [Voice] ${member.user.username} left voice after ${mins}m`);
         }
@@ -115,16 +112,14 @@ export async function handleVoiceStateUpdate(
       });
 
       // Close previous channel session
-      const prevSession = await prisma.voiceSession.findFirst({
+      const prevSessions = await prisma.voiceSession.findMany({
         where: {
           userId: user.id,
-          channelId: oldState.channelId,
           leftAt: null,
         },
-        orderBy: { joinedAt: "desc" },
       });
 
-      if (prevSession) {
+      for (const prevSession of prevSessions) {
         const duration = Math.max(
           1,
           Math.floor((now.getTime() - prevSession.joinedAt.getTime()) / 1000)

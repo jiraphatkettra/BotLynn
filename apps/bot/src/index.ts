@@ -70,7 +70,7 @@ export interface BotCommand {
   autocomplete?: (interaction: AutocompleteInteraction) => Promise<void>;
 }
 
-// Create client with required partials for reaction roles
+// Create client with required partials and rest options
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -81,6 +81,10 @@ const client = new Client({
     GatewayIntentBits.GuildMessageReactions,
   ],
   partials: [Partials.Message, Partials.Channel, Partials.Reaction],
+  rest: {
+    timeout: 30000,
+    retries: 3,
+  },
 });
 
 // Register commands
@@ -186,6 +190,23 @@ async function shutdown(reason: string) {
   process.exit(0);
 }
 
+// Diagnostic state tracking
+let isReady = false;
+let lastBotError: string | null = null;
+let connectionAttempts = 0;
+
+// Client event diagnostic listeners
+client.on("warn", (msg) => console.warn(`⚠️ [Discord Warn] ${msg}`));
+client.on("error", (err) => {
+  lastBotError = `Client error: ${err.message || String(err)}`;
+  console.error("❌ [Discord Client Error]", err);
+});
+client.rest.on("rateLimited", (info) => {
+  const msg = `Rate limited on ${info.route}: wait ${Math.ceil(info.timeToReset / 1000)}s (global: ${info.global})`;
+  lastBotError = msg;
+  console.warn(`⏳ [Discord REST Rate Limited] ${msg}`);
+});
+
 process.on("SIGINT", () => shutdown("SIGINT"));
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("unhandledRejection", (reason, promise) => {
@@ -195,12 +216,15 @@ process.on("uncaughtException", (error) => {
   console.error("⚠️ Uncaught Exception:", error);
 });
 
-// Login
-const token = process.env.DISCORD_TOKEN;
-if (!token) {
-  console.error("❌ DISCORD_TOKEN not found in .env");
+// Clean and sanitize DISCORD_TOKEN
+const rawToken = process.env.DISCORD_TOKEN;
+if (!rawToken) {
+  console.error("❌ DISCORD_TOKEN not found in environment variables");
   process.exit(1);
 }
+
+// Strip accidental surrounding quotes and whitespace (very common issue when copying to Render)
+const token = rawToken.trim().replace(/^["']|["']$/g, "").trim();
 
 // Minimal HTTP health check server (required for Render Free Tier Web Service & uptime monitors)
 const PORT = process.env.PORT || 3001;
@@ -209,7 +233,14 @@ const healthServer = http.createServer((req, res) => {
   res.end(
     JSON.stringify({
       status: "ok",
-      bot: client.user?.tag || "starting",
+      bot: client.user?.tag || (isReady ? "ready" : "starting"),
+      wsStatus: client.ws?.status ?? -1,
+      wsPing: client.ws?.ping ?? -1,
+      connectionAttempts,
+      lastError: lastBotError,
+      tokenConfigured: Boolean(token),
+      tokenLength: token.length,
+      tokenPrefix: token.substring(0, 10) + "...",
       uptime: process.uptime(),
       timestamp: new Date().toISOString(),
     })
@@ -220,5 +251,42 @@ healthServer.listen(PORT, () => {
   console.log(`📡 Health check server listening on port ${PORT}`);
 });
 
-console.log("🤖 Starting LynnBot...");
-client.login(token);
+// Robust gateway connection with timeout and retry
+async function connectToDiscord(maxRetries = 5) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    connectionAttempts = attempt;
+    console.log(`🤖 [Attempt ${attempt}/${maxRetries}] Connecting to Discord Gateway...`);
+
+    try {
+      // Race client.login against a 25-second timeout
+      const loginPromise = client.login(token);
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error("Gateway connection timed out after 25s")),
+          25000
+        )
+      );
+
+      await Promise.race([loginPromise, timeoutPromise]);
+      isReady = true;
+      lastBotError = null;
+      console.log(`✨ Discord login promise resolved successfully!`);
+      return;
+    } catch (err: any) {
+      const errMsg = err?.message || String(err);
+      lastBotError = errMsg;
+      console.error(`❌ Gateway connection attempt ${attempt} failed: ${errMsg}`);
+
+      if (attempt < maxRetries) {
+        const waitTime = Math.min(attempt * 5, 20);
+        console.log(`⏳ Waiting ${waitTime}s before retrying...`);
+        await new Promise((r) => setTimeout(r, waitTime * 1000));
+      }
+    }
+  }
+
+  console.error("❌ All gateway connection attempts failed. Exiting process to trigger clean container restart...");
+  process.exit(1);
+}
+
+connectToDiscord();

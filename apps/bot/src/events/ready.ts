@@ -40,9 +40,14 @@ export async function handleReady(client: Client<true>, prisma: PrismaClient) {
     ],
   });
 
+  // Initial Voice Session Audit & Discord Reconciliation
+  setTimeout(() => syncVoiceSessions(client, prisma), 3000);
+
   // Start heartbeat interval (every 5 minutes)
   setInterval(async () => {
     try {
+      syncVoiceSessions(client, prisma);
+
       let users = 0;
       client.guilds.cache.forEach((guild) => {
         users += guild.memberCount;
@@ -63,4 +68,47 @@ export async function handleReady(client: Client<true>, prisma: PrismaClient) {
       // Silently fail heartbeat
     }
   }, 5 * 60 * 1000);
+}
+
+async function syncVoiceSessions(client: Client<true>, prisma: PrismaClient) {
+  try {
+    const activeSessions = await prisma.voiceSession.findMany({
+      where: { leftAt: null },
+      include: { user: true },
+    });
+
+    const now = new Date();
+    for (const session of activeSessions) {
+      const guild = client.guilds.cache.get(session.guildId);
+      if (!guild) {
+        await prisma.voiceSession.update({
+          where: { id: session.id },
+          data: {
+            leftAt: now,
+            duration: Math.max(1, Math.floor((now.getTime() - session.joinedAt.getTime()) / 1000)),
+          },
+        });
+        continue;
+      }
+
+      const member =
+        guild.members.cache.get(session.user.discordId) ||
+        (await guild.members.fetch(session.user.discordId).catch(() => null));
+
+      // If member is not in Discord voice or not in this channel anymore
+      if (!member || !member.voice?.channelId || member.voice.channelId !== session.channelId) {
+        const duration = Math.max(1, Math.floor((now.getTime() - session.joinedAt.getTime()) / 1000));
+        await prisma.voiceSession.update({
+          where: { id: session.id },
+          data: {
+            leftAt: now,
+            duration,
+          },
+        });
+        console.log(`🎙️ [Voice Sync] Closed stale session for ${session.user.username}`);
+      }
+    }
+  } catch (err) {
+    console.error("❌ Voice session sync error:", err);
+  }
 }

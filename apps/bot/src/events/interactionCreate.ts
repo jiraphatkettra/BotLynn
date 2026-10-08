@@ -55,6 +55,7 @@ export async function handleInteraction(
     // 1. Handle Button Interactions
     if (interaction.isButton()) {
       const btn = interaction as ButtonInteraction;
+      console.log(`🔘 [Button Click] "${btn.customId}" by @${btn.user.username} (${btn.user.id}) in channel ${btn.channelId}`);
 
       try {
         // Attendance Panel Buttons
