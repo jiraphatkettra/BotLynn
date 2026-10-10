@@ -7,15 +7,15 @@ export default function CyberBackground() {
 
   useEffect(() => {
     const isTouchOnly = typeof window !== "undefined" && window.matchMedia("(hover: none)").matches;
-    if (isTouchOnly) return; // skip on touch-only devices
+    if (isTouchOnly) return;
 
     let ticking = false;
     function handleMouseMove(e: MouseEvent) {
       if (!ticking) {
         window.requestAnimationFrame(() => {
           setMousePos({
-            x: (e.clientX / window.innerWidth) * 100,
-            y: (e.clientY / window.innerHeight) * 100,
+            x: Math.round((e.clientX / window.innerWidth) * 100),
+            y: Math.round((e.clientY / window.innerHeight) * 100),
           });
           ticking = false;
         });
@@ -28,66 +28,41 @@ export default function CyberBackground() {
   }, []);
 
   return (
-    <div
-      className="cyber-background-root"
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        width: "100%",
-        maxWidth: "100%",
-        height: "100vh",
-        pointerEvents: "none",
-        zIndex: 0,
-        overflow: "hidden",
-        contain: "paint",
-      }}
-    >
-      {/* 1. Cursor Reactive Ambient Light Spotlight */}
+    <div className="ios-liquid-canvas-mesh" aria-hidden="true">
+      {/* 1. Azure Liquid Sphere */}
       <div
+        className="ios-liquid-orb orb-azure"
         style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          background: `radial-gradient(900px circle at ${mousePos.x}% ${mousePos.y}%, rgba(10, 132, 255, 0.07) 0%, rgba(112, 0, 255, 0.04) 40%, transparent 70%)`,
-          transition: "background 0.15s ease-out",
+          transform: `translate3d(${(mousePos.x - 50) * 0.15}px, ${(mousePos.y - 50) * 0.15}px, 0)`,
         }}
       />
 
-      {/* 2. Floating Cybernetic Perspective Grid (Bottom) */}
+      {/* 2. Lavender / Violet Liquid Sphere */}
       <div
-        className="cyber-perspective-grid"
+        className="ios-liquid-orb orb-violet"
         style={{
-          position: "absolute",
-          bottom: 0,
-          left: "-50%",
-          width: "200%",
-          height: "450px",
-          backgroundImage:
-            "linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px)",
-          backgroundSize: "60px 60px",
-          transform: "perspective(600px) rotateX(65deg)",
-          transformOrigin: "bottom center",
-          maskImage: "linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.7) 60%, black 100%)",
-          WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.7) 60%, black 100%)",
-          opacity: 0.7,
+          transform: `translate3d(${(50 - mousePos.x) * 0.18}px, ${(50 - mousePos.y) * 0.18}px, 0)`,
         }}
       />
 
-      {/* 3. Deep Space Stars / Ambient Dust */}
+      {/* 3. Sunset Rose / Coral Sphere */}
       <div
+        className="ios-liquid-orb orb-amber"
         style={{
-          position: "absolute",
-          inset: 0,
-          backgroundImage: "radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px)",
-          backgroundSize: "80px 80px",
-          opacity: 0.25,
+          transform: `translate3d(${(mousePos.x - 50) * 0.1}px, ${(50 - mousePos.y) * 0.1}px, 0)`,
         }}
       />
+
+      {/* 4. Mint / Emerald Liquid Sphere */}
+      <div
+        className="ios-liquid-orb orb-emerald"
+        style={{
+          transform: `translate3d(${(50 - mousePos.x) * 0.12}px, ${(mousePos.y - 50) * 0.12}px, 0)`,
+        }}
+      />
+
+      {/* 5. Liquid Optical Noise & Specular Diffusion Layer */}
+      <div className="ios-liquid-specular-wash" />
     </div>
   );
 }

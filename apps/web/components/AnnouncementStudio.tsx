@@ -21,6 +21,7 @@ export default function AnnouncementStudio() {
   const [channels, setChannels] = useState<DiscordChannel[]>([]);
   const [roles, setRoles] = useState<DiscordRole[]>([]);
   const [loadingGuildData, setLoadingGuildData] = useState(false);
+  const [guildError, setGuildError] = useState<string | null>(null);
   const [selectedChannel, setSelectedChannel] = useState("");
   const [title, setTitle] = useState("📢 ประกาศจากทีมงาน");
   const [description, setDescription] = useState(
@@ -50,23 +51,37 @@ export default function AnnouncementStudio() {
   );
 
   // Fetch Guild Data (Channels & Roles)
-  useEffect(() => {
+  const fetchGuildData = async () => {
     setLoadingGuildData(true);
-    fetch("/api/discord/guild-data")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.channels) {
-          setChannels(data.channels);
-          if (data.channels.length > 0) {
-            setSelectedChannel(data.channels[0].id);
-          }
+    setGuildError(null);
+    try {
+      const r = await fetch("/api/discord/guild-data");
+      const data = await r.json();
+      if (!r.ok || data.error) {
+        setGuildError(data.error || "ไม่สามารถดึงข้อมูลห้องและยศจาก Discord ได้");
+        return;
+      }
+      if (Array.isArray(data.channels)) {
+        setChannels(data.channels);
+        if (data.channels.length > 0) {
+          setSelectedChannel((prev) =>
+            prev && data.channels.some((c: any) => c.id === prev) ? prev : data.channels[0].id
+          );
         }
-        if (data.roles) {
-          setRoles(data.roles);
-        }
-      })
-      .catch((e) => console.error("Error loading Discord data:", e))
-      .finally(() => setLoadingGuildData(false));
+      }
+      if (Array.isArray(data.roles)) {
+        setRoles(data.roles);
+      }
+    } catch (e: any) {
+      console.error("Error loading Discord data:", e);
+      setGuildError("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
+    } finally {
+      setLoadingGuildData(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchGuildData();
   }, []);
 
   // Close toolbar dropdowns on outside click
@@ -381,16 +396,17 @@ export default function AnnouncementStudio() {
 
   return (
     <div
+      className="announcement-grid"
       style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 350px), 1fr))",
+        gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 420px), 1fr))",
         gap: "24px",
       }}
     >
       {/* Left Form */}
       <div className="card" style={{ padding: "24px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-          <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#ffffff", margin: 0 }}>
+          <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
             สตูดิโอสร้างประกาศ (Announcement Studio)
           </h3>
           <span
@@ -407,18 +423,63 @@ export default function AnnouncementStudio() {
             DISCORD v10
           </span>
         </div>
-        <p style={{ fontSize: "13px", color: "#86868b", margin: "0 0 20px 0" }}>
+        <p style={{ fontSize: "13px", color: "var(--text-muted)", margin: "0 0 20px 0" }}>
           สร้างข้อความแบบ Rich Embed พร้อมแท็กแจ้งเตือน (@everyone, @here, ยศ Discord) ส่งตรงลงห้องได้ทันที
         </p>
 
         <form onSubmit={handleSend} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+          {guildError && (
+            <div
+              style={{
+                padding: "12px 14px",
+                borderRadius: "10px",
+                background: "rgba(255, 69, 58, 0.12)",
+                border: "1px solid rgba(255, 69, 58, 0.35)",
+                color: "#ff453a",
+                fontSize: "13px",
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: "12px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
+                <span style={{ fontSize: "16px", lineHeight: "1.2" }}>⚠️</span>
+                <div>
+                  <div style={{ fontWeight: 600 }}>ไม่สามารถโหลดห้องหรือยศจาก Discord ได้</div>
+                  <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.8)", marginTop: "3px", lineHeight: "1.4" }}>
+                    {guildError}
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={fetchGuildData}
+                disabled={loadingGuildData}
+                style={{
+                  padding: "5px 12px",
+                  borderRadius: "6px",
+                  background: "rgba(255, 255, 255, 0.12)",
+                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                  color: "#ffffff",
+                  fontSize: "12px",
+                  cursor: loadingGuildData ? "not-allowed" : "pointer",
+                  whiteSpace: "nowrap",
+                  fontWeight: 500,
+                }}
+              >
+                {loadingGuildData ? "กำลังโหลด..." : "🔄 ลองใหม่"}
+              </button>
+            </div>
+          )}
+
           {/* Channel Select */}
           <div>
             <label
               style={{
                 fontSize: "13px",
                 fontWeight: 500,
-                color: "#e5e5e7",
+                color: "var(--text-primary)",
                 display: "block",
                 marginBottom: "6px",
               }}
@@ -428,7 +489,20 @@ export default function AnnouncementStudio() {
             <CustomSelect
               value={selectedChannel}
               onChange={setSelectedChannel}
-              placeholder={loadingGuildData ? "กำลังโหลดห้อง Discord..." : "เลือกห้อง Discord..."}
+              placeholder={
+                loadingGuildData
+                  ? "กำลังโหลดห้อง Discord..."
+                  : guildError
+                  ? "เกิดข้อผิดพลาดในการโหลดห้อง"
+                  : "เลือกห้อง Discord..."
+              }
+              emptyText={
+                guildError
+                  ? `ไม่สามารถโหลดห้องได้ (${guildError})`
+                  : loadingGuildData
+                  ? "กำลังโหลดข้อมูลห้อง..."
+                  : "ไม่พบห้องสำหรับประกาศ"
+              }
               options={channels.map((ch) => ({
                 value: ch.id,
                 label: `#${ch.name}`,
@@ -440,8 +514,8 @@ export default function AnnouncementStudio() {
           {/* Mention Tag Section */}
           <div
             style={{
-              background: "rgba(255, 255, 255, 0.02)",
-              border: "1px solid rgba(255, 255, 255, 0.06)",
+              background: "var(--bg-tertiary)",
+              border: "1px solid var(--border-default)",
               borderRadius: "10px",
               padding: "14px",
             }}
@@ -451,7 +525,7 @@ export default function AnnouncementStudio() {
                 style={{
                   fontSize: "13px",
                   fontWeight: 600,
-                  color: "#ffffff",
+                  color: "var(--text-primary)",
                   display: "flex",
                   alignItems: "center",
                   gap: "6px",
@@ -726,8 +800,12 @@ export default function AnnouncementStudio() {
                 >
                   {filteredDrawerRoles.length === 0 ? (
                     <div style={{ fontSize: "12px", color: "#86868b", padding: "8px 0" }}>
-                      {roles.length === 0
-                        ? "กำลังโหลดยศ หรือไม่พบยศใน Discord"
+                      {guildError
+                        ? `ไม่สามารถโหลดยศได้ (${guildError})`
+                        : loadingGuildData
+                        ? "กำลังโหลดยศ Discord..."
+                        : roles.length === 0
+                        ? "ไม่พบยศใน Discord"
                         : "ไม่พบยศที่ตรงกับการค้นหา"}
                     </div>
                   ) : (
@@ -837,7 +915,7 @@ export default function AnnouncementStudio() {
               style={{
                 fontSize: "13px",
                 fontWeight: 500,
-                color: "#e5e5e7",
+                color: "var(--text-primary)",
                 display: "block",
                 marginBottom: "6px",
               }}
@@ -849,13 +927,10 @@ export default function AnnouncementStudio() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="ใส่หัวข้อประกาศ..."
+              className="form-input"
               style={{
                 width: "100%",
                 padding: "10px 12px",
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: "8px",
-                color: "#ffffff",
                 fontSize: "13px",
               }}
             />
@@ -875,7 +950,7 @@ export default function AnnouncementStudio() {
                 style={{
                   fontSize: "13px",
                   fontWeight: 500,
-                  color: "#e5e5e7",
+                  color: "var(--text-primary)",
                   margin: 0,
                 }}
               >
@@ -1244,16 +1319,14 @@ export default function AnnouncementStudio() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="พิมพ์เนื้อหาประกาศ รองรับ Markdown (**ตัวหนา**, *ตัวเอียง*, > คำคม) หรือแท็ก @everyone, ยศ..."
+              className="form-input"
               style={{
                 width: "100%",
                 padding: "10px 12px",
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.08)",
                 borderTopLeftRadius: "0",
                 borderTopRightRadius: "0",
                 borderBottomLeftRadius: "8px",
                 borderBottomRightRadius: "8px",
-                color: "#ffffff",
                 fontSize: "13px",
                 lineHeight: "1.5",
                 resize: "vertical",
@@ -1267,7 +1340,7 @@ export default function AnnouncementStudio() {
               style={{
                 fontSize: "13px",
                 fontWeight: 500,
-                color: "#e5e5e7",
+                color: "var(--text-primary)",
                 display: "block",
                 marginBottom: "6px",
               }}
@@ -1302,13 +1375,11 @@ export default function AnnouncementStudio() {
                 type="text"
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
+                className="form-input"
                 style={{
                   width: "90px",
                   padding: "4px 8px",
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.08)",
                   borderRadius: "6px",
-                  color: "#ffffff",
                   fontSize: "12px",
                   textAlign: "center",
                   marginLeft: "8px",
@@ -1323,7 +1394,7 @@ export default function AnnouncementStudio() {
               style={{
                 fontSize: "13px",
                 fontWeight: 500,
-                color: "#e5e5e7",
+                color: "var(--text-primary)",
                 display: "block",
                 marginBottom: "6px",
               }}
@@ -1335,13 +1406,11 @@ export default function AnnouncementStudio() {
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
               placeholder="https://example.com/banner.png"
+              className="form-input"
               style={{
                 width: "100%",
                 padding: "8px 12px",
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.08)",
                 borderRadius: "8px",
-                color: "#ffffff",
                 fontSize: "13px",
               }}
             />

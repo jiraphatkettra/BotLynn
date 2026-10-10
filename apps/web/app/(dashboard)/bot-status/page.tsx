@@ -141,7 +141,7 @@ export default async function BotStatusPage() {
               <div className="stat-card-icon">⚠️</div>
             </div>
             <div className="stat-card-value">
-              {data.sessions.filter((s) => s.status === "ERROR").length}
+              {data.sessions.filter((s: any) => s.status === "ERROR").length}
             </div>
             <div className="stat-card-label">ข้อผิดพลาด</div>
           </div>

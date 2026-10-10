@@ -48,8 +48,13 @@ export default function LiveActivityFeed({ initialLogs }: { initialLogs: any[] }
   return (
     <div className="dashboard-activity-card">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
-        <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#ffffff", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
-          <span>📜</span>
+        <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--text-primary)", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.85 }}>
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+          </svg>
           <span>กิจกรรมแบบเรียลไทม์ (Live Activity)</span>
         </h3>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -81,16 +86,16 @@ export default function LiveActivityFeed({ initialLogs }: { initialLogs: any[] }
                   justifyContent: "space-between",
                   padding: "12px 14px",
                   borderRadius: "12px",
-                  background: "rgba(255, 255, 255, 0.02)",
-                  border: "1px solid rgba(255, 255, 255, 0.05)",
+                  background: "var(--bg-card)",
+                  border: "1px solid var(--border-subtle)",
                 }}
               >
                 <div>
-                  <div style={{ fontSize: "13px", fontWeight: 600, color: "#ffffff" }}>
+                  <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>
                     {log.action}
                   </div>
-                  <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.45)" }}>
-                    โดย <span style={{ color: "var(--accent-blue)" }}>{log.executorName}</span> • หมวด {log.category}
+                  <div style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
+                    โดย <span style={{ color: "var(--accent)" }}>{log.executorName}</span> • หมวด {log.category}
                   </div>
                 </div>
                 <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
@@ -100,7 +105,7 @@ export default function LiveActivityFeed({ initialLogs }: { initialLogs: any[] }
             ))}
           </div>
         ) : (
-          <div style={{ padding: "40px", textAlign: "center", color: "rgba(255, 255, 255, 0.4)", fontSize: "13px" }}>
+          <div style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)", fontSize: "13px" }}>
             ไม่มีประวัติกิจกรรมล่าสุด
           </div>
         )}

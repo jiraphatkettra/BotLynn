@@ -9,36 +9,36 @@ export const helpCommand: BotCommand = {
   async execute(interaction) {
     const embed = new EmbedBuilder()
       .setColor(0x2997ff)
-      .setTitle("คำสั่งการใช้งาน LynnBot")
+      .setTitle("📖 คู่มือและคำสั่งการใช้งาน • Lynn Assistant")
       .setDescription(
         [
-          "**👤 ข้อมูลส่วนตัว (Self-Service)**",
-          "`/me` — ดูโปรไฟล์ ยอดเงิน Badge และข้อมูลรวมของตัวเอง",
-          "`/balance` — เช็คยอดเงินคงเหลือในกระเป๋า",
-          "`/myslips [status]` — ดูประวัติสลิปที่ส่ง",
-          "`/mytickets [status]` — ดูทิกเก็ตที่เปิดไว้",
+          "ยินดีต้อนรับสู่ระบบ **LynnBot Operations** นะคะ! ด้านล่างนี้คือคำสั่งทั้งหมดที่สามารถใช้งานได้ค่ะ ✨",
           "",
-          "**ระบบตอกบัตร**",
-          "`/clockin [note]` — ตอกบัตรเข้างาน",
-          "`/clockout [note]` — ตอกบัตรออกงาน",
-          "`/attendance [days]` — ประวัติตอกบัตร",
+          "**👤 ข้อมูลส่วนบุคคล (Self-Service)**",
+          "• `/me` — ดูโปรไฟล์ ยอดเงินคงเหลือ เหรียญรางวัล (Badge) และสถิติรวม",
+          "• `/balance` — ตรวจสอบยอดเงินในกระเป๋าดิจิทัล พร้อมปุ่มส่งสลิป",
+          "• `/myslips [status]` — ติดตามสถานะสลิปโอนเงินที่ส่งเข้าระบบ",
+          "• `/mytickets [status]` — ตรวจสอบรายการทิกเก็ตขอความช่วยเหลือ",
           "",
-          "**ร้านค้ายศ**",
-          "`/shop [category]` — ดูรายการยศที่มีจำหน่าย",
-          "`/buy <role>` — ซื้อยศ",
+          "**⏰ ระบบบันทึกเวลาทำงาน (Attendance)**",
+          "• `/clockin [note]` — บันทึกเวลาเริ่มงาน พร้อมหมายเหตุ",
+          "• `/clockout [note]` — บันทึกเวลาออกงาน พร้อมสรุปชั่วโมงทำงาน",
+          "• `/attendance [days]` — ตรวจสอบสรุปประวัติการเข้างานย้อนหลัง",
           "",
-          "**จัดการแอดมิน** (สำหรับผู้ดูแล)",
-          "`/admin list` — รายชื่อแอดมิน",
-          "`/admin info <user>` — ข้อมูลแอดมิน",
-          "`/admin setrole <user> <role>` — กำหนดตำแหน่ง",
-          "`/userinfo <user>` — ดูข้อมูลรวมของสมาชิก (X-ray)",
-          "`/welcome test` — ทดสอบส่งข้อความต้อนรับ Embed",
-          "`/welcome setup` — ตั้งค่าห้องและข้อความต้อนรับ",
+          "**🛒 ร้านค้ายศและไอเทม (Role Store)**",
+          "• `/shop [category]` — เลือกดูรายการยศและสิทธิพิเศษที่เปิดจำหน่าย",
+          "• `/buy <role>` — สั่งซื้อยศและรับบทบาทอัตโนมัติ",
           "",
-          `**เว็บแดชบอร์ด:** ${process.env.NEXTAUTH_URL || "http://localhost:3000"}`,
+          "**👑 เครื่องมือผู้ดูแลระบบ (Admin Tools)**",
+          "• `/admin list` — ตรวจสอบรายชื่อทีมงานและสถานะปฏิบัติหน้าที่",
+          "• `/admin info <user>` — ดูประวัติและข้อมูลงานของแอดมิน",
+          "• `/userinfo <user>` — ตรวจสอบประวัติสมาชิกแบบเจาะลึก (X-ray)",
+          "",
+          `> 🌐 **ระบบจัดการผ่านเว็บ:** [คลิกเปิด Web Dashboard](${process.env.NEXTAUTH_URL || "http://localhost:3000"})`,
         ].join("\n")
       )
-      .setFooter({ text: "LynnBot" });
+      .setFooter({ text: "Lynn Operations • Pro Minimal Dark" })
+      .setTimestamp();
 
     await interaction.reply({ embeds: [embed], ephemeral: true });
   },

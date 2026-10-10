@@ -7,6 +7,7 @@ import { useSession, signOut } from "next-auth/react";
 import { getDiscordAvatarUrl, isRootOwner } from "@/lib/utils";
 import LiveStatusPulse from "@/components/LiveStatusPulse";
 import NotificationCenter from "@/components/NotificationCenter";
+import ThemeToggle from "@/components/ThemeToggle";
 
 interface SubNavItem {
   href: string;
@@ -102,7 +103,7 @@ const FINANCE_CATEGORY: NavCategory = {
 // 2.2 Services & Community Category (Tickets, Announcements, Voice)
 const SERVICES_CATEGORY: NavCategory = {
   id: "services",
-  label: "บริการ & ชุมชน",
+  label: "บริการ",
   icon: (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -331,7 +332,7 @@ const TEAM_CATEGORY: NavCategory = {
 // 2.4 System Category (Settings, Backups, Logs, Bot Status)
 const SYSTEM_CATEGORY: NavCategory = {
   id: "system",
-  label: "จัดการระบบ",
+  label: "ระบบ",
   alignRight: true,
   icon: (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -540,7 +541,6 @@ export default function Navbar() {
           }}
           aria-expanded={isOpen}
         >
-          <span className="apple-nav-link-icon">{category.icon}</span>
           <span>{category.label}</span>
           {categoryBadge > 0 && (
             <span
@@ -637,7 +637,6 @@ export default function Navbar() {
             }}
             className={`apple-nav-link ${isItemActive(DASHBOARD_NAV.href) ? "active" : ""}`}
           >
-            <span className="apple-nav-link-icon">{DASHBOARD_NAV.icon}</span>
             <span>{DASHBOARD_NAV.label}</span>
           </Link>
 
@@ -671,6 +670,9 @@ export default function Navbar() {
             <kbd className="apple-nav-kbd">⌘K</kbd>
           </button>
 
+          {/* iOS 27 Segmented Theme Toggle */}
+          <ThemeToggle />
+
           {/* Notification Center with Dropdown */}
           <NotificationCenter />
 
@@ -701,16 +703,6 @@ export default function Navbar() {
                 <span className="apple-profile-name">
                   {user?.displayName || user?.name || "แอดมิน"}
                 </span>
-                {isRoot ? (
-                  <span className="apple-role-tag root">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14" />
-                    </svg>
-                    Owner
-                  </span>
-                ) : (
-                  <span className="apple-role-tag">{user?.role || "Staff"}</span>
-                )}
               </div>
               <svg
                 width="12"
@@ -747,7 +739,16 @@ export default function Navbar() {
                       @{user?.username || user?.name || "discord"}
                     </div>
                     <div className="apple-profile-dropdown-badge">
-                      {isRoot ? "👑 เจ้าของสูงสุด (Root Owner)" : `สิทธิ์: ${user?.role || "ADMIN"}`}
+                      {isRoot ? (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14" />
+                          </svg>
+                          เจ้าของสูงสุด (Root Owner)
+                        </span>
+                      ) : (
+                        `สิทธิ์: ${user?.role || "ADMIN"}`
+                      )}
                     </div>
                   </div>
                 </div>
@@ -798,6 +799,21 @@ export default function Navbar() {
               </div>
             )}
           </div>
+
+          {/* Mobile & Tablet Drawer Trigger Button */}
+          <button
+            type="button"
+            className="apple-mobile-menu-btn"
+            onClick={() => setMobileMenuOpen(true)}
+            aria-label="เปิดเมนูนำทาง"
+            title="เปิดเมนูนำทาง"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="4" x2="20" y1="6" y2="6" />
+              <line x1="4" x2="20" y1="12" y2="12" />
+              <line x1="4" x2="20" y1="18" y2="18" />
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -818,11 +834,11 @@ export default function Navbar() {
                 justifyContent: "space-between",
                 paddingBottom: "14px",
                 marginBottom: "16px",
-                borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                borderBottom: "1px solid var(--border-subtle)",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ fontSize: "14px", fontWeight: 600, color: "#ffffff" }}>
+                <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-primary)" }}>
                   เมนูนำทางทั้งหมด
                 </span>
                 <span style={{ fontSize: "10px", padding: "1px 6px", borderRadius: "4px", background: "rgba(10, 132, 255, 0.2)", color: "#2997ff", fontWeight: 600 }}>
@@ -833,12 +849,12 @@ export default function Navbar() {
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
                 style={{
-                  background: "rgba(255, 255, 255, 0.08)",
-                  border: "none",
+                  background: "var(--bg-card-hover)",
+                  border: "1px solid var(--border-subtle)",
                   borderRadius: "50%",
                   width: "28px",
                   height: "28px",
-                  color: "#ffffff",
+                  color: "var(--text-primary)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -971,6 +987,14 @@ export default function Navbar() {
                     </Link>
                   );
                 })}
+              </div>
+            </div>
+
+            {/* Section 6: Theme Switcher */}
+            <div className="apple-mobile-category-block" style={{ marginTop: "16px" }}>
+              <div className="apple-mobile-section-label">ธีมการแสดงผล</div>
+              <div style={{ display: "flex", justifyContent: "flex-start", paddingTop: "4px" }}>
+                <ThemeToggle />
               </div>
             </div>
 

@@ -358,12 +358,12 @@ export default function EmbedEditorModal({
     >
       <div
         style={{
-          width: "min(1240px, 96vw)",
-          maxHeight: "92vh",
-          backgroundColor: "#0d0d12",
+          width: "min(1240px, 98vw)",
+          maxHeight: "94vh",
+          backgroundColor: "var(--bg-elevated)",
           borderRadius: "20px",
-          border: "1px solid rgba(255, 255, 255, 0.12)",
-          boxShadow: "0 24px 64px rgba(0, 0, 0, 0.8)",
+          border: "1px solid var(--border-default)",
+          boxShadow: "var(--shadow-elevated)",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
@@ -376,12 +376,12 @@ export default function EmbedEditorModal({
         <div
           style={{
             padding: "18px 24px",
-            borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+            borderBottom: "1px solid var(--border-subtle)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             gap: "16px",
-            background: "rgba(255, 255, 255, 0.02)",
+            background: "var(--bg-card)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
@@ -395,8 +395,8 @@ export default function EmbedEditorModal({
                   gap: "6px",
                   padding: "6px 12px",
                   borderRadius: "8px",
-                  background: "rgba(255, 255, 255, 0.06)",
-                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  background: "var(--bg-tertiary)",
+                  border: "1px solid var(--border-default)",
                   color: "var(--text-secondary)",
                   fontSize: "12px",
                   fontWeight: 500,
@@ -430,7 +430,7 @@ export default function EmbedEditorModal({
                   style={{
                     fontSize: "16px",
                     fontWeight: 600,
-                    color: "#ffffff",
+                    color: "var(--text-primary)",
                     margin: 0,
                     whiteSpace: "nowrap",
                     overflow: "hidden",
@@ -795,22 +795,20 @@ export default function EmbedEditorModal({
             /* ============================================================= */
             config && (
               <div
+                className="embed-modal-grid"
                 style={{
                   flex: 1,
-                  display: "grid",
-                  gridTemplateColumns: "1.15fr 0.85fr",
                   minHeight: 0,
-                  overflow: "hidden",
                 }}
               >
                 {/* --------------------------------------------------------- */}
                 {/* LEFT COLUMN: EDIT FORM CONTROLS                           */}
                 {/* --------------------------------------------------------- */}
                 <div
+                  className="embed-editor-left"
                   style={{
                     padding: "20px 24px",
                     overflowY: "auto",
-                    borderRight: "1px solid rgba(255, 255, 255, 0.08)",
                     display: "flex",
                     flexDirection: "column",
                     gap: "20px",
@@ -1500,6 +1498,7 @@ export default function EmbedEditorModal({
                 {/* RIGHT COLUMN: DISCORD LIVE DARK THEME PREVIEW             */}
                 {/* --------------------------------------------------------- */}
                 <div
+                  className="embed-editor-right"
                   style={{
                     padding: "24px",
                     backgroundColor: "#1e1f22",

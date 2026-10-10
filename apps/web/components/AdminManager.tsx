@@ -427,27 +427,17 @@ export default function AdminManager({
 
       {/* 1. Proportional Stats Row */}
       <div
+        className="stats-grid"
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))",
           gap: 16,
           marginBottom: 24,
         }}
       >
-        <div
-          style={{
-            background: "rgba(255, 255, 255, 0.025)",
-            border: "1px solid rgba(255, 255, 255, 0.07)",
-            borderRadius: 18,
-            padding: "20px 24px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.35)",
-          }}
-        >
+        <div className="stat-card">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-            <span style={{ fontSize: 13, color: "rgba(255, 255, 255, 0.5)", fontWeight: 500 }}>
+            <span className="stat-card-label">
               แอดมินทั้งหมด
             </span>
             <div
@@ -455,11 +445,12 @@ export default function AdminManager({
                 width: 32,
                 height: 32,
                 borderRadius: 8,
-                background: "rgba(255, 255, 255, 0.05)",
+                background: "var(--bg-elevated)",
+                border: "1px solid var(--border-subtle)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "rgba(255, 255, 255, 0.7)",
+                color: "var(--text-secondary)",
               }}
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -470,25 +461,14 @@ export default function AdminManager({
               </svg>
             </div>
           </div>
-          <div style={{ fontSize: 32, fontWeight: 700, color: "#ffffff", letterSpacing: "-0.03em" }}>
+          <div className="stat-card-value">
             {admins.length}
           </div>
         </div>
 
-        <div
-          style={{
-            background: "rgba(255, 255, 255, 0.025)",
-            border: "1px solid rgba(255, 255, 255, 0.07)",
-            borderRadius: 18,
-            padding: "20px 24px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.35)",
-          }}
-        >
+        <div className="stat-card">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-            <span style={{ fontSize: 13, color: "rgba(255, 255, 255, 0.5)", fontWeight: 500 }}>
+            <span className="stat-card-label">
               เปิดใช้งานอยู่
             </span>
             <div
@@ -497,6 +477,7 @@ export default function AdminManager({
                 height: 32,
                 borderRadius: 8,
                 background: "rgba(48, 209, 88, 0.12)",
+                border: "1px solid rgba(48, 209, 88, 0.25)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -509,25 +490,14 @@ export default function AdminManager({
               </svg>
             </div>
           </div>
-          <div style={{ fontSize: 32, fontWeight: 700, color: "#ffffff", letterSpacing: "-0.03em" }}>
+          <div className="stat-card-value">
             {admins.filter((a) => a.isActive).length}
           </div>
         </div>
 
-        <div
-          style={{
-            background: "rgba(255, 255, 255, 0.025)",
-            border: "1px solid rgba(255, 255, 255, 0.07)",
-            borderRadius: 18,
-            padding: "20px 24px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.35)",
-          }}
-        >
+        <div className="stat-card">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-            <span style={{ fontSize: 13, color: "rgba(255, 255, 255, 0.5)", fontWeight: 500 }}>
+            <span className="stat-card-label">
               ผู้จัดการ / Owner
             </span>
             <div
@@ -536,6 +506,7 @@ export default function AdminManager({
                 height: 32,
                 borderRadius: 8,
                 background: "rgba(10, 132, 255, 0.12)",
+                border: "1px solid rgba(10, 132, 255, 0.25)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -547,25 +518,14 @@ export default function AdminManager({
               </svg>
             </div>
           </div>
-          <div style={{ fontSize: 32, fontWeight: 700, color: "#ffffff", letterSpacing: "-0.03em" }}>
+          <div className="stat-card-value">
             {admins.filter((a) => a.role === "OWNER" || a.role === "MANAGER").length}
           </div>
         </div>
 
-        <div
-          style={{
-            background: "rgba(255, 255, 255, 0.025)",
-            border: "1px solid rgba(255, 255, 255, 0.07)",
-            borderRadius: 18,
-            padding: "20px 24px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.35)",
-          }}
-        >
+        <div className="stat-card">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-            <span style={{ fontSize: 13, color: "rgba(255, 255, 255, 0.5)", fontWeight: 500 }}>
+            <span className="stat-card-label">
               Admin / Mod
             </span>
             <div
@@ -574,6 +534,7 @@ export default function AdminManager({
                 height: 32,
                 borderRadius: 8,
                 background: "rgba(167, 139, 250, 0.12)",
+                border: "1px solid rgba(167, 139, 250, 0.25)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -585,7 +546,7 @@ export default function AdminManager({
               </svg>
             </div>
           </div>
-          <div style={{ fontSize: 32, fontWeight: 700, color: "#ffffff", letterSpacing: "-0.03em" }}>
+          <div className="stat-card-value">
             {admins.filter((a) => a.role === "ADMIN" || a.role === "MODERATOR").length}
           </div>
         </div>
@@ -594,8 +555,8 @@ export default function AdminManager({
       {/* 2. Management & Filter Bar (Apple Pro Toolbar) */}
       <div
         style={{
-          background: "rgba(255, 255, 255, 0.02)",
-          border: "1px solid rgba(255, 255, 255, 0.08)",
+          background: "var(--bg-card)",
+          border: "1px solid var(--border-subtle)",
           borderRadius: 18,
           padding: "12px 18px",
           display: "flex",
@@ -605,13 +566,15 @@ export default function AdminManager({
           gap: 14,
           marginBottom: 28,
           backdropFilter: "blur(20px)",
+          boxShadow: "var(--shadow-sm)",
         }}
       >
         {/* Left: Search & Filter Tabs */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", flex: 1 }}>
-          <div style={{ position: "relative", minWidth: 220, maxWidth: 300, width: "100%" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", flex: 1, minWidth: 0 }}>
+          <div style={{ position: "relative", minWidth: 0, flex: "1 1 200px", maxWidth: 300, width: "100%" }}>
             <input
               type="text"
+              className="form-input"
               placeholder="ค้นหาชื่อ, @username, ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -621,20 +584,6 @@ export default function AdminManager({
                 paddingRight: 12,
                 fontSize: 13,
                 width: "100%",
-                background: "rgba(255, 255, 255, 0.04)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: 10,
-                color: "#ffffff",
-                outline: "none",
-                transition: "all 0.15s ease",
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "rgba(10, 132, 255, 0.6)";
-                e.currentTarget.style.boxShadow = "0 0 0 3px rgba(10, 132, 255, 0.15)";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
-                e.currentTarget.style.boxShadow = "none";
               }}
             />
             <svg
@@ -651,7 +600,7 @@ export default function AdminManager({
                 left: 12,
                 top: "50%",
                 transform: "translateY(-50%)",
-                color: "rgba(255, 255, 255, 0.4)",
+                color: "var(--text-muted)",
               }}
             >
               <circle cx="11" cy="11" r="8" />
@@ -810,7 +759,8 @@ export default function AdminManager({
                               height: 36,
                               borderRadius: "50%",
                               overflow: "hidden",
-                              background: "rgba(255,255,255,0.06)",
+                              background: "var(--bg-elevated)",
+                              border: "1px solid var(--border-subtle)",
                               flexShrink: 0,
                             }}
                           >
@@ -822,7 +772,7 @@ export default function AdminManager({
                           </div>
                           <div>
                             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                              <span style={{ fontWeight: 600, color: "#ffffff" }}>
+                              <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>
                                 {admin.displayName || admin.username}
                               </span>
                               {isRoot && (
@@ -1024,8 +974,8 @@ export default function AdminManager({
               >
                 <div
                   style={{
-                    background: "rgba(18, 18, 24, 0.75)",
-                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    background: "var(--bg-card)",
+                    border: "1px solid var(--border-subtle)",
                     borderRadius: "20px",
                     padding: "20px 22px",
                     display: "flex",
@@ -1034,6 +984,7 @@ export default function AdminManager({
                     gap: 16,
                     height: "100%",
                     backdropFilter: "blur(20px)",
+                    boxShadow: "var(--shadow-sm)",
                   }}
                 >
                 <div>
@@ -1052,7 +1003,7 @@ export default function AdminManager({
                         height: 44,
                         borderRadius: "50%",
                         overflow: "hidden",
-                        background: "rgba(255,255,255,0.06)",
+                        background: "var(--bg-elevated)",
                         border: "1px solid var(--border-default)",
                         flexShrink: 0,
                       }}
@@ -1129,7 +1080,7 @@ export default function AdminManager({
                       display: "grid",
                       gridTemplateColumns: "repeat(3, 1fr)",
                       gap: 8,
-                      background: "rgba(255, 255, 255, 0.02)",
+                      background: "var(--bg-elevated)",
                       border: "1px solid var(--border-subtle)",
                       borderRadius: "var(--radius-md)",
                       padding: "10px 12px",
@@ -2141,9 +2092,9 @@ export default function AdminManager({
                   alignItems: "center",
                   gap: 12,
                   padding: "12px 14px",
-                  background: "rgba(255, 255, 255, 0.03)",
+                  background: "var(--bg-elevated)",
                   borderRadius: 12,
-                  border: "1px solid rgba(255, 255, 255, 0.06)",
+                  border: "1px solid var(--border-subtle)",
                 }}
               >
                 <img
@@ -2152,7 +2103,7 @@ export default function AdminManager({
                   style={{ width: 42, height: 42, borderRadius: "50%", objectFit: "cover" }}
                 />
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, color: "#ffffff", fontSize: 14 }}>
+                  <div style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: 14 }}>
                     {walletTarget.displayName || walletTarget.username}
                   </div>
                   <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
@@ -2213,11 +2164,12 @@ export default function AdminManager({
                       type="button"
                       onClick={() => setWalletAmount(String(amt))}
                       style={{
-                        padding: "3px 8px",
+                        padding: "4px 10px",
                         borderRadius: "var(--radius-pill)",
-                        background: walletAmount === String(amt) ? "rgba(255, 255, 255, 0.15)" : "rgba(255, 255, 255, 0.04)",
-                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                        background: walletAmount === String(amt) ? "var(--accent)" : "var(--bg-elevated)",
+                        border: "1px solid var(--border-subtle)",
                         color: walletAmount === String(amt) ? "#ffffff" : "var(--text-secondary)",
+                        fontWeight: walletAmount === String(amt) ? 600 : 500,
                         fontSize: 11,
                         cursor: "pointer",
                       }}

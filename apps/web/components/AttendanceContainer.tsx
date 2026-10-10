@@ -202,9 +202,9 @@ export default function AttendanceContainer({
               gap: "16px",
               background: myActive
                 ? "linear-gradient(90deg, rgba(52, 199, 89, 0.08) 0%, rgba(52, 199, 89, 0.02) 100%)"
-                : "rgba(255, 255, 255, 0.02)",
+                : "var(--bg-card)",
               border: `1px solid ${
-                myActive ? "rgba(52, 199, 89, 0.3)" : "rgba(255, 255, 255, 0.08)"
+                myActive ? "rgba(52, 199, 89, 0.3)" : "var(--border-subtle)"
               }`,
             }}
           >
@@ -214,7 +214,8 @@ export default function AttendanceContainer({
                   width: "42px",
                   height: "42px",
                   borderRadius: "12px",
-                  background: myActive ? "rgba(52, 199, 89, 0.15)" : "rgba(255, 255, 255, 0.06)",
+                  background: myActive ? "rgba(52, 199, 89, 0.15)" : "var(--bg-elevated)",
+                  border: "1px solid var(--border-subtle)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -225,7 +226,7 @@ export default function AttendanceContainer({
               </div>
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span style={{ fontSize: "15px", fontWeight: 600, color: "#ffffff" }}>
+                  <span style={{ fontSize: "15px", fontWeight: 600, color: "var(--text-primary)" }}>
                     สถานะการทำงานของคุณ
                   </span>
                   <span
@@ -233,7 +234,7 @@ export default function AttendanceContainer({
                       width: "8px",
                       height: "8px",
                       borderRadius: "50%",
-                      background: myActive ? "#34c759" : "#86868b",
+                      background: myActive ? "#34c759" : "var(--text-muted)",
                       boxShadow: myActive ? "0 0 8px #34c759" : "none",
                     }}
                   />
@@ -241,13 +242,13 @@ export default function AttendanceContainer({
                     style={{
                       fontSize: "12px",
                       fontWeight: 600,
-                      color: myActive ? "#34c759" : "#86868b",
+                      color: myActive ? "#34c759" : "var(--text-muted)",
                     }}
                   >
                     {myActive ? "กำลังปฏิบัติงาน (Clocked In)" : "ยังไม่ได้เข้างาน (Clocked Out)"}
                   </span>
                 </div>
-                <div style={{ fontSize: "12px", color: "#86868b", marginTop: "3px" }}>
+                <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "3px" }}>
                   {myActive
                     ? `เข้างานเมื่อ: ${formatTime(myActive.clockIn)} (${formatDate(myActive.clockIn)})`
                     : "คุณสามารถกดตอกบัตรเข้างานเพื่อบันทึกเวลาทำงานได้ทันทีจากที่นี่"}
@@ -379,7 +380,7 @@ export default function AttendanceContainer({
             <div
               style={{
                 padding: "16px 20px",
-                borderBottom: "1px solid rgba(255,255,255,0.06)",
+                borderBottom: "1px solid var(--border-subtle)",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
@@ -388,10 +389,10 @@ export default function AttendanceContainer({
               }}
             >
               <div>
-                <h3 style={{ fontSize: "15px", fontWeight: 600, color: "#ffffff", margin: 0 }}>
+                <h3 style={{ fontSize: "15px", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
                   ประวัติการเข้างาน (บันทึกเวลาเข้า-ออก)
                 </h3>
-                <span style={{ fontSize: "12px", color: "#86868b" }}>
+                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
                   บันทึกจากคำสั่ง Discord /clockin, /clockout และ Web Dashboard
                 </span>
               </div>
@@ -422,22 +423,22 @@ export default function AttendanceContainer({
                 <div className="table-responsive">
                   <table className="table" style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
-                      <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                        <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "left" }}>แอดมิน</th>
-                        <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "left" }}>วันที่</th>
-                        <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "left" }}>เวลาเข้างาน</th>
-                        <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "left" }}>เวลาออกงาน</th>
-                        <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "left" }}>ระยะเวลา</th>
-                        <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "left" }}>สถานะ</th>
-                        <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "left" }}>ช่องทาง / หมายเหตุ</th>
+                      <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                        <th style={{ padding: "12px 20px", fontSize: "12px", color: "var(--text-muted)", textAlign: "left" }}>แอดมิน</th>
+                        <th style={{ padding: "12px 20px", fontSize: "12px", color: "var(--text-muted)", textAlign: "left" }}>วันที่</th>
+                        <th style={{ padding: "12px 20px", fontSize: "12px", color: "var(--text-muted)", textAlign: "left" }}>เวลาเข้างาน</th>
+                        <th style={{ padding: "12px 20px", fontSize: "12px", color: "var(--text-muted)", textAlign: "left" }}>เวลาออกงาน</th>
+                        <th style={{ padding: "12px 20px", fontSize: "12px", color: "var(--text-muted)", textAlign: "left" }}>ระยะเวลา</th>
+                        <th style={{ padding: "12px 20px", fontSize: "12px", color: "var(--text-muted)", textAlign: "left" }}>สถานะ</th>
+                        <th style={{ padding: "12px 20px", fontSize: "12px", color: "var(--text-muted)", textAlign: "left" }}>ช่องทาง / หมายเหตุ</th>
                         {isManager && (
-                          <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "right" }}>การจัดการ</th>
+                          <th style={{ padding: "12px 20px", fontSize: "12px", color: "var(--text-muted)", textAlign: "right" }}>การจัดการ</th>
                         )}
                       </tr>
                     </thead>
                     <tbody>
                       {attendances.map((att) => (
-                        <tr key={att.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                        <tr key={att.id} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
                           <td style={{ padding: "12px 20px" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                               <img
@@ -445,22 +446,22 @@ export default function AttendanceContainer({
                                 alt={att.user.displayName || att.user.username}
                                 loading="lazy"
                                 decoding="async"
-                                style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }}
+                                style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover", background: "var(--bg-elevated)", border: "1px solid var(--border-subtle)" }}
                                 onError={(e) => {
                                   (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
                                 }}
                               />
                               <div>
-                                <div style={{ fontSize: "13px", fontWeight: 500, color: "#ffffff" }}>
+                                <div style={{ fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>
                                   {att.user.displayName || att.user.username}
                                 </div>
-                                <div style={{ fontSize: "11px", color: "#86868b" }}>
+                                <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
                                   @{att.user.username}
                                 </div>
                               </div>
                             </div>
                           </td>
-                          <td style={{ padding: "12px 20px", fontSize: "13px", color: "#86868b" }}>{formatDate(att.clockIn)}</td>
+                          <td style={{ padding: "12px 20px", fontSize: "13px", color: "var(--text-muted)" }}>{formatDate(att.clockIn)}</td>
                           <td style={{ padding: "12px 20px", fontSize: "13px", color: "#34c759", fontWeight: 600 }}>
                             {formatTime(att.clockIn)}
                           </td>
@@ -484,7 +485,7 @@ export default function AttendanceContainer({
                               </span>
                             )}
                           </td>
-                          <td style={{ padding: "12px 20px", fontSize: "13px", color: "#ffffff", fontWeight: 500 }}>
+                          <td style={{ padding: "12px 20px", fontSize: "13px", color: "var(--text-primary)", fontWeight: 500 }}>
                             {att.duration ? formatDuration(att.duration) : "—"}
                           </td>
                           <td style={{ padding: "12px 20px" }}>

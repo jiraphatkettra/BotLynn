@@ -33,11 +33,81 @@ interface StaffMember {
   avatar: string | null;
 }
 
+const Icons = {
+  Kanban: () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "middle" }}>
+      <rect width="18" height="18" x="3" y="3" rx="2"/>
+      <path d="M8 7v7M12 7v4M16 7v9"/>
+    </svg>
+  ),
+  User: () => (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "middle" }}>
+      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+      <circle cx="12" cy="7" r="4"/>
+    </svg>
+  ),
+  Calendar: () => (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "middle" }}>
+      <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+      <line x1="16" x2="16" y1="2" y2="6"/>
+      <line x1="8" x2="8" y1="2" y2="6"/>
+      <line x1="3" x2="21" y1="10" y2="10"/>
+    </svg>
+  ),
+  AlertTriangle: () => (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "middle" }}>
+      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+      <line x1="12" x2="12" y1="9" y2="13"/>
+      <line x1="12" x2="12.01" y1="17" y2="17"/>
+    </svg>
+  ),
+  Clock: () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "middle" }}>
+      <circle cx="12" cy="12" r="10"/>
+      <polyline points="12 6 12 12 16 14"/>
+    </svg>
+  ),
+  Zap: () => (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "middle" }}>
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+    </svg>
+  ),
+  Check: () => (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "middle" }}>
+      <polyline points="20 6 9 17 4 12"/>
+    </svg>
+  ),
+  CheckCircle: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "middle" }}>
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+      <polyline points="22 4 12 14.01 9 11.01"/>
+    </svg>
+  ),
+  Trash: () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "middle" }}>
+      <path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+      <line x1="10" x2="10" y1="11" y2="17"/>
+      <line x1="14" x2="14" y1="11" y2="17"/>
+    </svg>
+  ),
+  Plus: () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "middle" }}>
+      <line x1="12" x2="12" y1="5" y2="19"/>
+      <line x1="5" x2="19" y1="12" y2="12"/>
+    </svg>
+  ),
+  ArrowLeft: () => (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "middle" }}>
+      <polyline points="15 18 9 12 15 6"/>
+    </svg>
+  ),
+};
+
 const PRIORITY_CONFIG = {
-  LOW: { label: "ต่ำ", color: "var(--text-muted)", bg: "rgba(255,255,255,0.06)", border: "rgba(255,255,255,0.1)" },
-  MEDIUM: { label: "ปานกลาง", color: "var(--accent-blue)", bg: "rgba(0,113,227,0.12)", border: "rgba(0,113,227,0.25)" },
-  HIGH: { label: "สูง", color: "var(--accent-warning)", bg: "rgba(255,159,10,0.12)", border: "rgba(255,159,10,0.25)" },
-  URGENT: { label: "เร่งด่วน", color: "var(--accent-danger)", bg: "rgba(255,69,58,0.15)", border: "rgba(255,69,58,0.3)" },
+  LOW: { label: "ต่ำ (Low)", color: "#16a34a", bg: "rgba(22,163,74,0.12)", border: "rgba(22,163,74,0.3)" },
+  MEDIUM: { label: "ปานกลาง (Medium)", color: "#0071e3", bg: "rgba(0,113,227,0.12)", border: "rgba(0,113,227,0.3)" },
+  HIGH: { label: "สูง (High)", color: "#d97706", bg: "rgba(217,119,6,0.12)", border: "rgba(217,119,6,0.3)" },
+  URGENT: { label: "เร่งด่วน (Urgent)", color: "#dc2626", bg: "rgba(220,38,38,0.14)", border: "rgba(220,38,38,0.35)" },
 };
 
 export default function TaskBoard() {
@@ -220,18 +290,19 @@ export default function TaskBoard() {
         >
           <div>
             {task.assignee ? (
-              <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>
-                👤 {task.assignee.username}
+              <span style={{ color: "var(--text-primary)", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                <Icons.User /> {task.assignee.username}
               </span>
             ) : (
-              <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>
-                ⚪ ยังไม่มอบหมาย
+              <span style={{ color: "var(--text-muted)", fontStyle: "italic", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                <Icons.Clock /> ยังไม่มอบหมาย
               </span>
             )}
           </div>
           {task.dueDate && (
-            <div style={{ color: isOverdue ? "var(--accent-danger)" : "var(--text-muted)" }}>
-              {isOverdue ? "⚠️ เลยกำหนด " : "📅 "}
+            <div style={{ color: isOverdue ? "var(--danger)" : "var(--text-muted)", display: "inline-flex", alignItems: "center", gap: "4px", fontWeight: isOverdue ? 600 : 400 }}>
+              {isOverdue ? <Icons.AlertTriangle /> : <Icons.Calendar />}
+              {isOverdue && "เลยกำหนด "}
               {new Date(task.dueDate).toLocaleDateString("th-TH", {
                 day: "numeric",
                 month: "short",
@@ -250,22 +321,21 @@ export default function TaskBoard() {
             marginTop: "0.25rem",
           }}
         >
-          <div style={{ display: "flex", gap: "0.3rem" }}>
+          <div style={{ display: "flex", gap: "0.3rem", flexWrap: "wrap" }}>
             {task.status !== "TODO" && (
               <button
                 onClick={() => handleUpdateStatus(task.id, "TODO")}
                 title="ย้ายไป รอดำเนินการ"
+                className="btn btn-secondary btn-sm"
                 style={{
-                  background: "rgba(255,255,255,0.06)",
-                  border: "1px solid var(--border-subtle)",
-                  color: "var(--text-secondary)",
-                  borderRadius: "var(--radius-sm)",
                   padding: "0.25rem 0.5rem",
                   fontSize: "0.75rem",
-                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
                 }}
               >
-                ◀ รอดำเนินการ
+                <Icons.ArrowLeft /> รอดำเนินการ
               </button>
             )}
             {task.status !== "IN_PROGRESS" && (
@@ -273,16 +343,20 @@ export default function TaskBoard() {
                 onClick={() => handleUpdateStatus(task.id, "IN_PROGRESS")}
                 title="ย้ายไป กำลังทำ"
                 style={{
-                  background: "rgba(0,113,227,0.15)",
+                  background: "rgba(0,113,227,0.12)",
                   border: "1px solid rgba(0,113,227,0.3)",
-                  color: "var(--accent-blue)",
+                  color: "#0071e3",
                   borderRadius: "var(--radius-sm)",
                   padding: "0.25rem 0.5rem",
                   fontSize: "0.75rem",
                   cursor: "pointer",
+                  fontWeight: 600,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
                 }}
               >
-                ⚡ กำลังทำ
+                <Icons.Zap /> กำลังทำ
               </button>
             )}
             {task.status !== "DONE" && (
@@ -290,16 +364,20 @@ export default function TaskBoard() {
                 onClick={() => handleUpdateStatus(task.id, "DONE")}
                 title="ย้ายไป เสร็จสิ้น"
                 style={{
-                  background: "rgba(48,209,88,0.15)",
-                  border: "1px solid rgba(48,209,88,0.3)",
-                  color: "var(--accent-success)",
+                  background: "rgba(22,163,74,0.12)",
+                  border: "1px solid rgba(22,163,74,0.3)",
+                  color: "#16a34a",
                   borderRadius: "var(--radius-sm)",
                   padding: "0.25rem 0.5rem",
                   fontSize: "0.75rem",
                   cursor: "pointer",
+                  fontWeight: 600,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
                 }}
               >
-                ✓ เสร็จสิ้น
+                <Icons.Check /> เสร็จสิ้น
               </button>
             )}
           </div>
@@ -311,11 +389,14 @@ export default function TaskBoard() {
               border: "none",
               color: "var(--text-muted)",
               cursor: "pointer",
-              padding: "0.2rem",
-              fontSize: "0.8rem",
+              padding: "0.25rem",
+              borderRadius: "4px",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            🗑️
+            <Icons.Trash />
           </button>
         </div>
       </div>
@@ -335,8 +416,8 @@ export default function TaskBoard() {
         }}
       >
         <div>
-          <h2 style={{ margin: 0, fontSize: "1.5rem", fontWeight: 700, color: "var(--text-primary)" }}>
-            📋 กระดานติดตามงาน (Task Kanban)
+          <h2 style={{ margin: 0, fontSize: "1.5rem", fontWeight: 700, color: "var(--text-primary)", display: "flex", alignItems: "center", gap: "8px" }}>
+            <Icons.Kanban /> กระดานติดตามงาน (Task Kanban)
           </h2>
           <p style={{ margin: "0.25rem 0 0", fontSize: "0.875rem", color: "var(--text-secondary)" }}>
             มอบหมายและจัดการสถานะงานของทีมงาน LynnBot
@@ -348,30 +429,26 @@ export default function TaskBoard() {
           <select
             value={filterPriority}
             onChange={(e) => setFilterPriority(e.target.value)}
+            className="form-select"
             style={{
-              background: "var(--bg-card)",
-              border: "1px solid var(--border-subtle)",
-              color: "var(--text-primary)",
               padding: "0.5rem 0.75rem",
               borderRadius: "var(--radius-md)",
               fontSize: "0.85rem",
             }}
           >
             <option value="ALL">ทุกระดับความสำคัญ</option>
-            <option value="LOW">🟢 ต่ำ</option>
-            <option value="MEDIUM">🔵 ปานกลาง</option>
-            <option value="HIGH">🟠 สูง</option>
-            <option value="URGENT">🔴 เร่งด่วน</option>
+            <option value="LOW">ต่ำ (Low)</option>
+            <option value="MEDIUM">ปานกลาง (Medium)</option>
+            <option value="HIGH">สูง (High)</option>
+            <option value="URGENT">เร่งด่วน (Urgent)</option>
           </select>
 
           {/* Filter Assignee */}
           <select
             value={filterAssignee}
             onChange={(e) => setFilterAssignee(e.target.value)}
+            className="form-select"
             style={{
-              background: "var(--bg-card)",
-              border: "1px solid var(--border-subtle)",
-              color: "var(--text-primary)",
               padding: "0.5rem 0.75rem",
               borderRadius: "var(--radius-md)",
               fontSize: "0.85rem",
@@ -388,21 +465,18 @@ export default function TaskBoard() {
 
           <button
             onClick={() => setShowAddModal(true)}
+            className="btn btn-primary"
             style={{
-              background: "var(--accent-blue)",
-              border: "none",
-              color: "#fff",
               padding: "0.5rem 1rem",
               borderRadius: "var(--radius-md)",
               fontWeight: 600,
               fontSize: "0.875rem",
-              cursor: "pointer",
               display: "flex",
               alignItems: "center",
-              gap: "0.4rem",
+              gap: "6px",
             }}
           >
-            <span>➕</span> เพิ่มงานใหม่
+            <Icons.Plus /> เพิ่มงานใหม่
           </button>
         </div>
       </div>
@@ -424,7 +498,7 @@ export default function TaskBoard() {
           {/* Column 1: TODO */}
           <div
             style={{
-              background: "rgba(255,255,255,0.02)",
+              background: "var(--bg-card)",
               border: "1px solid var(--border-subtle)",
               borderRadius: "var(--radius-lg)",
               padding: "1rem",
@@ -443,15 +517,15 @@ export default function TaskBoard() {
                 borderBottom: "1px solid var(--border-subtle)",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <span style={{ fontSize: "1rem" }}>⚪</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--text-muted)" }}>
+                <Icons.Clock />
                 <span style={{ fontWeight: 600, fontSize: "0.95rem", color: "var(--text-primary)" }}>
                   รอดำเนินการ (To-Do)
                 </span>
               </div>
               <span
                 style={{
-                  background: "rgba(255,255,255,0.08)",
+                  background: "var(--bg-tertiary)",
                   padding: "0.15rem 0.5rem",
                   borderRadius: "var(--radius-full)",
                   fontSize: "0.75rem",
@@ -465,7 +539,7 @@ export default function TaskBoard() {
               {todoTasks.map(renderTaskCard)}
               {todoTasks.length === 0 && (
                 <div className="empty-state" style={{ padding: "2rem 1rem" }}>
-                  <div className="empty-state-icon" style={{ fontSize: "24px" }}>📋</div>
+                  <div className="empty-state-icon" style={{ fontSize: "20px", color: "var(--text-muted)" }}><Icons.Clock /></div>
                   <p className="empty-state-title" style={{ fontSize: "13px" }}>ไม่มีงานรอดำเนินการ</p>
                   <p className="empty-state-text" style={{ fontSize: "11px" }}>กดปุ่มสร้างงานใหม่เพื่อเพิ่มงาน</p>
                 </div>
@@ -476,8 +550,8 @@ export default function TaskBoard() {
           {/* Column 2: IN PROGRESS */}
           <div
             style={{
-              background: "rgba(0,113,227,0.02)",
-              border: "1px solid rgba(0,113,227,0.15)",
+              background: "var(--bg-card)",
+              border: "1px solid var(--border-subtle)",
               borderRadius: "var(--radius-lg)",
               padding: "1rem",
               display: "flex",
@@ -492,22 +566,23 @@ export default function TaskBoard() {
                 justifyContent: "space-between",
                 alignItems: "center",
                 paddingBottom: "0.75rem",
-                borderBottom: "1px solid rgba(0,113,227,0.15)",
+                borderBottom: "1px solid var(--border-subtle)",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <span style={{ fontSize: "1rem" }}>🟡</span>
-                <span style={{ fontWeight: 600, fontSize: "0.95rem", color: "var(--accent-blue)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "#0071e3" }}>
+                <Icons.Zap />
+                <span style={{ fontWeight: 600, fontSize: "0.95rem", color: "#0071e3" }}>
                   กำลังดำเนินการ (In Progress)
                 </span>
               </div>
               <span
                 style={{
-                  background: "rgba(0,113,227,0.15)",
+                  background: "rgba(0,113,227,0.12)",
                   padding: "0.15rem 0.5rem",
                   borderRadius: "var(--radius-full)",
                   fontSize: "0.75rem",
-                  color: "var(--accent-blue)",
+                  color: "#0071e3",
+                  fontWeight: 600,
                 }}
               >
                 {inProgressTasks.length}
@@ -517,7 +592,7 @@ export default function TaskBoard() {
               {inProgressTasks.map(renderTaskCard)}
               {inProgressTasks.length === 0 && (
                 <div className="empty-state" style={{ padding: "2rem 1rem" }}>
-                  <div className="empty-state-icon" style={{ fontSize: "24px" }}>⚡</div>
+                  <div className="empty-state-icon" style={{ fontSize: "20px", color: "#0071e3" }}><Icons.Zap /></div>
                   <p className="empty-state-title" style={{ fontSize: "13px" }}>ไม่มีงานกำลังทำ</p>
                   <p className="empty-state-text" style={{ fontSize: "11px" }}>ย้ายงานจากรอดำเนินการมาที่นี่</p>
                 </div>
@@ -528,8 +603,8 @@ export default function TaskBoard() {
           {/* Column 3: DONE */}
           <div
             style={{
-              background: "rgba(48,209,88,0.02)",
-              border: "1px solid rgba(48,209,88,0.15)",
+              background: "var(--bg-card)",
+              border: "1px solid var(--border-subtle)",
               borderRadius: "var(--radius-lg)",
               padding: "1rem",
               display: "flex",
@@ -544,22 +619,23 @@ export default function TaskBoard() {
                 justifyContent: "space-between",
                 alignItems: "center",
                 paddingBottom: "0.75rem",
-                borderBottom: "1px solid rgba(48,209,88,0.15)",
+                borderBottom: "1px solid var(--border-subtle)",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <span style={{ fontSize: "1rem" }}>✅</span>
-                <span style={{ fontWeight: 600, fontSize: "0.95rem", color: "var(--accent-success)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "#16a34a" }}>
+                <Icons.CheckCircle />
+                <span style={{ fontWeight: 600, fontSize: "0.95rem", color: "#16a34a" }}>
                   เสร็จสิ้น (Done)
                 </span>
               </div>
               <span
                 style={{
-                  background: "rgba(48,209,88,0.15)",
+                  background: "rgba(22,163,74,0.12)",
                   padding: "0.15rem 0.5rem",
                   borderRadius: "var(--radius-full)",
                   fontSize: "0.75rem",
-                  color: "var(--accent-success)",
+                  color: "#16a34a",
+                  fontWeight: 600,
                 }}
               >
                 {doneTasks.length}
@@ -599,8 +675,8 @@ export default function TaskBoard() {
         >
           <div
             style={{
-              background: "var(--bg-surface)",
-              border: "1px solid var(--border-subtle)",
+              background: "var(--bg-elevated)",
+              border: "1px solid var(--border-default)",
               borderRadius: "var(--radius-xl)",
               width: "100%",
               maxWidth: "500px",
@@ -608,11 +684,12 @@ export default function TaskBoard() {
               display: "flex",
               flexDirection: "column",
               gap: "1.25rem",
+              boxShadow: "var(--shadow-elevated)",
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: "var(--text-primary)" }}>
-                ➕ เพิ่มงานใหม่
+              <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: "var(--text-primary)", display: "flex", alignItems: "center", gap: "6px" }}>
+                <Icons.Plus /> เพิ่มงานใหม่
               </h3>
               <button
                 onClick={() => setShowAddModal(false)}
@@ -633,13 +710,9 @@ export default function TaskBoard() {
                   placeholder="เช่น ตรวจสอบความถูกต้องของสลิปประจำวัน"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
+                  className="form-input"
                   style={{
                     width: "100%",
-                    padding: "0.6rem 0.8rem",
-                    background: "var(--bg-card)",
-                    border: "1px solid var(--border-subtle)",
-                    borderRadius: "var(--radius-md)",
-                    color: "var(--text-primary)",
                     fontSize: "0.9rem",
                   }}
                 />
@@ -654,13 +727,9 @@ export default function TaskBoard() {
                   placeholder="ระบุรายละเอียดขั้นตอน หรือลิงก์ที่เกี่ยวข้อง..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
+                  className="form-input"
                   style={{
                     width: "100%",
-                    padding: "0.6rem 0.8rem",
-                    background: "var(--bg-card)",
-                    border: "1px solid var(--border-subtle)",
-                    borderRadius: "var(--radius-md)",
-                    color: "var(--text-primary)",
                     fontSize: "0.9rem",
                     resize: "vertical",
                   }}
@@ -675,13 +744,9 @@ export default function TaskBoard() {
                   <select
                     value={assigneeId}
                     onChange={(e) => setAssigneeId(e.target.value)}
+                    className="form-select"
                     style={{
                       width: "100%",
-                      padding: "0.6rem 0.8rem",
-                      background: "var(--bg-card)",
-                      border: "1px solid var(--border-subtle)",
-                      borderRadius: "var(--radius-md)",
-                      color: "var(--text-primary)",
                       fontSize: "0.85rem",
                     }}
                   >
@@ -701,20 +766,16 @@ export default function TaskBoard() {
                   <select
                     value={priority}
                     onChange={(e) => setPriority(e.target.value as any)}
+                    className="form-select"
                     style={{
                       width: "100%",
-                      padding: "0.6rem 0.8rem",
-                      background: "var(--bg-card)",
-                      border: "1px solid var(--border-subtle)",
-                      borderRadius: "var(--radius-md)",
-                      color: "var(--text-primary)",
                       fontSize: "0.85rem",
                     }}
                   >
-                    <option value="LOW">🟢 ต่ำ</option>
-                    <option value="MEDIUM">🔵 ปานกลาง</option>
-                    <option value="HIGH">🟠 สูง</option>
-                    <option value="URGENT">🔴 เร่งด่วน</option>
+                    <option value="LOW">ต่ำ (Low)</option>
+                    <option value="MEDIUM">ปานกลาง (Medium)</option>
+                    <option value="HIGH">สูง (High)</option>
+                    <option value="URGENT">เร่งด่วน (Urgent)</option>
                   </select>
                 </div>
               </div>
@@ -727,13 +788,9 @@ export default function TaskBoard() {
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
+                  className="form-input"
                   style={{
                     width: "100%",
-                    padding: "0.6rem 0.8rem",
-                    background: "var(--bg-card)",
-                    border: "1px solid var(--border-subtle)",
-                    borderRadius: "var(--radius-md)",
-                    color: "var(--text-primary)",
                     fontSize: "0.85rem",
                   }}
                 />
@@ -743,13 +800,9 @@ export default function TaskBoard() {
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
+                  className="btn btn-secondary"
                   style={{
-                    background: "transparent",
-                    border: "1px solid var(--border-subtle)",
-                    color: "var(--text-secondary)",
                     padding: "0.6rem 1rem",
-                    borderRadius: "var(--radius-md)",
-                    cursor: "pointer",
                     fontSize: "0.85rem",
                   }}
                 >
@@ -758,14 +811,10 @@ export default function TaskBoard() {
                 <button
                   type="submit"
                   disabled={saving}
+                  className="btn btn-primary"
                   style={{
-                    background: "var(--accent-blue)",
-                    border: "none",
-                    color: "#fff",
                     padding: "0.6rem 1.25rem",
-                    borderRadius: "var(--radius-md)",
                     fontWeight: 600,
-                    cursor: saving ? "not-allowed" : "pointer",
                     fontSize: "0.85rem",
                   }}
                 >

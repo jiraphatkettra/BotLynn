@@ -49,11 +49,11 @@ export const clockinCommand: BotCommand = {
           name: interaction.user.displayName || interaction.user.username,
           iconURL: interaction.user.displayAvatarURL(),
         })
-        .setTitle("ตอกบัตรเข้างานอยู่แล้ว")
+        .setTitle("⚠️ คุณอยู่ในช่วงปฏิบัติงานอยู่แล้วนะคะ")
         .setDescription(
-          `เข้างานเมื่อ <t:${Math.floor(existingClockin.clockIn.getTime() / 1000)}:R>\nใช้ \`/clockout\` เมื่อต้องการตอกบัตรออก`
+          `ระบบตรวจพบบันทึกการเข้างานของคุณเมื่อ <t:${Math.floor(existingClockin.clockIn.getTime() / 1000)}:R>\n\n> 💡 เมื่อเสร็จสิ้นภารกิจ สามารถพิมพ์คำสั่ง \`/clockout\` เพื่อบันทึกเวลาออกงานและสรุปชั่วโมงงานได้เลยค่ะ`
         )
-        .setFooter({ text: "LynnBot" });
+        .setFooter({ text: "Lynn Operations • Attendance System" });
 
       await interaction.editReply({ embeds: [embed] });
       return;
@@ -81,18 +81,19 @@ export const clockinCommand: BotCommand = {
     });
 
     const embed = new EmbedBuilder()
-      .setColor(0x000000)
+      .setColor(0x30d158)
       .setAuthor({
         name: interaction.user.displayName || interaction.user.username,
         iconURL: interaction.user.displayAvatarURL(),
       })
-      .setTitle("⏱️ บันทึกเวลาเข้างานเรียบร้อย")
+      .setTitle("✨ บันทึกเวลาเข้างานเรียบร้อยแล้วค่ะ")
       .setDescription(
-        `เข้างานเวลา: <t:${Math.floor(now.getTime() / 1000)}:T> (<t:${Math.floor(now.getTime() / 1000)}:R>)${
-          note ? `\nหมายเหตุ: ${note}` : ""
-        }\n\nเมื่อเสร็จสิ้นการปฏิบัติงาน สามารถใช้คำสั่ง \`/clockout\` เพื่อบันทึกเวลาออกงาน`
+        `ยินดีต้อนรับสู่กะการทำงานนะคะ ขอให้เป็นวันที่ราบรื่นและมีพลังใจเต็มเปี่ยมค่ะ!\n\n` +
+          `• ⏱️ **เริ่มงาน:** <t:${Math.floor(now.getTime() / 1000)}:T> (<t:${Math.floor(now.getTime() / 1000)}:R>)\n` +
+          `${note ? `• 📝 **บันทึกช่วยจำ:** ${note}\n` : ""}\n` +
+          `> 💡 เมื่อปฏิบัติงานเสร็จสิ้น สามารถพิมพ์คำสั่ง \`/clockout\` เพื่อสรุปเวลาออกงานได้เลยนะคะ`
       )
-      .setFooter({ text: "LynnBot Attendance System" })
+      .setFooter({ text: "Lynn Operations • Attendance System" })
       .setTimestamp();
 
     await interaction.editReply({ embeds: [embed] });

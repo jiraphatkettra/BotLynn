@@ -316,7 +316,7 @@ export default function StaffNotesManager() {
               </div>
 
               {/* Title */}
-              <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#ffffff", margin: 0, lineHeight: 1.4 }}>
+              <h3 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text-primary)", margin: 0, lineHeight: 1.4 }}>
                 {note.title}
               </h3>
 
@@ -324,7 +324,7 @@ export default function StaffNotesManager() {
               <div
                 style={{
                   fontSize: "13px",
-                  color: "rgba(255, 255, 255, 0.75)",
+                  color: "var(--text-secondary)",
                   lineHeight: 1.6,
                   whiteSpace: "pre-wrap",
                   flex: 1,

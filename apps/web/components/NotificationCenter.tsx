@@ -150,8 +150,8 @@ export default function NotificationCenter() {
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
-          width: "36px",
-          height: "36px",
+          width: "34px",
+          height: "34px",
           borderRadius: "50%",
           background: isOpen ? "rgba(255, 255, 255, 0.12)" : "rgba(255, 255, 255, 0.05)",
           border: "1px solid",
@@ -212,12 +212,12 @@ export default function NotificationCenter() {
             right: 0,
             width: "360px",
             maxWidth: "calc(100vw - 32px)",
-            background: "rgba(18, 18, 22, 0.94)",
+            background: "var(--bg-elevated)",
             backdropFilter: "blur(24px)",
             WebkitBackdropFilter: "blur(24px)",
-            border: "1px solid rgba(255, 255, 255, 0.12)",
+            border: "1px solid var(--border-default)",
             borderRadius: "16px",
-            boxShadow: "0 20px 50px rgba(0, 0, 0, 0.6), 0 0 1px 1px rgba(255, 255, 255, 0.08)",
+            boxShadow: "var(--shadow-glass)",
             zIndex: 1000,
             overflow: "hidden",
             animation: "appleDropdownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
@@ -230,11 +230,11 @@ export default function NotificationCenter() {
               alignItems: "center",
               justifyContent: "space-between",
               padding: "14px 16px",
-              borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+              borderBottom: "1px solid var(--border-subtle)",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ fontSize: "14px", fontWeight: 600, color: "#ffffff" }}>
+              <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-primary)" }}>
                 การแจ้งเตือน
               </span>
               {data.totalCount > 0 && (
@@ -318,8 +318,8 @@ export default function NotificationCenter() {
                   fontWeight: 500,
                   border: "none",
                   cursor: "pointer",
-                  background: activeTab === tab.id ? "rgba(255, 255, 255, 0.12)" : "transparent",
-                  color: activeTab === tab.id ? "#ffffff" : "var(--text-secondary)",
+                  background: activeTab === tab.id ? "var(--bg-card-hover)" : "transparent",
+                  color: activeTab === tab.id ? "var(--text-primary)" : "var(--text-secondary)",
                   transition: "all 0.15s ease",
                   whiteSpace: "nowrap",
                 }}
@@ -443,7 +443,7 @@ export default function NotificationCenter() {
                         style={{
                           fontSize: "13px",
                           fontWeight: 600,
-                          color: "#ffffff",
+                          color: "var(--text-primary)",
                           whiteSpace: "nowrap",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
@@ -534,12 +534,12 @@ export default function NotificationCenter() {
                 fontSize: "11.5px",
                 fontWeight: 500,
                 color: "#ff9f0a",
-                background: "rgba(18, 18, 22, 0.95)",
+                background: "var(--bg-elevated)",
                 textDecoration: "none",
                 transition: "background 0.15s ease",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 159, 10, 0.1)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(18, 18, 22, 0.95)")}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 159, 10, 0.12)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--bg-elevated)")}
             >
               ตรวจสลิป →
             </Link>
@@ -552,12 +552,12 @@ export default function NotificationCenter() {
                 fontSize: "11.5px",
                 fontWeight: 500,
                 color: "#2997ff",
-                background: "rgba(18, 18, 22, 0.95)",
+                background: "var(--bg-elevated)",
                 textDecoration: "none",
                 transition: "background 0.15s ease",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(41, 151, 255, 0.1)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(18, 18, 22, 0.95)")}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(41, 151, 255, 0.12)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--bg-elevated)")}
             >
               ทิกเก็ต →
             </Link>
@@ -570,12 +570,12 @@ export default function NotificationCenter() {
                 fontSize: "11.5px",
                 fontWeight: 500,
                 color: "#30d158",
-                background: "rgba(18, 18, 22, 0.95)",
+                background: "var(--bg-elevated)",
                 textDecoration: "none",
                 transition: "background 0.15s ease",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(48, 209, 88, 0.1)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(18, 18, 22, 0.95)")}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(48, 209, 88, 0.12)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--bg-elevated)")}
             >
               อนุมัติลา →
             </Link>

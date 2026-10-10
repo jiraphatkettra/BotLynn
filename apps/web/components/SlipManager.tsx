@@ -213,10 +213,10 @@ export default function SlipManager() {
         await fetchSlips();
       } else {
         const data = await res.json();
-        alert(`เกิดข้อผิดพลาด: ${data.error || "ไม่สามารถอนุมัติได้"}`);
+        alert(`⚠️ ขออภัยด้วยนะคะ ไม่สามารถอนุมัติสลิปได้ในขณะนี้: ${data.error || "เกิดข้อผิดพลาดทางเทคนิค"}`);
       }
     } catch (err) {
-      alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+      alert("🌐 ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ในขณะนี้ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่อีกครั้งนะคะ");
     } finally {
       setSubmitting(false);
     }
@@ -225,7 +225,7 @@ export default function SlipManager() {
   const handleConfirmReject = async () => {
     if (!rejectingSlip) return;
     if (!rejectReason.trim()) {
-      alert("กรุณาระบุสาเหตุที่ปฏิเสธสลิป");
+      alert("⚠️ กรุณาระบุเหตุผลในการปฏิเสธสลิป เพื่อแจ้งให้สมาชิกทราบและแก้ไขได้อย่างถูกต้องนะคะ");
       return;
     }
 
@@ -248,10 +248,10 @@ export default function SlipManager() {
         await fetchSlips();
       } else {
         const data = await res.json();
-        alert(`เกิดข้อผิดพลาด: ${data.error || "ไม่สามารถปฏิเสธได้"}`);
+        alert(`⚠️ ขออภัยด้วยนะคะ ไม่สามารถปฏิเสธสลิปได้: ${data.error || "เกิดข้อผิดพลาดทางเทคนิค"}`);
       }
     } catch (err) {
-      alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+      alert("🌐 ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ในขณะนี้ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่อีกครั้งนะคะ");
     } finally {
       setSubmitting(false);
     }
@@ -276,14 +276,14 @@ export default function SlipManager() {
         }
         await fetchSlips();
       } else if (data.rejected) {
-        alert(`❌ สลิปถูกปฏิเสธ: ${data.message}`);
+        alert(`❌ ระบบตรวจสอบปฏิเสธสลิป: ${data.message || "ข้อมูลสลิปไม่ตรงตามเงื่อนไขที่กำหนด"}`);
         await fetchSlips();
       } else {
-        alert(`⚠️ ผลการตรวจสแกน: ${data.message || "ไม่สามารถอนุมัติอัตโนมัติได้ ต้องให้แอดมินตรวจด้วยตนเอง"}`);
+        alert(`🔍 ข้อมูลการตรวจสอบ: ${data.message || "ระบบไม่สามารถตรวจอัตโนมัติได้สมบูรณ์ รบกวนแอดมินช่วยตรวจเช็คภาพสลิปด้วยตนเองนะคะ"}`);
         await fetchSlips();
       }
     } catch (err: any) {
-      alert(`เกิดข้อผิดพลาดในการเชื่อมต่อ: ${err.message}`);
+      alert(`🌐 เกิดข้อผิดพลาดในการเชื่อมต่อระบบตรวจสอบ: ${err.message}`);
     } finally {
       setVerifyingId(null);
     }
@@ -375,7 +375,7 @@ export default function SlipManager() {
             padding: "16px 20px",
             display: "flex",
             flexWrap: "wrap",
-            gap: "16px",
+            gap: "14px",
             alignItems: "center",
             justifyContent: "space-between",
           }}
@@ -393,7 +393,7 @@ export default function SlipManager() {
               type="button"
               className={`apple-segmented-item ${activeTab === "PENDING" ? "active" : ""}`}
               onClick={() => handleTabChange("PENDING")}
-              style={activeTab === "PENDING" ? { background: "#ff9f0a", color: "#000" } : undefined}
+              style={activeTab === "PENDING" ? { background: "#ff9f0a", color: "#000", fontWeight: 650 } : undefined}
             >
               ⏳ รอตรวจสอบ ({stats.pending})
             </button>
@@ -414,7 +414,7 @@ export default function SlipManager() {
           </div>
 
           {/* Controls Right Side: Auto-refresh + Search */}
-          <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap", flex: "1 1 auto", justifyContent: "flex-end", minWidth: 0 }}>
             <button
               type="button"
               onClick={() => setAutoRefresh(!autoRefresh)}
@@ -423,9 +423,11 @@ export default function SlipManager() {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
-                borderColor: autoRefresh ? "rgba(48, 209, 88, 0.4)" : "rgba(255, 255, 255, 0.1)",
-                color: autoRefresh ? "#30d158" : "var(--text-muted)",
+                borderColor: autoRefresh ? "rgba(48, 209, 88, 0.4)" : undefined,
+                color: autoRefresh ? "#16a34a" : undefined,
                 fontSize: "12px",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
               }}
               title="เปิด/ปิดการดึงข้อมูลสลิปใหม่อัตโนมัติทุก 25 วินาที"
             >
@@ -442,16 +444,16 @@ export default function SlipManager() {
             </button>
 
             {/* Search Bar */}
-            <form onSubmit={handleSearchSubmit} style={{ display: "flex", gap: "8px", minWidth: 260 }}>
+            <form onSubmit={handleSearchSubmit} style={{ display: "flex", gap: "8px", minWidth: 0, flex: "1 1 200px", maxWidth: "380px", width: "100%" }}>
               <input
                 type="text"
                 className="form-input"
-                placeholder="ค้นหาชื่อผู้ใช้, Discord ID, รหัสทิกเก็ต..."
+                placeholder="ค้นหาชื่อผู้ใช้, Discord ID..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                style={{ fontSize: "13px" }}
+                style={{ fontSize: "13px", width: "100%", minWidth: 0, flex: 1 }}
               />
-              <button type="submit" className="btn btn-secondary btn-sm">
+              <button type="submit" className="btn btn-secondary btn-sm" style={{ flexShrink: 0 }}>
                 ค้นหา
               </button>
             </form>
@@ -477,13 +479,13 @@ export default function SlipManager() {
         <div className="card-body" style={{ padding: 0 }}>
           {loading ? (
             <div style={{ padding: "48px", textAlign: "center", color: "var(--text-muted)" }}>
-              กำลังโหลดข้อมูลสลิป...
+              ⏳ กำลังดึงข้อมูลสลิปโอนเงินล่าสุด...
             </div>
           ) : slips.length === 0 ? (
             <div className="empty-state">
-              <p className="empty-state-title">ไม่พบรายการสลิปโอนเงิน</p>
+              <p className="empty-state-title">✨ ยังไม่พบรายการสลิปโอนเงินในระบบ</p>
               <p className="empty-state-text">
-                เมื่อมีลูกค้าส่งสลิปผ่านห้องทิกเก็ตหรือช่องทางส่งสลิปในดิสคอร์ด รายการจะแสดงที่นี่อัตโนมัติ
+                ขณะนี้ยังไม่มีสลิปส่งเข้ามานะคะ เมื่อมีสมาชิกแนบภาพสลิปผ่านห้องทิกเก็ตหรือช่องทางที่กำหนด ระบบจะดึงข้อมูลมาแสดงที่นี่โดยอัตโนมัติค่ะ
               </p>
             </div>
           ) : (
@@ -1424,10 +1426,10 @@ export default function SlipManager() {
             >
               TRANSACTION VERIFIED // SLIP APPROVED
             </div>
-            <div style={{ fontSize: "14.5px", fontWeight: 600, color: "#ffffff", marginTop: "2px" }}>
+            <div style={{ fontSize: "14.5px", fontWeight: 600, color: "var(--text-primary)", marginTop: "2px" }}>
               อนุมัติยอด ฿{formatCurrency(showApprovalCelebration.amount)} สำเร็จ
             </div>
-            <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.5)" }}>
+            <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
               สมาชิก: {showApprovalCelebration.user}
             </div>
           </div>

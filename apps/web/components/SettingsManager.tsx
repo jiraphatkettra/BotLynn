@@ -491,8 +491,8 @@ export default function SettingsManager({
                     เมื่อสมาชิกซื้อยศสำเร็จ บอทจะโพสต์ใบเสร็จและประกาศลงในห้องนี้
                   </div>
                 </div>
-                <div style={{ minWidth: 280, maxWidth: 420, width: "100%", display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ flex: 1 }}>
+                <div style={{ flexShrink: 0, width: "min(360px, 100%)", display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <CustomSelect
                       disabled={!isSuperAdmin || loadingChannels}
                       value={settings.shop_notify_channel || ""}
@@ -532,8 +532,8 @@ export default function SettingsManager({
                     ส่งบันทึกเมื่อมีแอดมินใช้คำสั่ง /clockin หรือ /clockout
                   </div>
                 </div>
-                <div style={{ minWidth: 280, maxWidth: 420, width: "100%", display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ flex: 1 }}>
+                <div style={{ flexShrink: 0, width: "min(360px, 100%)", display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <CustomSelect
                       disabled={!isSuperAdmin || loadingChannels}
                       value={settings.attendance_notify_channel || ""}
@@ -573,8 +573,8 @@ export default function SettingsManager({
                     เมื่อมีการออกใบเตือนหรือลงโทษสมาชิก (ผ่าน Dashboard, /warn หรือผ่าน Panel) บอทจะประกาศลงในห้องนี้
                   </div>
                 </div>
-                <div style={{ minWidth: 280, maxWidth: 420, width: "100%", display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ flex: 1 }}>
+                <div style={{ flexShrink: 0, width: "min(360px, 100%)", display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <CustomSelect
                       disabled={!isSuperAdmin || loadingChannels}
                       value={settings.moderation_notify_channel || ""}

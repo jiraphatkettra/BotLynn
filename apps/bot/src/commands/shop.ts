@@ -32,24 +32,34 @@ export const shopCommand: BotCommand = {
     if (roles.length === 0) {
       const embed = new EmbedBuilder()
         .setColor(0xffd60a)
-        .setTitle("ร้านค้ายศ")
-        .setDescription("ขณะนี้ยังไม่มียศเปิดจำหน่าย")
-        .setFooter({ text: "LynnBot" });
+        .setTitle("🛒 ร้านค้ายศ • Role Shop")
+        .setDescription(
+          "ขณะนี้ยังไม่มีรายการยศเปิดวางจำหน่ายในหมวดหมู่นี้นะคะ\n\n> 💡 แอดมินกำลังจัดเตรียมสิทธิพิเศษใหม่ ๆ โปรดติดตามประกาศเพิ่มเติมนะคะ ✨"
+        )
+        .setFooter({ text: "Lynn Operations • Role Store" });
 
       await interaction.editReply({ embeds: [embed] });
       return;
     }
 
     const roleLines = roles.map((role) => {
-      const stock = role.stock !== null ? `(เหลือ ${role.stock})` : "";
-      return `**${role.name}** — ฿${role.price.toLocaleString("th-TH")} ${stock}\n${role.description || "สิทธิพิเศษประจำยศ"}\nสั่งซื้อ: \`/buy role:${role.name}\``;
+      const stock = role.stock !== null ? `• เหลือ ${role.stock} สิทธิ์` : "• พร้อมจำหน่าย";
+      return `### 🏷️ ${role.name}\n` +
+        `> **ราคา:** \`฿${role.price.toLocaleString("th-TH")}\` (${stock})\n` +
+        `> **สิทธิพิเศษ:** ${role.description || "รับบทบาทพิเศษและสิทธิ์ในการเข้าถึงห้องลับ"}\n` +
+        `> 🛒 **วิธีสั่งซื้อ:** พิมพ์ \`/buy role:${role.name}\``;
     });
 
     const embed = new EmbedBuilder()
       .setColor(0x2997ff)
-      .setTitle("ร้านค้ายศ")
-      .setDescription(roleLines.join("\n\n"))
-      .setFooter({ text: `ยศทั้งหมด ${roles.length} รายการ • LynnBot` });
+      .setTitle("🛒 ร้านค้ายศประจำเซิร์ฟเวอร์ • Role Shop")
+      .setDescription(
+        `ยินดีต้อนรับสู่ร้านค้ายศนะคะ! พบยศที่เปิดจำหน่ายทั้งหมด **${roles.length} รายการ**\n` +
+          `ยอดเงินจะถูกหักจากกระเป๋าเงินดิจิทัลของคุณโดยอัตโนมัติค่ะ 💳\n\n` +
+          roleLines.join("\n\n")
+      )
+      .setFooter({ text: `Lynn Operations • วางจำหน่ายทั้งหมด ${roles.length} รายการ` })
+      .setTimestamp();
 
     await interaction.editReply({ embeds: [embed] });
   },

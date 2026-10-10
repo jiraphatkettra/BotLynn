@@ -41,16 +41,18 @@ export const balanceCommand: BotCommand = {
       });
 
       const embed = new EmbedBuilder()
-        .setColor(0x000000)
+        .setColor(0x2997ff)
         .setTitle(`💳 กระเป๋าเงินของคุณ • ${user.displayName || user.username}`)
         .setDescription(
-          `**ยอดเงินคงเหลือ:** \`${user.balance.toLocaleString("th-TH", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })} ฿\`\n\nสามารถใช้ยอดเงินนี้ซื้อยศในเซิร์ฟเวอร์ได้ทันทีผ่านคำสั่ง \`/buy\``
+          `ยินดีต้อนรับสู่กระเป๋าเงินดิจิทัลนะคะ! ตรวจสอบยอดเงินและประวัติธุรกรรมของคุณได้ที่นี่ค่ะ ✨\n\n` +
+            `• 💰 **ยอดเงินคงเหลือ:** \`${user.balance.toLocaleString("th-TH", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })} ฿\`\n\n` +
+            `> 💡 ยอดเงินนี้สามารถนำไปใช้สั่งซื้อยศและไอเทมในเซิร์ฟเวอร์ได้ทันทีผ่านคำสั่ง \`/buy\` ค่ะ`
         )
         .setThumbnail(interaction.user.displayAvatarURL())
-        .setFooter({ text: "LynnBot Wallet System" })
+        .setFooter({ text: "Lynn Operations • Wallet System" })
         .setTimestamp();
 
       if (user.walletTransactions && user.walletTransactions.length > 0) {
@@ -58,7 +60,7 @@ export const balanceCommand: BotCommand = {
           .map((tx) => {
             const sign = tx.amount >= 0 ? "+" : "";
             const date = new Date(tx.createdAt).toLocaleDateString("th-TH");
-            return `• \`${date}\` **${sign}${tx.amount} ฿** (${tx.type}) ${tx.note ? `- ${tx.note}` : ""}`;
+            return `• \`${date}\` **${sign}${tx.amount} ฿** (${tx.type}) ${tx.note ? `— ${tx.note}` : ""}`;
           })
           .join("\n");
         embed.addFields({ name: "📋 ประวัติทำรายการล่าสุด", value: historyText });
@@ -75,7 +77,7 @@ export const balanceCommand: BotCommand = {
       await interaction.editReply({ embeds: [embed], components: [row] });
     } catch (err: any) {
       console.error("❌ [Wallet] Error in /balance:", err);
-      await interaction.editReply({ content: `❌ เกิดข้อผิดพลาด: ${err.message}` });
+      await interaction.editReply({ content: `⚠️ ขออภัยด้วยนะคะ ไม่สามารถดึงข้อมูลกระเป๋าเงินได้ในขณะนี้: ${err.message}` });
     }
   },
 };
@@ -108,16 +110,16 @@ export const topupCommand: BotCommand = {
       const attachment = new AttachmentBuilder(buffer, { name: "promptpay_qr.png" });
 
       const embed = new EmbedBuilder()
-        .setColor(0x000000)
-        .setTitle("💳 เติมเงินเข้ากระเป๋า (PromptPay Topup)")
+        .setColor(0x2997ff)
+        .setTitle("💳 เติมเงินเข้ากระเป๋า • PromptPay Official QR")
         .setDescription(
-          `สแกน QR Code ด้านล่างผ่านแอปพลิเคชันธนาคารทุกแห่งเพื่อเติมเงิน\n\n` +
-            (amount ? `💰 **ยอดที่ต้องชำระ:** \`${amount.toLocaleString("th-TH", { minimumFractionDigits: 2 })} ฿\`\n` : "") +
-            `📱 **หมายเลขพร้อมเพย์:** \`${promptpayNumber}\`\n\n` +
-            `เมื่อโอนเงินเสร็จเรียบร้อย กรุณากดปุ่ม **"📩 แจ้งส่งสลิป"** ด้านล่าง เพื่อให้แอดมินตรวจสอบและเพิ่มยอดเงินเข้ากระเป๋าให้ทันที`
+          `สามารถสแกน QR Code ด้านล่างผ่านแอปพลิเคชันธนาคารทุกแห่งเพื่อเติมเงินได้ทันทีค่ะ ✨\n\n` +
+            (amount ? `• 💰 **ยอดชำระที่ระบุ:** \`${amount.toLocaleString("th-TH", { minimumFractionDigits: 2 })} ฿\`\n` : "") +
+            `• 📱 **หมายเลขพร้อมเพย์:** \`${promptpayNumber}\`\n\n` +
+            `> 💡 **ขั้นตอนถัดไป:** เมื่อโอนเงินเรียบร้อยแล้ว กดปุ่ม **"📩 แจ้งส่งสลิปโอนเงิน"** ด้านล่างได้เลยนะคะ ระบบจะตรวจสอบและเพิ่มยอดเงินเข้ากระเป๋าให้อัตโนมัติค่ะ`
         )
         .setImage("attachment://promptpay_qr.png")
-        .setFooter({ text: "LynnBot Security Payment • ตรวจสอบสลิป 24 ชม." })
+        .setFooter({ text: "Lynn Operations • Secure Payment Gateway" })
         .setTimestamp();
 
       const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -131,7 +133,7 @@ export const topupCommand: BotCommand = {
       await interaction.editReply({ embeds: [embed], files: [attachment], components: [row] });
     } catch (err: any) {
       console.error("❌ [Wallet] Error in /topup:", err);
-      await interaction.editReply({ content: `❌ เกิดข้อผิดพลาด: ${err.message}` });
+      await interaction.editReply({ content: `⚠️ ขออภัยด้วยนะคะ ไม่สามารถสร้าง QR Code ได้ในขณะนี้: ${err.message}` });
     }
   },
 };

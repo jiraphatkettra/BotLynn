@@ -15,6 +15,7 @@
     "start": "npm run start --workspace=apps/web",
     "start:bot": "npm run start --workspace=apps/bot",
     "start:all": "concurrently \"npm run start\" \"npm run start:bot\"",
+    "deploy:commands": "npm run deploy --workspace=apps/bot",
     "db:generate": "npm run generate --workspace=packages/database",
     "db:push": "npm run push --workspace=packages/database",
     "db:migrate": "npm run migrate --workspace=packages/database",
@@ -22,6 +23,7 @@
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
+    "prisma": "^8.0.0-rc.20",
     "typescript": "^5.5.0"
   },
   "allowScripts": {
@@ -29,5 +31,8 @@
     "prisma@5.22.0": true,
     "@prisma/engines@5.22.0": true,
     "esbuild@0.28.2": true
+  },
+  "dependencies": {
+    "@prisma/client": "^7.10.0"
   }
 }

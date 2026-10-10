@@ -47,6 +47,25 @@ export default function AnalyticsCharts() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [themeMode, setThemeMode] = useState<"light" | "dark">("dark");
+
+  // Track Theme Changes for Canvas Repainting
+  useEffect(() => {
+    const updateTheme = () => {
+      const isLight = document.documentElement.getAttribute("data-theme") === "light";
+      setThemeMode(isLight ? "light" : "dark");
+    };
+    updateTheme();
+    window.addEventListener("theme-changed", updateTheme);
+
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "class"] });
+
+    return () => {
+      window.removeEventListener("theme-changed", updateTheme);
+      observer.disconnect();
+    };
+  }, []);
 
   // Line Chart Tooltip State
   const [lineTooltip, setLineTooltip] = useState<{
@@ -115,6 +134,7 @@ export default function AnalyticsCharts() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    const isLight = themeMode === "light";
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
 
@@ -137,10 +157,10 @@ export default function AnalyticsCharts() {
     const maxVal = Math.max(...points.map((p) => p.amount), 100);
 
     // Draw horizontal grid lines
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+    ctx.strokeStyle = isLight ? "rgba(15, 23, 42, 0.10)" : "rgba(255, 255, 255, 0.10)";
     ctx.lineWidth = 1;
-    ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
-    ctx.font = "10px JetBrains Mono, monospace";
+    ctx.fillStyle = isLight ? "#334155" : "#cbd5e1";
+    ctx.font = "500 11px Prompt, -apple-system, sans-serif";
 
     const gridSteps = 4;
     for (let i = 0; i <= gridSteps; i++) {
@@ -153,7 +173,7 @@ export default function AnalyticsCharts() {
       ctx.stroke();
 
       ctx.textAlign = "right";
-      ctx.fillText(`฿${value >= 1000 ? (value / 1000).toFixed(1) + "k" : value}`, padding.left - 8, y + 3);
+      ctx.fillText(`฿${value >= 1000 ? (value / 1000).toFixed(1) + "k" : value}`, padding.left - 8, y + 4);
     }
 
     // Coordinates calculation
@@ -165,8 +185,13 @@ export default function AnalyticsCharts() {
 
     // Draw gradient area fill
     const areaGradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
-    areaGradient.addColorStop(0, "rgba(41, 151, 255, 0.35)");
-    areaGradient.addColorStop(1, "rgba(41, 151, 255, 0.0)");
+    if (isLight) {
+      areaGradient.addColorStop(0, "rgba(0, 113, 227, 0.22)");
+      areaGradient.addColorStop(1, "rgba(0, 113, 227, 0.0)");
+    } else {
+      areaGradient.addColorStop(0, "rgba(41, 151, 255, 0.32)");
+      areaGradient.addColorStop(1, "rgba(41, 151, 255, 0.0)");
+    }
 
     ctx.beginPath();
     ctx.moveTo(coords[0].x, height - padding.bottom);
@@ -188,8 +213,8 @@ export default function AnalyticsCharts() {
 
     // Draw Line
     ctx.beginPath();
-    ctx.strokeStyle = "#2997ff";
-    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = isLight ? "#0071e3" : "#2997ff";
+    ctx.lineWidth = 2.8;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
@@ -202,15 +227,15 @@ export default function AnalyticsCharts() {
     ctx.lineTo(last.x, last.y);
     ctx.stroke();
 
-    // Draw x-axis labels (every 5th day)
-    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+    // Draw x-axis labels
+    ctx.fillStyle = isLight ? "#334155" : "#cbd5e1";
+    ctx.font = "500 11px Prompt, -apple-system, sans-serif";
     ctx.textAlign = "center";
     for (let i = 0; i < coords.length; i += 5) {
       ctx.fillText(coords[i].data.label, coords[i].x, height - 12);
     }
-    // Also last day
     ctx.fillText(coords[coords.length - 1].data.label, coords[coords.length - 1].x, height - 12);
-  }, [data]);
+  }, [data, themeMode]);
 
   // Handle Line Canvas Mouse Hover
   const handleLineMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -257,6 +282,7 @@ export default function AnalyticsCharts() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    const isLight = themeMode === "light";
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
 
@@ -277,10 +303,10 @@ export default function AnalyticsCharts() {
     const maxVal = Math.max(...bars.map((b) => b.hours), 8);
 
     // Draw horizontal grid lines
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+    ctx.strokeStyle = isLight ? "rgba(15, 23, 42, 0.10)" : "rgba(255, 255, 255, 0.10)";
     ctx.lineWidth = 1;
-    ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
-    ctx.font = "10px JetBrains Mono, monospace";
+    ctx.fillStyle = isLight ? "#334155" : "#cbd5e1";
+    ctx.font = "500 11px Prompt, -apple-system, sans-serif";
 
     const steps = 4;
     for (let i = 0; i <= steps; i++) {
@@ -293,50 +319,43 @@ export default function AnalyticsCharts() {
       ctx.stroke();
 
       ctx.textAlign = "right";
-      ctx.fillText(`${value}h`, padding.left - 6, y + 3);
+      ctx.fillText(`${value}h`, padding.left - 6, y + 4);
     }
 
     // Bar width and spacing
     const barWidth = Math.min(32, chartWidth / bars.length - 12);
     const stepX = chartWidth / bars.length;
 
-    bars.forEach((bar, i) => {
-      const x = padding.left + stepX * i + (stepX - barWidth) / 2;
-      const barH = (bar.hours / maxVal) * chartHeight;
-      const y = padding.top + chartHeight - barH;
+    bars.forEach((b, i) => {
+      const barX = padding.left + stepX * i + (stepX - barWidth) / 2;
+      const barHeight = Math.max(4, (b.hours / maxVal) * chartHeight);
+      const barY = padding.top + chartHeight - barHeight;
 
-      // Draw Bar Gradient
-      const gradient = ctx.createLinearGradient(0, y, 0, padding.top + chartHeight);
-      gradient.addColorStop(0, "#30d158");
-      gradient.addColorStop(1, "rgba(48, 209, 88, 0.2)");
-
-      ctx.fillStyle = gradient;
-
-      // Rounded Top Bar
-      const radius = 6;
+      // Slot background
+      ctx.fillStyle = isLight ? "rgba(15, 23, 42, 0.05)" : "rgba(255, 255, 255, 0.04)";
       ctx.beginPath();
-      if (barH > radius) {
-        ctx.moveTo(x, padding.top + chartHeight);
-        ctx.lineTo(x, y + radius);
-        ctx.quadraticCurveTo(x, y, x + radius, y);
-        ctx.lineTo(x + barWidth - radius, y);
-        ctx.quadraticCurveTo(x + barWidth, y, x + barWidth, y + radius);
-        ctx.lineTo(x + barWidth, padding.top + chartHeight);
-      } else if (barH > 0) {
-        ctx.rect(x, y, barWidth, barH);
-      }
-      ctx.closePath();
+      ctx.roundRect(barX, padding.top, barWidth, chartHeight, [6, 6, 0, 0]);
       ctx.fill();
 
-      // Label below bar
-      ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
-      ctx.textAlign = "center";
-      ctx.font = "11px Prompt, sans-serif";
-      ctx.fillText(bar.shortDay, x + barWidth / 2, height - 14);
-    });
-  }, [data]);
+      // Active bar gradient
+      const barGrad = ctx.createLinearGradient(0, barY, 0, barY + barHeight);
+      barGrad.addColorStop(0, "#16a34a");
+      barGrad.addColorStop(1, isLight ? "rgba(22, 163, 74, 0.70)" : "rgba(48, 209, 88, 0.5)");
 
-  // Handle Bar Canvas Hover
+      ctx.fillStyle = barGrad;
+      ctx.beginPath();
+      ctx.roundRect(barX, barY, barWidth, barHeight, [6, 6, 2, 2]);
+      ctx.fill();
+
+      // Day label
+      ctx.fillStyle = isLight ? "#334155" : "#cbd5e1";
+      ctx.font = "600 11.5px Prompt, -apple-system, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(b.shortDay, barX + barWidth / 2, height - 12);
+    });
+  }, [data, themeMode]);
+
+  // Handle Bar Mouse Move
   const handleBarMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!data || !barCanvasRef.current) return;
     const canvas = barCanvasRef.current;
@@ -351,14 +370,14 @@ export default function AnalyticsCharts() {
 
     const index = Math.floor((mouseX - padding.left) / stepX);
     if (index >= 0 && index < bars.length) {
-      const bar = bars[index];
+      const b = bars[index];
       setBarTooltip({
         visible: true,
         x: mouseX,
         y: mouseY,
-        day: `${bar.dayName} (${bar.date})`,
-        hours: bar.hours,
-        sessions: bar.sessionsCount,
+        day: b.dayName,
+        hours: b.hours,
+        sessions: b.sessionsCount,
       });
     } else {
       setBarTooltip((prev) => ({ ...prev, visible: false }));
@@ -378,6 +397,7 @@ export default function AnalyticsCharts() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    const isLight = themeMode === "light";
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
 
@@ -395,18 +415,17 @@ export default function AnalyticsCharts() {
 
     const centerX = width / 2;
     const centerY = height / 2;
-    const outerRadius = Math.min(width, height) / 2 - 14;
+    const outerRadius = Math.min(centerX, centerY) - 8;
     const innerRadius = outerRadius * 0.68;
 
     if (total === 0) {
-      // Empty state donut ring
       ctx.beginPath();
       ctx.arc(centerX, centerY, outerRadius, 0, Math.PI * 2);
       ctx.arc(centerX, centerY, innerRadius, Math.PI * 2, 0, true);
-      ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
+      ctx.fillStyle = isLight ? "rgba(0, 0, 0, 0.05)" : "rgba(255, 255, 255, 0.05)";
       ctx.fill();
 
-      ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+      ctx.fillStyle = isLight ? "rgba(28, 28, 30, 0.45)" : "rgba(255, 255, 255, 0.4)";
       ctx.font = "12px Prompt, sans-serif";
       ctx.textAlign = "center";
       ctx.fillText("ไม่มีข้อมูล", centerX, centerY + 4);
@@ -426,61 +445,32 @@ export default function AnalyticsCharts() {
         ctx.closePath();
 
         ctx.fillStyle = item.color;
-        ctx.shadowColor = item.color;
-        ctx.shadowBlur = 10;
         ctx.fill();
-        ctx.shadowBlur = 0;
       }
 
       startAngle = endAngle;
     });
 
     // Center total display
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 22px JetBrains Mono, monospace";
+    ctx.fillStyle = isLight ? "#0a0f1d" : "#ffffff";
+    ctx.font = "bold 24px JetBrains Mono, monospace";
     ctx.textAlign = "center";
     ctx.fillText(`${total}`, centerX, centerY + 2);
 
-    ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
-    ctx.font = "11px Prompt, sans-serif";
+    ctx.fillStyle = isLight ? "#475569" : "rgba(255, 255, 255, 0.65)";
+    ctx.font = "500 11px Prompt, sans-serif";
     ctx.fillText("ทิกเก็ตทั้งหมด", centerX, centerY + 18);
-  }, [data]);
+  }, [data, themeMode]);
 
   return (
-    <section className="dashboard-analytics-section" style={{ width: "100%", maxWidth: "1080px", margin: "32px auto 0" }}>
+    <section className="ios-analytics-container">
       {/* Section Header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "20px",
-          flexWrap: "wrap",
-          gap: "12px",
-        }}
-      >
+      <div className="ios-analytics-header">
         <div>
-          <div
-            style={{
-              fontSize: "11px",
-              fontWeight: 700,
-              color: "#2997ff",
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-              marginBottom: "4px",
-            }}
-          >
+          <div className="ios-analytics-eyebrow">
             ANALYTICS OVERVIEW
           </div>
-          <h2
-            style={{
-              fontSize: "clamp(20px, 2.5vw, 26px)",
-              fontWeight: 700,
-              color: "#ffffff",
-              letterSpacing: "-0.02em",
-              margin: 0,
-            }}
-          >
+          <h2 className="ios-analytics-title">
             สถิติภาพรวม & แนวโน้มระบบ
           </h2>
         </div>
@@ -490,22 +480,8 @@ export default function AnalyticsCharts() {
           type="button"
           onClick={fetchAnalytics}
           disabled={loading}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "8px 16px",
-            borderRadius: "9999px",
-            background: "rgba(255, 255, 255, 0.05)",
-            border: "1px solid rgba(255, 255, 255, 0.12)",
-            color: "#ffffff",
-            fontSize: "12px",
-            fontWeight: 500,
-            cursor: loading ? "not-allowed" : "pointer",
-            transition: "all 0.2s ease",
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)")}
+          className="ios-glass-btn"
+          aria-label="อัปเดตข้อมูลสถิติ"
         >
           <svg
             width="13"
@@ -523,61 +499,40 @@ export default function AnalyticsCharts() {
       </div>
 
       {/* Grid Bento Layout */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-          gap: "20px",
-        }}
-      >
+      <div className="ios-analytics-bento-grid">
         {/* ======================================================== */}
-        {/* 1. LINE CHART: ยอดขายยศ 30 วัน (2-columns on large screens) */}
+        {/* 1. LINE CHART: ยอดขายยศ 30 วัน                           */}
         {/* ======================================================== */}
-        <div
-          style={{
-            gridColumn: "1 / -1",
-            background: "rgba(255, 255, 255, 0.03)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "20px",
-            padding: "24px",
-            position: "relative",
-            backdropFilter: "blur(12px)",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              marginBottom: "16px",
-              flexWrap: "wrap",
-              gap: "12px",
-            }}
-          >
+        <div className="ios-glass-card line-chart-card">
+          <div className="ios-chart-top-bar">
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                <span style={{ fontSize: "16px" }}>📈</span>
-                <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#ffffff", margin: 0 }}>
+              <div className="ios-chart-title-group">
+                <div className="ios-chart-icon-box">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                  </svg>
+                </div>
+                <h3 className="ios-chart-title">
                   ยอดขายยศร้านค้า 30 วันย้อนหลัง
                 </h3>
               </div>
-              <p style={{ fontSize: "12.5px", color: "var(--text-secondary)", margin: 0 }}>
+              <p className="ios-chart-desc">
                 กราฟเส้นแสดงแนวโน้มรายรับจากการซื้อยศและแพ็กเกจประจำวัน
               </p>
             </div>
 
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: "20px", fontWeight: 700, color: "#2997ff" }}>
+            <div className="ios-chart-stat-right">
+              <div className="ios-chart-stat-val">
                 ฿{data ? formatCurrency(data.sales30Days.totalRevenue) : "0"}
               </div>
-              <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+              <div className="ios-chart-stat-sub">
                 {data ? `${data.sales30Days.totalCount} คำสั่งซื้อเสร็จสิ้น` : "0 คำสั่งซื้อ"}
               </div>
             </div>
           </div>
 
           {/* Canvas Wrapper */}
-          <div style={{ position: "relative", width: "100%", height: "220px" }}>
+          <div className="ios-canvas-wrap">
             <canvas
               ref={lineCanvasRef}
               onMouseMove={handleLineMouseMove}
@@ -588,27 +543,17 @@ export default function AnalyticsCharts() {
             {/* Interactive Tooltip */}
             {lineTooltip.visible && (
               <div
+                className="ios-glass-tooltip"
                 style={{
-                  position: "absolute",
                   left: `${lineTooltip.x}px`,
                   top: `${Math.max(10, lineTooltip.y - 65)}px`,
-                  transform: "translateX(-50%)",
-                  background: "rgba(10, 10, 14, 0.95)",
-                  border: "1px solid rgba(41, 151, 255, 0.4)",
-                  boxShadow: "0 8px 24px rgba(0, 0, 0, 0.7)",
-                  borderRadius: "10px",
-                  padding: "6px 12px",
-                  pointerEvents: "none",
-                  whiteSpace: "nowrap",
-                  zIndex: 20,
-                  fontSize: "12px",
                 }}
               >
-                <div style={{ color: "var(--text-secondary)", fontSize: "10.5px" }}>{lineTooltip.title}</div>
-                <div style={{ color: "#2997ff", fontWeight: 700, fontSize: "13px" }}>
+                <div className="ios-tooltip-date">{lineTooltip.title}</div>
+                <div className="ios-tooltip-val">
                   ฿{formatCurrency(lineTooltip.amount)}
                 </div>
-                <div style={{ color: "var(--text-muted)", fontSize: "10px" }}>
+                <div className="ios-tooltip-sub">
                   {lineTooltip.count} รายการ
                 </div>
               </div>
@@ -619,48 +564,37 @@ export default function AnalyticsCharts() {
         {/* ======================================================== */}
         {/* 2. BAR CHART: ชั่วโมงทำงานทีมงานรายสัปดาห์ (7 Days)        */}
         {/* ======================================================== */}
-        <div
-          style={{
-            background: "rgba(255, 255, 255, 0.03)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "20px",
-            padding: "24px",
-            position: "relative",
-            backdropFilter: "blur(12px)",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              marginBottom: "16px",
-            }}
-          >
+        <div className="ios-glass-card">
+          <div className="ios-chart-top-bar">
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                <span style={{ fontSize: "16px" }}>⏱️</span>
-                <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#ffffff", margin: 0 }}>
+              <div className="ios-chart-title-group">
+                <div className="ios-chart-icon-box success">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                </div>
+                <h3 className="ios-chart-title">
                   ชั่วโมงทำงานทีมงาน (7 วัน)
                 </h3>
               </div>
-              <p style={{ fontSize: "12.5px", color: "var(--text-secondary)", margin: 0 }}>
+              <p className="ios-chart-desc">
                 รวมเวลากะเข้างานของแอดมินทุกคน
               </p>
             </div>
 
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: "18px", fontWeight: 700, color: "#30d158" }}>
+            <div className="ios-chart-stat-right">
+              <div className="ios-chart-stat-val success">
                 {data ? `${data.weeklyWorkHours.totalHours} ชม.` : "0 ชม."}
               </div>
-              <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+              <div className="ios-chart-stat-sub">
                 เฉลี่ย {data?.weeklyWorkHours.avgDailyHours || 0} ชม./วัน
               </div>
             </div>
           </div>
 
           {/* Bar Canvas */}
-          <div style={{ position: "relative", width: "100%", height: "200px" }}>
+          <div className="ios-canvas-wrap small">
             <canvas
               ref={barCanvasRef}
               onMouseMove={handleBarMouseMove}
@@ -671,27 +605,17 @@ export default function AnalyticsCharts() {
             {/* Bar Tooltip */}
             {barTooltip.visible && (
               <div
+                className="ios-glass-tooltip"
                 style={{
-                  position: "absolute",
                   left: `${barTooltip.x}px`,
                   top: `${Math.max(10, barTooltip.y - 60)}px`,
-                  transform: "translateX(-50%)",
-                  background: "rgba(10, 10, 14, 0.95)",
-                  border: "1px solid rgba(48, 209, 88, 0.4)",
-                  boxShadow: "0 8px 24px rgba(0, 0, 0, 0.7)",
-                  borderRadius: "10px",
-                  padding: "6px 12px",
-                  pointerEvents: "none",
-                  whiteSpace: "nowrap",
-                  zIndex: 20,
-                  fontSize: "12px",
                 }}
               >
-                <div style={{ color: "var(--text-secondary)", fontSize: "10.5px" }}>{barTooltip.day}</div>
-                <div style={{ color: "#30d158", fontWeight: 700, fontSize: "13px" }}>
+                <div className="ios-tooltip-date">{barTooltip.day}</div>
+                <div className="ios-tooltip-val success">
                   {barTooltip.hours} ชั่วโมง
                 </div>
-                <div style={{ color: "var(--text-muted)", fontSize: "10px" }}>
+                <div className="ios-tooltip-sub">
                   {barTooltip.sessions} กะการทำงาน
                 </div>
               </div>
@@ -700,74 +624,47 @@ export default function AnalyticsCharts() {
         </div>
 
         {/* ======================================================== */}
-        {/* 3. DONUT CHART: สัดส่วนสถานะทิกเก็ต (Open/Claimed/Closed) */}
+        {/* 3. DONUT CHART: สัดส่วนสถานะทิกเก็ต                         */}
         {/* ======================================================== */}
-        <div
-          style={{
-            background: "rgba(255, 255, 255, 0.03)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "20px",
-            padding: "24px",
-            position: "relative",
-            backdropFilter: "blur(12px)",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <div style={{ marginBottom: "16px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-              <span style={{ fontSize: "16px" }}>🎫</span>
-              <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#ffffff", margin: 0 }}>
-                สัดส่วนสถานะทิกเก็ต
-              </h3>
+        <div className="ios-glass-card">
+          <div className="ios-chart-top-bar" style={{ marginBottom: "14px" }}>
+            <div>
+              <div className="ios-chart-title-group">
+                <div className="ios-chart-icon-box info">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                    <polyline points="22,6 12,13 2,6" />
+                  </svg>
+                </div>
+                <h3 className="ios-chart-title">
+                  สัดส่วนสถานะทิกเก็ต
+                </h3>
+              </div>
+              <p className="ios-chart-desc">
+                ประสิทธิภาพการตอบกลับและปิดเคสช่วยเหลือ
+              </p>
             </div>
-            <p style={{ fontSize: "12.5px", color: "var(--text-secondary)", margin: 0 }}>
-              ประสิทธิภาพการตอบกลับและปิดเคสช่วยเหลือ
-            </p>
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flex: 1,
-              flexWrap: "wrap",
-              gap: "16px",
-            }}
-          >
+          <div className="ios-donut-content-split">
             {/* Donut Canvas */}
-            <div style={{ width: "160px", height: "160px", margin: "0 auto", position: "relative" }}>
+            <div className="ios-donut-wrap">
               <canvas ref={donutCanvasRef} style={{ width: "100%", height: "100%", display: "block" }} />
             </div>
 
             {/* Legend & Stats */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px", flex: 1, minWidth: "140px" }}>
+            <div className="ios-donut-legend">
               {data?.ticketDistribution.items.map((item) => (
-                <div
-                  key={item.status}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: "8px",
-                    padding: "6px 10px",
-                    borderRadius: "8px",
-                    background: "rgba(255, 255, 255, 0.03)",
-                    border: "1px solid rgba(255, 255, 255, 0.05)",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <div key={item.status} className="ios-legend-item">
+                  <div className="ios-legend-item-left">
                     <span
+                      className="ios-legend-dot"
                       style={{
-                        width: "8px",
-                        height: "8px",
-                        borderRadius: "50%",
-                        background: item.color,
+                        backgroundColor: item.color,
                         boxShadow: `0 0 8px ${item.color}`,
                       }}
                     />
-                    <span style={{ fontSize: "12px", color: "var(--text-primary)" }}>
+                    <span className="ios-legend-label">
                       {item.status === "OPEN"
                         ? "รอรับเคส"
                         : item.status === "CLAIMED"
@@ -775,13 +672,9 @@ export default function AnalyticsCharts() {
                         : "ปิดสำเร็จ"}
                     </span>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff" }}>
-                      {item.count}
-                    </span>
-                    <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>
-                      ({item.percentage}%)
-                    </span>
+                  <div className="ios-legend-item-right">
+                    <span className="ios-legend-count">{item.count}</span>
+                    <span className="ios-legend-pct">({item.percentage}%)</span>
                   </div>
                 </div>
               ))}

@@ -81,7 +81,7 @@ export default function VoiceStandbyWidget() {
           <div className="stat-card-label">เฝ้าห้องเสียงสด (Voice Online)</div>
         </div>
 
-        <div className="stat-card" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
+        <div className="stat-card">
           <div className="stat-card-header">
             <div className="stat-card-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -94,7 +94,7 @@ export default function VoiceStandbyWidget() {
           <div className="stat-card-label">เวลารวมในห้องเสียง (30 วัน)</div>
         </div>
 
-        <div className="stat-card" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
+        <div className="stat-card">
           <div className="stat-card-header">
             <div className="stat-card-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -103,7 +103,7 @@ export default function VoiceStandbyWidget() {
               </svg>
             </div>
           </div>
-          <div className="stat-card-value" style={{ color: "#2997ff" }}>
+          <div className="stat-card-value" style={{ color: "var(--accent)" }}>
             {(data.totalHours * hourlyRate).toLocaleString("th-TH")} ฿
           </div>
           <div className="stat-card-label">
@@ -117,7 +117,7 @@ export default function VoiceStandbyWidget() {
         <div
           style={{
             padding: "16px 20px",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            borderBottom: "1px solid var(--border-subtle)",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
@@ -126,52 +126,51 @@ export default function VoiceStandbyWidget() {
           }}
         >
           <div>
-            <h3 style={{ fontSize: "15px", fontWeight: 600, color: "#ffffff", margin: 0 }}>
+            <h3 style={{ fontSize: "15px", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
               สถิติการเฝ้าห้องเสียงของทีมงาน (Voice Standby Tracking)
             </h3>
-            <span style={{ fontSize: "12px", color: "#86868b" }}>
+            <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
               ตรวจจับการเข้า-ออกห้องเสียงอัตโนมัติ คำนวณชั่วโมง และประมาณการค่าตอบแทน
             </span>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "12px", color: "#86868b" }}>เรทค่าจ้าง:</span>
+            <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>เรทค่าจ้าง:</span>
             <input
               type="number"
               value={hourlyRate}
               onChange={(e) => setHourlyRate(Number(e.target.value) || 0)}
+              className="form-input"
               style={{
-                width: "70px",
+                width: "75px",
+                height: "32px",
                 padding: "4px 8px",
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "6px",
-                color: "#ffffff",
                 fontSize: "12px",
                 textAlign: "center",
+                fontWeight: 600,
               }}
             />
-            <span style={{ fontSize: "12px", color: "#86868b" }}>฿ / ชม.</span>
+            <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>฿ / ชม.</span>
           </div>
         </div>
 
         <div className="table-responsive">
           <table className="table" style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "left" }}>
+              <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                <th style={{ padding: "12px 20px", fontSize: "12px", color: "var(--text-muted)", textAlign: "left" }}>
                   อันดับ / ทีมงาน
                 </th>
-                <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "left" }}>
+                <th style={{ padding: "12px 20px", fontSize: "12px", color: "var(--text-muted)", textAlign: "left" }}>
                   สถานะห้องเสียง
                 </th>
-                <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "left" }}>
+                <th style={{ padding: "12px 20px", fontSize: "12px", color: "var(--text-muted)", textAlign: "left" }}>
                   จำนวนครั้งที่เข้า
                 </th>
-                <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "left" }}>
+                <th style={{ padding: "12px 20px", fontSize: "12px", color: "var(--text-muted)", textAlign: "left" }}>
                   ชั่วโมงรวม
                 </th>
-                <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "right" }}>
+                <th style={{ padding: "12px 20px", fontSize: "12px", color: "var(--text-muted)", textAlign: "right" }}>
                   ค่าตอบแทนโดยประมาณ
                 </th>
               </tr>
@@ -179,13 +178,13 @@ export default function VoiceStandbyWidget() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: "center", padding: "30px", color: "#86868b" }}>
+                  <td colSpan={5} style={{ textAlign: "center", padding: "30px", color: "var(--text-muted)" }}>
                     กำลังโหลดสถิติห้องเสียง...
                   </td>
                 </tr>
               ) : data.leaderboard.length === 0 ? (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: "center", padding: "30px", color: "#86868b" }}>
+                  <td colSpan={5} style={{ textAlign: "center", padding: "30px", color: "var(--text-muted)" }}>
                     ยังไม่มีข้อมูลการเข้าห้องเสียง ระบบจะเริ่มบันทึกอัตโนมัติเมื่อมีสมาชิกเข้า Voice Channel
                   </td>
                 </tr>
@@ -198,9 +197,9 @@ export default function VoiceStandbyWidget() {
                     <tr
                       key={item.user.id}
                       style={{
-                        borderBottom: "1px solid rgba(255,255,255,0.04)",
+                        borderBottom: "1px solid var(--border-subtle)",
                         background: item.isCurrentlyInVoice
-                          ? "rgba(52,199,89,0.03)"
+                          ? "rgba(52,199,89,0.04)"
                           : "transparent",
                       }}
                     >
@@ -210,17 +209,17 @@ export default function VoiceStandbyWidget() {
                             style={{
                               fontSize: "12px",
                               fontWeight: 600,
-                              color: index < 3 ? "#ffffff" : "#86868b",
+                              color: index < 3 ? "var(--text-primary)" : "var(--text-muted)",
                               width: "16px",
                             }}
                           >
                             {index + 1}
                           </span>
                           <div style={{ display: "flex", flexDirection: "column" }}>
-                            <span style={{ fontSize: "13px", fontWeight: 500, color: "#ffffff" }}>
+                            <span style={{ fontSize: "13px", fontWeight: 500, color: "var(--text-primary)" }}>
                               {item.user.displayName || item.user.username}
                             </span>
-                            <span style={{ fontSize: "11px", color: "#86868b" }}>
+                            <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
                               @{item.user.username}
                             </span>
                           </div>
@@ -265,21 +264,21 @@ export default function VoiceStandbyWidget() {
                             </div>
                           </span>
                         ) : (
-                          <span style={{ fontSize: "12px", color: "#48484a" }}>
+                          <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
                             ออฟไลน์
                           </span>
                         )}
                       </td>
 
-                      <td style={{ padding: "12px 20px", fontSize: "13px", color: "#86868b" }}>
+                      <td style={{ padding: "12px 20px", fontSize: "13px", color: "var(--text-muted)" }}>
                         {item.sessionCount} ครั้ง
                       </td>
 
-                      <td style={{ padding: "12px 20px", fontSize: "13px", fontWeight: 600, color: "#ffffff" }}>
+                      <td style={{ padding: "12px 20px", fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>
                         {formatHours(item.totalSeconds)}
                       </td>
 
-                      <td style={{ padding: "12px 20px", textAlign: "right", fontSize: "13px", fontWeight: 600, color: "#2997ff" }}>
+                      <td style={{ padding: "12px 20px", textAlign: "right", fontSize: "13px", fontWeight: 600, color: "var(--accent)" }}>
                         {wage.toLocaleString("th-TH")} ฿
                       </td>
                     </tr>

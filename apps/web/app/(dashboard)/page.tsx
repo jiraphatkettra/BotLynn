@@ -3,8 +3,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@lynnbot/database";
 import { formatRelativeTime, formatCurrency, getDiscordAvatarUrl } from "@/lib/utils";
-import LynnCoreOrb from "@/components/LynnCoreOrb";
-import TiltCard from "@/components/TiltCard";
 import AnalyticsCharts from "@/components/AnalyticsCharts";
 import LiveActivityFeed from "@/components/LiveActivityFeed";
 
@@ -110,645 +108,432 @@ export default async function DashboardPage() {
   const user = session?.user as any;
   const userName = user?.displayName || user?.name || "ผู้ดูแลระบบ";
 
+  const hasUrgentTasks = data.pendingSlipsCount > 0 || data.openTicketsCount > 0;
+
   return (
-    <div className="page-content dashboard-page-container">
+    <div className="ios-dashboard-container">
       {/* ======================================================== */}
-      {/* 1. HERO SECTION (REFERENCE DESIGN: STUDENT COURSE HUB)    */}
+      {/* 1. CALM GREETING & STATUS BANNER (iOS 27 STYLE)           */}
       {/* ======================================================== */}
-      <section className="dashboard-hero-section">
-        {/* Subtle Ambient Radial Glow */}
-        <div className="dashboard-hero-glow" />
-
-        <div className="dashboard-hero-inner">
-          {/* Top Pill Tag with glowing dot */}
-          <div className="dashboard-hero-pill">
-            <span
-              style={{
-                width: "7px",
-                height: "7px",
-                borderRadius: "50%",
-                background: "#0A84FF",
-                boxShadow: "0 0 10px #0A84FF",
-              }}
-            />
-            <span
-              style={{
-                fontSize: "13px",
-                fontWeight: 500,
-                color: "#c7c7cc",
-                letterSpacing: "0.01em",
-              }}
-            >
-              Next-Generation Discord Management
-            </span>
+      <header className="ios-overview-header">
+        <div className="ios-overview-header-main">
+          <div className="ios-pill-badge">
+            <span className="ios-badge-dot" />
+            <span>ศูนย์ควบคุมระบบดิสคอร์ด</span>
           </div>
-
-          {/* 3D Holographic Interactive Quantum Core Orb */}
-          <LynnCoreOrb />
-
-          {/* Hero Headline */}
-          <h1 className="dashboard-hero-headline">
-            LynnBot Control Hub
+          <h1 className="ios-page-title">
+            สวัสดี, {userName}
           </h1>
-
-          {/* Subtitle */}
-          <p className="dashboard-hero-subtitle">
-            ศูนย์รวมและบริหารจัดการระบบเซิร์ฟเวอร์ดิสคอร์ดสำหรับผู้ดูแล — วางแผนและควบคุมคอมมูนิตี้
-            อย่างชาญฉลาด รวดเร็ว และแม่นยำ
+          <p className="ios-page-subtitle">
+            ภาพรวมการดำเนินงาน สถิติธุรกรรม และสถานะทีมงานแบบเรียลไทม์
           </p>
+        </div>
 
-          {/* CTA Buttons */}
-          <div className="dashboard-hero-cta">
-            <a
-              href="#systems-showcase"
-              className="btn-hero-primary"
-            >
-              <span>สำรวจระบบทั้งหมด</span>
-              <span>→</span>
-            </a>
+        <div className="ios-overview-header-meta">
+          <div className="ios-live-indicator">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2v4" />
+              <path d="M12 18v4" />
+              <path d="m4.93 4.93 2.83 2.83" />
+              <path d="m16.24 16.24 2.83 2.83" />
+              <path d="M2 12h4" />
+              <path d="M18 12h4" />
+              <path d="m4.93 19.07 2.83-2.83" />
+              <path d="m16.24 7.76 2.83-2.83" />
+            </svg>
+            <span>ระบบออนไลน์ 100%</span>
+          </div>
+        </div>
+      </header>
 
-            <Link
-              href="/settings"
-              className="btn-hero-secondary"
-            >
-              <span>เกี่ยวกับระบบ</span>
+      {/* ======================================================== */}
+      {/* 2. SINGLE PRIMARY ACTION ALERT CARD                      */}
+      {/* ======================================================== */}
+      {hasUrgentTasks ? (
+        <section className="ios-action-banner" aria-label="งานค้างที่ต้องดำเนินการ">
+          <div className="ios-action-banner-content">
+            <div className="ios-action-banner-icon warning">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </div>
+            <div className="ios-action-banner-text">
+              <div className="ios-action-banner-title">
+                มีงานที่ต้องตรวจสอบในระบบ
+              </div>
+              <div className="ios-action-banner-desc">
+                {data.pendingSlipsCount > 0 && `สลิปโอนเงินรอตรวจสอบ ${data.pendingSlipsCount} รายการ`}
+                {data.pendingSlipsCount > 0 && data.openTicketsCount > 0 && " • "}
+                {data.openTicketsCount > 0 && `ทิกเก็ตเปิดค้าง ${data.openTicketsCount} เคส`}
+              </div>
+            </div>
+          </div>
+
+          <div className="ios-action-banner-cta">
+            {data.pendingSlipsCount > 0 ? (
+              <Link href="/slips" className="ios-btn-primary">
+                <span>ตรวจสอบสลิป ({data.pendingSlipsCount})</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </Link>
+            ) : (
+              <Link href="/tickets" className="ios-btn-primary">
+                <span>จัดการทิกเก็ต ({data.openTicketsCount})</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </Link>
+            )}
+
+            {data.pendingSlipsCount > 0 && data.openTicketsCount > 0 && (
+              <Link href="/tickets" className="ios-btn-ghost">
+                <span>ดูทิกเก็ต ({data.openTicketsCount})</span>
+              </Link>
+            )}
+          </div>
+        </section>
+      ) : (
+        <section className="ios-action-banner calm" aria-label="สถานะงาน">
+          <div className="ios-action-banner-content">
+            <div className="ios-action-banner-icon success">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+            </div>
+            <div className="ios-action-banner-text">
+              <div className="ios-action-banner-title">
+                การดำเนินงานราบรื่น ไม่มีงานค้าง
+              </div>
+              <div className="ios-action-banner-desc">
+                สลิปทั้งหมดได้รับการตรวจสอบและทิกเก็ตทุกเคสได้รับการดูแลเรียบร้อยแล้ว
+              </div>
+            </div>
+          </div>
+          <div className="ios-action-banner-cta">
+            <Link href="/settings" className="ios-btn-ghost">
+              <span>ตรวจสอบการตั้งค่า</span>
             </Link>
           </div>
+        </section>
+      )}
 
-          {/* Urgent Action Pills (if pending slips or open tickets exist) */}
-          {(data.pendingSlipsCount > 0 || data.openTicketsCount > 0) && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "10px",
-                flexWrap: "wrap",
-                marginBottom: "28px",
-              }}
-            >
-              {data.pendingSlipsCount > 0 && (
-                <Link
-                  href="/slips"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    padding: "6px 14px",
-                    borderRadius: "9999px",
-                    background: "rgba(255, 159, 10, 0.14)",
-                    border: "1px solid rgba(255, 159, 10, 0.35)",
-                    color: "#ff9f0a",
-                    fontSize: "12.5px",
-                    fontWeight: 500,
-                    textDecoration: "none",
-                  }}
-                >
-                  <span>⚠️ มีสลิปรอตรวจสอบ {data.pendingSlipsCount} รายการ</span>
-                  <span>→</span>
-                </Link>
-              )}
-              {data.openTicketsCount > 0 && (
-                <Link
-                  href="/tickets"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    padding: "6px 14px",
-                    borderRadius: "9999px",
-                    background: "rgba(41, 151, 255, 0.14)",
-                    border: "1px solid rgba(41, 151, 255, 0.35)",
-                    color: "#2997ff",
-                    fontSize: "12.5px",
-                    fontWeight: 500,
-                    textDecoration: "none",
-                  }}
-                >
-                  <span>💬 มีทิกเก็ตเปิดค้าง {data.openTicketsCount} เคส</span>
-                  <span>→</span>
-                </Link>
-              )}
+      {/* ======================================================== */}
+      {/* 3. BENTO METRICS BAR (3 CLEAN METRIC CARDS)              */}
+      {/* ======================================================== */}
+      <section className="ios-bento-grid" aria-label="สถิติภาพรวม">
+        {/* Metric 1: Admins */}
+        <div className="ios-bento-card">
+          <div className="ios-bento-card-header">
+            <span className="ios-bento-card-label">ทีมงานในระบบ</span>
+            <div className="ios-bento-card-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
             </div>
-          )}
+          </div>
+          <div className="ios-bento-card-val">
+            {data.totalAdmins}
+            <span className="ios-bento-card-unit">ท่าน</span>
+          </div>
+          <div className="ios-bento-card-sub">
+            เข้างานวันนี้ {data.activeToday} คน
+          </div>
+        </div>
 
-          {/* Centered Metric Summary Cards - Perfectly Balanced & Responsive */}
-          <div className="dashboard-hero-metrics">
-            {/* Card 1 - Admins */}
-            <div className="dashboard-hero-metric-card metric-cyan">
-              <div className="dashboard-hero-metric-val">
-                {data.totalAdmins}
-              </div>
-              <div className="dashboard-hero-metric-lbl">
-                ทีมงานในระบบ
-              </div>
+        {/* Metric 2: Revenue */}
+        <div className="ios-bento-card">
+          <div className="ios-bento-card-header">
+            <span className="ios-bento-card-label">ยอดขายยศ (7 วัน)</span>
+            <div className="ios-bento-card-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="1" x2="12" y2="23" />
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+              </svg>
             </div>
+          </div>
+          <div className="ios-bento-card-val">
+            ฿{formatCurrency(data.weeklyRevenue)}
+          </div>
+          <div className="ios-bento-card-sub">
+            สำเร็จ {data.totalTransactions} รายการ
+          </div>
+        </div>
 
-            {/* Card 2 - Weekly Revenue */}
-            <div className="dashboard-hero-metric-card metric-gold">
-              <div className="dashboard-hero-metric-val">
-                ฿{formatCurrency(data.weeklyRevenue)}
-              </div>
-              <div className="dashboard-hero-metric-lbl">
-                ยอดขายยศ (7 วัน)
-              </div>
+        {/* Metric 3: Accounting Records */}
+        <div className="ios-bento-card">
+          <div className="ios-bento-card-header">
+            <span className="ios-bento-card-label">บันทึกบัญชี & งบ</span>
+            <div className="ios-bento-card-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                <line x1="3" y1="9" x2="21" y2="9" />
+                <line x1="9" y1="21" x2="9" y2="9" />
+              </svg>
             </div>
-
-            {/* Card 3 - Status */}
-            <div className="dashboard-hero-metric-card metric-green">
-              <div className="dashboard-hero-metric-val" style={{ color: "#30d158" }}>
-                100%
-              </div>
-              <div className="dashboard-hero-metric-lbl">
-                สถานะระบบออนไลน์
-              </div>
-            </div>
+          </div>
+          <div className="ios-bento-card-val">
+            {data.financeRecordsCount}
+            <span className="ios-bento-card-unit">รายการ</span>
+          </div>
+          <div className="ios-bento-card-sub">
+            บันทึกรายรับ-รายจ่ายเซิร์ฟเวอร์
           </div>
         </div>
       </section>
 
       {/* ======================================================== */}
-      {/* 2. AUDIENCE & PURPOSE SECTION (FROM REFERENCE SCREENSHOT) */}
+      {/* 4. ANALYTICS & TELEMETRY SECTION                        */}
       {/* ======================================================== */}
-      <section
-        style={{
-          width: "100%",
-          maxWidth: "1080px",
-          margin: "0 auto",
-        }}
-      >
-        <div className="dashboard-audience-card">
-          {/* Small Cyan Sub-header */}
-          <div
-            style={{
-              fontSize: "11px",
-              fontWeight: 700,
-              color: "#2997ff",
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-              marginBottom: "14px",
-            }}
-          >
-            AUDIENCE & PURPOSE
-          </div>
-
-          {/* Section Title */}
-          <h2
-            style={{
-              fontSize: "clamp(22px, 3vw, 30px)",
-              fontWeight: 700,
-              color: "#ffffff",
-              letterSpacing: "-0.025em",
-              lineHeight: 1.25,
-              margin: "0 0 16px",
-            }}
-          >
-            กลุ่มผู้ใช้งานเป้าหมาย & ศูนย์ควบคุมระบบ
-          </h2>
-
-          {/* Section Body */}
-          <p
-            style={{
-              fontSize: "15px",
-              color: "rgba(255, 255, 255, 0.7)",
-              lineHeight: 1.75,
-              margin: 0,
-              maxWidth: "880px",
-            }}
-          >
-            ออกแบบมาเพื่อให้ผู้ดูแลและทีมงานเข้าถึงเครื่องมือจัดการเซิร์ฟเวอร์ได้อย่างราบรื่น
-            ตรวจสอบสลิปโอนเงิน อนุมัติยศอัตโนมัติ ติดตามเวลาทำงานของแอดมิน และดูแลสมาชิกผ่านระบบทิกเก็ตได้อย่างสะดวกและมีประสิทธิภาพสูงสุด
-            พร้อมระบบความปลอดภัยคุ้มครองสิทธิ์เจ้าของสูงสุด (Root Owner) ตลอด 24 ชั่วโมง
-          </p>
-        </div>
+      <section className="ios-section-wrap" aria-label="สถิติและการวิเคราะห์">
+        <AnalyticsCharts />
       </section>
 
       {/* ======================================================== */}
-      {/* 2.5 ANALYTICS & TELEMETRY SECTION                        */}
+      {/* 5. CORE SYSTEM CAPABILITIES GRID (CLEAN VECTOR ICONS)   */}
       {/* ======================================================== */}
-      <AnalyticsCharts />
-
-      {/* ======================================================== */}
-      {/* 3. CORE SYSTEMS SHOWCASE (SCROLLABLE PRODUCT TOUR)       */}
-      {/* ======================================================== */}
-      <section
-        id="systems-showcase"
-        style={{
-          width: "100%",
-          maxWidth: "1080px",
-          margin: "0 auto",
-          display: "flex",
-          flexDirection: "column",
-          gap: "24px",
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "12px" }}>
+      <section className="ios-section-wrap" id="systems-showcase" aria-label="ระบบงานหลัก">
+        <div className="ios-section-header">
           <div>
-            <div
-              style={{
-                fontSize: "11px",
-                fontWeight: 700,
-                color: "#2997ff",
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-                marginBottom: "6px",
-              }}
-            >
-              CORE CAPABILITIES
-            </div>
-            <h2
-              style={{
-                fontSize: "clamp(22px, 3vw, 28px)",
-                fontWeight: 700,
-                color: "#ffffff",
-                letterSpacing: "-0.02em",
-                margin: 0,
-              }}
-            >
-              แนะนำระบบการทำงานหลักของเว็บ
-            </h2>
+            <h2 className="ios-section-title">ระบบงานหลัก</h2>
+            <p className="ios-section-desc">เข้าถึงระบบจัดการหลักของเซิร์ฟเวอร์ได้อย่างรวดเร็ว</p>
           </div>
-          <span style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.45)" }}>
-            กด ⌘K เพื่อค้นหาหรือข้ามไปยังหน้าใดก็ได้ทันที
-          </span>
+          <span className="ios-section-hint">กด ⌘K เพื่อค้นหาด่วน</span>
         </div>
 
-        {/* 6 Modular Capability Cards Grid */}
-        <div className="dashboard-capabilities-grid">
+        <div className="ios-capabilities-grid">
           {/* Card 1: Slips */}
-          <div className="dashboard-capability-card">
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
-                <span style={{ fontSize: "28px" }}>🧾</span>
-                <span
-                  style={{
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    padding: "3px 10px",
-                    borderRadius: "9999px",
-                    background: "rgba(255, 159, 10, 0.12)",
-                    color: "#ff9f0a",
-                    border: "1px solid rgba(255, 159, 10, 0.25)",
-                  }}
-                >
-                  {data.pendingSlipsCount > 0 ? `รอตรวจ ${data.pendingSlipsCount}` : "สลิปพร้อมเพย์"}
-                </span>
+          <Link href="/slips" className="ios-capability-card">
+            <div className="ios-cap-top">
+              <div className="ios-cap-icon-box">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                  <circle cx="9" cy="9" r="2" />
+                  <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                </svg>
               </div>
-              <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#ffffff", margin: "0 0 10px" }}>
-                ระบบตรวจสลิปโอนเงิน
-              </h3>
-              <p style={{ fontSize: "13.5px", color: "rgba(255, 255, 255, 0.6)", lineHeight: 1.65, margin: 0 }}>
-                รับภาพสลิปที่สมาชิกส่งในห้อง Discord ตรวจสอบความถูกต้อง พร้อมปุ่มเติมยอดเงินเข้าบัญชีสมาชิกทันทีในคลิกเดียว
-              </p>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "16px", borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}>
-              <span style={{ fontSize: "12px", color: data.pendingSlipsCount > 0 ? "#ff9f0a" : "rgba(255, 255, 255, 0.4)" }}>
-                {data.pendingSlipsCount > 0 ? `⚠️ มีสลิปรอตรวจ ${data.pendingSlipsCount} รายการ` : "✓ ดำเนินการครบแล้ว"}
+              <span className={`ios-badge ${data.pendingSlipsCount > 0 ? "warning" : "neutral"}`}>
+                {data.pendingSlipsCount > 0 ? `รอตรวจ ${data.pendingSlipsCount}` : "เรียบร้อย"}
               </span>
-              <Link
-                href="/slips"
-                style={{
-                  fontSize: "13px",
-                  fontWeight: 500,
-                  color: "#0A84FF",
-                  textDecoration: "none",
-                }}
-              >
-                เปิดระบบตรวจสลิป →
-              </Link>
             </div>
-          </div>
+            <div className="ios-cap-body">
+              <h3 className="ios-cap-title">ตรวจสลิปโอนเงิน</h3>
+              <p className="ios-cap-desc">ตรวจสอบยอดสลิปจาก Discord พร้อมอนุมัติเครดิตเข้ากระเป๋าในคลิกเดียว</p>
+            </div>
+            <div className="ios-cap-footer">
+              <span className="ios-cap-link">เปิดระบบตรวจสลิป</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </div>
+          </Link>
 
-          {/* Card: Finance & Cashflow */}
-          <div className="dashboard-capability-card">
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
-                <span style={{ fontSize: "28px" }}>💰</span>
-                <span
-                  style={{
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    padding: "3px 10px",
-                    borderRadius: "9999px",
-                    background: "rgba(48, 209, 88, 0.12)",
-                    color: "#30d158",
-                    border: "1px solid rgba(48, 209, 88, 0.25)",
-                  }}
-                >
-                  บัญชีรายรับ-รายจ่าย
-                </span>
+          {/* Card 2: Finance */}
+          <Link href="/finance" className="ios-capability-card">
+            <div className="ios-cap-top">
+              <div className="ios-cap-icon-box">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="1" x2="12" y2="23" />
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
               </div>
-              <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#ffffff", margin: "0 0 10px" }}>
-                ระบบบัญชี & งบเซิร์ฟเวอร์
-              </h3>
-              <p style={{ fontSize: "13.5px", color: "rgba(255, 255, 255, 0.6)", lineHeight: 1.65, margin: 0 }}>
-                บันทึกรายรับและรายจ่ายแบบกำหนดเอง ระบุประเภท หมวดหมู่ เลขบิล และแนบหลักฐาน พร้อมคำนวณกำไรขาดทุนสุทธิอัตโนมัติ
-              </p>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "16px", borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}>
-              <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.4)" }}>
-                บันทึกแล้ว {data.financeRecordsCount} รายการ
+              <span className="ios-badge success">
+                บัญชีงบประมาณ
               </span>
-              <Link
-                href="/finance"
-                style={{
-                  fontSize: "13px",
-                  fontWeight: 500,
-                  color: "#0A84FF",
-                  textDecoration: "none",
-                }}
-              >
-                จัดการรายรับ-รายจ่าย →
-              </Link>
             </div>
-          </div>
+            <div className="ios-cap-body">
+              <h3 className="ios-cap-title">รายรับ-รายจ่าย</h3>
+              <p className="ios-cap-desc">บันทึกบัญชีการเงินเซิร์ฟเวอร์ แนบหลักฐาน และคำนวณกำไรสุทธิอัตโนมัติ</p>
+            </div>
+            <div className="ios-cap-footer">
+              <span className="ios-cap-link">จัดการรายรับ-รายจ่าย</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </div>
+          </Link>
 
-          {/* Card 2: Tickets */}
-          <div className="dashboard-capability-card">
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
-                <span style={{ fontSize: "28px" }}>🎫</span>
-                <span
-                  style={{
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    padding: "3px 10px",
-                    borderRadius: "9999px",
-                    background: "rgba(41, 151, 255, 0.12)",
-                    color: "#2997ff",
-                    border: "1px solid rgba(41, 151, 255, 0.25)",
-                  }}
-                >
-                  บริการ & ซัพพอร์ต
-                </span>
+          {/* Card 3: Tickets */}
+          <Link href="/tickets" className="ios-capability-card">
+            <div className="ios-cap-top">
+              <div className="ios-cap-icon-box">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                  <polyline points="22,6 12,13 2,6" />
+                </svg>
               </div>
-              <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#ffffff", margin: "0 0 10px" }}>
-                ระบบทิกเก็ตดูแลสมาชิก
-              </h3>
-              <p style={{ fontSize: "13.5px", color: "rgba(255, 255, 255, 0.6)", lineHeight: 1.65, margin: 0 }}>
-                ศูนย์รับเรื่องร้องเรียนและช่วยเหลือสมาชิกใน Discord แอดมินสามารถเคลมเคส แชทโต้ตอบ และบันทึกประวัติข้อความได้ครบถ้วน
-              </p>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "16px", borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}>
-              <span style={{ fontSize: "12px", color: data.openTicketsCount > 0 ? "#2997ff" : "rgba(255, 255, 255, 0.4)" }}>
-                {data.openTicketsCount > 0 ? `💬 มีเคสค้าง ${data.openTicketsCount} รายการ` : "✓ ไม่มีเคสค้าง"}
+              <span className={`ios-badge ${data.openTicketsCount > 0 ? "info" : "neutral"}`}>
+                {data.openTicketsCount > 0 ? `เคสค้าง ${data.openTicketsCount}` : "ไม่มีเคสค้าง"}
               </span>
-              <Link
-                href="/tickets"
-                style={{
-                  fontSize: "13px",
-                  fontWeight: 500,
-                  color: "#0A84FF",
-                  textDecoration: "none",
-                }}
-              >
-                เข้าสู่ศูนย์ทิกเก็ต →
-              </Link>
             </div>
-          </div>
+            <div className="ios-cap-body">
+              <h3 className="ios-cap-title">ทิกเก็ตดูแลสมาชิก</h3>
+              <p className="ios-cap-desc">รับเรื่องร้องเรียน เคลมเคส และสนทนากับสมาชิก Discord ผ่านแดชบอร์ด</p>
+            </div>
+            <div className="ios-cap-footer">
+              <span className="ios-cap-link">ศูนย์ทิกเก็ต</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </div>
+          </Link>
 
-          {/* Card 3: Shop */}
-          <div className="dashboard-capability-card">
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
-                <span style={{ fontSize: "28px" }}>🛍️</span>
-                <span
-                  style={{
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    padding: "3px 10px",
-                    borderRadius: "9999px",
-                    background: "rgba(48, 209, 88, 0.12)",
-                    color: "#30d158",
-                    border: "1px solid rgba(48, 209, 88, 0.25)",
-                  }}
-                >
-                  ร้านค้ายศอัตโนมัติ
-                </span>
+          {/* Card 4: Shop */}
+          <Link href="/shop" className="ios-capability-card">
+            <div className="ios-cap-top">
+              <div className="ios-cap-icon-box">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+                  <path d="M3 6h18" />
+                  <path d="M16 10a4 4 0 0 1-8 0" />
+                </svg>
               </div>
-              <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#ffffff", margin: "0 0 10px" }}>
-                ร้านค้ายศ Discord
-              </h3>
-              <p style={{ fontSize: "13.5px", color: "rgba(255, 255, 255, 0.6)", lineHeight: 1.65, margin: 0 }}>
-                เปิดขายยศดิสคอร์ดให้สมาชิกซื้อผ่านคำสั่งในบอท พร้อมจัดการสต็อก ตั้งราคา และส่งข้อความแจ้งเตือนอัตโนมัติ
-              </p>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "16px", borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}>
-              <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.4)" }}>
-                สำเร็จ {data.totalTransactions} ครั้ง
+              <span className="ios-badge neutral">
+                {data.totalTransactions} รายการ
               </span>
-              <Link
-                href="/shop"
-                style={{
-                  fontSize: "13px",
-                  fontWeight: 500,
-                  color: "#0A84FF",
-                  textDecoration: "none",
-                }}
-              >
-                จัดการร้านค้ายศ →
-              </Link>
             </div>
-          </div>
+            <div className="ios-cap-body">
+              <h3 className="ios-cap-title">ร้านค้ายศ Discord</h3>
+              <p className="ios-cap-desc">จัดการรายการยศ กำหนดราคา สต็อก และตรวจสอบประวัติการซื้อ</p>
+            </div>
+            <div className="ios-cap-footer">
+              <span className="ios-cap-link">จัดการร้านค้ายศ</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </div>
+          </Link>
 
-          {/* Card 4: Attendance */}
-          <div className="dashboard-capability-card">
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
-                <span style={{ fontSize: "28px" }}>⏱️</span>
-                <span
-                  style={{
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    padding: "3px 10px",
-                    borderRadius: "9999px",
-                    background: "rgba(167, 139, 250, 0.12)",
-                    color: "#a78bfa",
-                    border: "1px solid rgba(167, 139, 250, 0.25)",
-                  }}
-                >
-                  เวลาทำงาน
-                </span>
+          {/* Card 5: Attendance */}
+          <Link href="/attendance" className="ios-capability-card">
+            <div className="ios-cap-top">
+              <div className="ios-cap-icon-box">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
               </div>
-              <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#ffffff", margin: "0 0 10px" }}>
-                ตอกบัตร & ห้องเสียง
-              </h3>
-              <p style={{ fontSize: "13.5px", color: "rgba(255, 255, 255, 0.6)", lineHeight: 1.65, margin: 0 }}>
-                บันทึกเวลาเข้า-ออกงานของแอดมิน ตรวจวัดระยะเวลาสแตนด์บายห้องเสียงใน Discord พร้อมระบบยื่นขอลางาน
-              </p>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "16px", borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}>
-              <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.4)" }}>
-                เข้างานวันนี้ {data.activeToday} คน
+              <span className="ios-badge neutral">
+                วันนี้ {data.activeToday} คน
               </span>
-              <Link
-                href="/attendance"
-                style={{
-                  fontSize: "13px",
-                  fontWeight: 500,
-                  color: "#0A84FF",
-                  textDecoration: "none",
-                }}
-              >
-                ดูบันทึกเวลา →
-              </Link>
             </div>
-          </div>
+            <div className="ios-cap-body">
+              <h3 className="ios-cap-title">เวลาทำงาน & เวร</h3>
+              <p className="ios-cap-desc">บันทึกเวลาเข้า-ออกงานของทีมงาน ตรวจวัดระยะเวลาห้องเสียง และคำขอลา</p>
+            </div>
+            <div className="ios-cap-footer">
+              <span className="ios-cap-link">ดูบันทึกเวลา</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </div>
+          </Link>
 
-          {/* Card 5: Admins & Root Owner */}
-          <div className="dashboard-capability-card">
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
-                <span style={{ fontSize: "28px" }}>👥</span>
-                <span
-                  style={{
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    padding: "3px 10px",
-                    borderRadius: "9999px",
-                    background: "rgba(255, 69, 58, 0.12)",
-                    color: "#ff453a",
-                    border: "1px solid rgba(255, 69, 58, 0.25)",
-                  }}
-                >
-                  ทีมงาน & สิทธิ์
-                </span>
+          {/* Card 6: Admins & Staff */}
+          <Link href="/admins" className="ios-capability-card">
+            <div className="ios-cap-top">
+              <div className="ios-cap-icon-box">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
               </div>
-              <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#ffffff", margin: "0 0 10px" }}>
-                จัดการทีมงาน & สิทธิ์
-              </h3>
-              <p style={{ fontSize: "13.5px", color: "rgba(255, 255, 255, 0.6)", lineHeight: 1.65, margin: 0 }}>
-                กำหนดสิทธิ์รายบุคคล ซิงค์ยศจาก Discord และมีระบบคุ้มครองเจ้าของสูงสุด (Root Owner) ในระดับแกนโค้ด
-              </p>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "16px", borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}>
-              <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.4)" }}>
-                ทีมงานทั้งหมด {data.totalAdmins} ท่าน
+              <span className="ios-badge neutral">
+                {data.totalAdmins} ท่าน
               </span>
-              <Link
-                href="/admins"
-                style={{
-                  fontSize: "13px",
-                  fontWeight: 500,
-                  color: "#0A84FF",
-                  textDecoration: "none",
-                }}
-              >
-                จัดการทีมงาน →
-              </Link>
             </div>
-          </div>
-
-          {/* Card 6: Settings */}
-          <div className="dashboard-capability-card">
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
-                <span style={{ fontSize: "28px" }}>⚙️</span>
-                <span
-                  style={{
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    padding: "3px 10px",
-                    borderRadius: "9999px",
-                    background: "rgba(255, 255, 255, 0.06)",
-                    color: "#a1a1a6",
-                    border: "1px solid rgba(255, 255, 255, 0.12)",
-                  }}
-                >
-                  การตั้งค่าบอท
-                </span>
-              </div>
-              <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#ffffff", margin: "0 0 10px" }}>
-                ตั้งค่าระบบ & ห้อง Discord
-              </h3>
-              <p style={{ fontSize: "13.5px", color: "rgba(255, 255, 255, 0.6)", lineHeight: 1.65, margin: 0 }}>
-                กำหนดห้องส่งแจ้งเตือนสำหรับบอท เชื่อมต่อบัญชีพร้อมเพย์ และมีปุ่มทดสอบส่ง Ping ข้อความเข้า Discord ได้ทันที
-              </p>
+            <div className="ios-cap-body">
+              <h3 className="ios-cap-title">ทีมงาน & สิทธิ์</h3>
+              <p className="ios-cap-desc">กำหนดสิทธิ์รายบุคคล ซิงค์ยศ Discord และระบบคุ้มครอง Root Owner</p>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "16px", borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}>
-              <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.4)" }}>
-                7 หมวดหมู่การตั้งค่า
-              </span>
-              <Link
-                href="/settings"
-                style={{
-                  fontSize: "13px",
-                  fontWeight: 500,
-                  color: "#0A84FF",
-                  textDecoration: "none",
-                }}
-              >
-                เปิดหน้าตั้งค่า →
-              </Link>
+            <div className="ios-cap-footer">
+              <span className="ios-cap-link">จัดการทีมงาน</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
             </div>
-          </div>
+          </Link>
         </div>
       </section>
 
       {/* ======================================================== */}
-      {/* 4. RECENT ACTIVITY FEED                                  */}
+      {/* 6. RECENT ACTIVITY & TRANSACTIONS FEED                   */}
       {/* ======================================================== */}
-      <section className="dashboard-activity-grid">
-        {/* Recent Transactions */}
-        <div className="dashboard-activity-card">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
-            <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#ffffff", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
-              <span>🛍️</span>
-              <span>รายการซื้อยศล่าสุด</span>
-            </h3>
-            <Link href="/shop" style={{ fontSize: "12.5px", color: "#0A84FF", textDecoration: "none" }}>
-              ดูทั้งหมด →
+      <section className="ios-activity-grid" aria-label="ประวัติกิจกรรมล่าสุด">
+        {/* Recent Transactions Card */}
+        <div className="ios-activity-card">
+          <div className="ios-activity-header">
+            <div className="ios-activity-title-group">
+              <div className="ios-activity-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+                  <path d="M3 6h18" />
+                  <path d="M16 10a4 4 0 0 1-8 0" />
+                </svg>
+              </div>
+              <h3 className="ios-activity-title">รายการซื้อยศล่าสุด</h3>
+            </div>
+            <Link href="/shop" className="ios-activity-more">
+              <span>ดูทั้งหมด</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
             </Link>
           </div>
 
-          <div>
+          <div className="ios-activity-body">
             {data.recentTransactions.length > 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div className="ios-list-stack">
                 {data.recentTransactions.map((tx) => (
-                  <div
-                    key={tx.id}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "12px 14px",
-                      borderRadius: "12px",
-                      background: "rgba(255, 255, 255, 0.02)",
-                      border: "1px solid rgba(255, 255, 255, 0.05)",
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div key={tx.id} className="ios-list-row">
+                    <div className="ios-list-row-main">
                       <img
                         src={getDiscordAvatarUrl(tx.user.discordId, tx.user.avatar)}
                         alt={tx.user.displayName || tx.user.username}
                         loading="lazy"
                         decoding="async"
-                        style={{ width: "34px", height: "34px", borderRadius: "50%" }}
+                        className="ios-avatar"
                       />
-                      <div>
-                        <div style={{ fontSize: "13px", fontWeight: 600, color: "#ffffff" }}>
+                      <div className="ios-list-row-info">
+                        <div className="ios-list-row-title">
                           {tx.user.displayName || tx.user.username}
                         </div>
-                        <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.45)" }}>
-                          ซื้อยศ <span style={{ color: "#2997ff" }}>{tx.role.name}</span> • {formatRelativeTime(tx.createdAt)}
+                        <div className="ios-list-row-desc">
+                          ยศ <span className="ios-highlight">{tx.role.name}</span> • {formatRelativeTime(tx.createdAt)}
                         </div>
                       </div>
                     </div>
-                    <div style={{ fontSize: "14px", fontWeight: 600, color: "#30d158" }}>
+                    <div className="ios-list-row-meta success">
                       ฿{formatCurrency(tx.price)}
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div style={{ padding: "40px", textAlign: "center", color: "rgba(255, 255, 255, 0.4)", fontSize: "13px" }}>
-                ยังไม่มีรายการซื้อยศ
+              <div className="ios-empty-state">
+                <div className="ios-empty-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+                    <path d="M3 6h18" />
+                    <path d="M16 10a4 4 0 0 1-8 0" />
+                  </svg>
+                </div>
+                <div className="ios-empty-title">ยังไม่มีรายการซื้อยศ</div>
+                <div className="ios-empty-desc">ประวัติการซื้อจะปรากฏที่นี่เมื่อสมาชิกเริ่มสั่งซื้อยศ</div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Recent Audit Logs (Real-time SSE Sync) */}
+        {/* Real-time Activity Feed */}
         <LiveActivityFeed initialLogs={data.recentLogs} />
       </section>
     </div>

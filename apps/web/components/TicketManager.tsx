@@ -176,10 +176,8 @@ export default function TicketManager() {
           justifyContent: "space-between",
           alignItems: "center",
           flexWrap: "wrap",
-          gap: "16px",
-          background: "#080808",
-          border: "1px solid rgba(255,255,255,0.07)",
-          borderRadius: "12px",
+          gap: "14px",
+          borderRadius: "var(--radius-lg)",
         }}
       >
         <div className="apple-segmented">
@@ -202,15 +200,15 @@ export default function TicketManager() {
 
         <form
           onSubmit={handleSearchSubmit}
-          style={{ display: "flex", gap: "8px", minWidth: "min(100%, 240px)", flex: "1 1 240px", maxWidth: "420px" }}
+          style={{ display: "flex", gap: "8px", minWidth: 0, flex: "1 1 240px", maxWidth: "480px", flexWrap: "wrap" }}
         >
-          <div style={{ position: "relative", flex: 1 }}>
+          <div style={{ position: "relative", flex: "1 1 180px", minWidth: 0 }}>
             <svg
               width="14"
               height="14"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#86868b"
+              stroke="var(--text-muted)"
               strokeWidth="2"
               style={{
                 position: "absolute",
@@ -227,22 +225,18 @@ export default function TicketManager() {
               placeholder="ค้นหารหัส หรือชื่อผู้เปิด..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              className="form-input"
               style={{
                 width: "100%",
-                padding: "8px 12px 8px 34px",
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: "8px",
-                color: "#ffffff",
+                paddingLeft: "34px",
                 fontSize: "13px",
-                outline: "none",
               }}
             />
           </div>
           <button
             type="submit"
             className="btn btn-secondary"
-            style={{ padding: "8px 14px", fontSize: "13px" }}
+            style={{ padding: "8px 14px", fontSize: "13px", flexShrink: 0 }}
           >
             ค้นหา
           </button>
@@ -259,8 +253,9 @@ export default function TicketManager() {
               gap: 6,
               background: "rgba(41, 151, 255, 0.12)",
               borderColor: "rgba(41, 151, 255, 0.3)",
-              color: "#2997ff",
+              color: "var(--accent)",
               whiteSpace: "nowrap",
+              flexShrink: 0,
             }}
             title="ตั้งค่าข้อความ Embed แผงทิกเก็ต, ข้อความต้อนรับ, และบันทึกประวัติปิดทิกเก็ตใน Discord"
           >
@@ -275,16 +270,18 @@ export default function TicketManager() {
         <div
           style={{
             padding: "16px 20px",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            borderBottom: "1px solid var(--border-subtle)",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            flexWrap: "wrap",
+            gap: "8px",
           }}
         >
-          <h3 style={{ fontSize: "15px", fontWeight: 600, color: "#ffffff", margin: 0 }}>
+          <h3 style={{ fontSize: "15px", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
             รายการทิกเก็ตทั้งหมด ({tickets.length})
           </h3>
-          <span style={{ fontSize: "12px", color: "#86868b" }}>
+          <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
             จัดการคำขอและตรวจดูบันทึกการสนทนา
           </span>
         </div>
@@ -292,26 +289,26 @@ export default function TicketManager() {
         <div className="table-responsive">
           <table className="table" style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "left" }}>
+              <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                <th style={{ padding: "12px 20px", fontSize: "12px", color: "var(--text-muted)", textAlign: "left" }}>
                   รหัสทิกเก็ต
                 </th>
-                <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "left" }}>
+                <th style={{ padding: "12px 20px", fontSize: "12px", color: "var(--text-muted)", textAlign: "left" }}>
                   ผู้เปิด
                 </th>
-                <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "left" }}>
+                <th style={{ padding: "12px 20px", fontSize: "12px", color: "var(--text-muted)", textAlign: "left" }}>
                   หัวข้อ / ประเภท
                 </th>
-                <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "left" }}>
+                <th style={{ padding: "12px 20px", fontSize: "12px", color: "var(--text-muted)", textAlign: "left" }}>
                   สถานะ
                 </th>
-                <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "left" }}>
+                <th style={{ padding: "12px 20px", fontSize: "12px", color: "var(--text-muted)", textAlign: "left" }}>
                   ผู้ดูแล
                 </th>
-                <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "left" }}>
+                <th style={{ padding: "12px 20px", fontSize: "12px", color: "var(--text-muted)", textAlign: "left" }}>
                   วันที่สร้าง
                 </th>
-                <th style={{ padding: "12px 20px", fontSize: "12px", color: "#86868b", textAlign: "right" }}>
+                <th style={{ padding: "12px 20px", fontSize: "12px", color: "var(--text-muted)", textAlign: "right" }}>
                   การกระทำ
                 </th>
               </tr>
@@ -319,13 +316,13 @@ export default function TicketManager() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: "40px", color: "#86868b" }}>
+                  <td colSpan={7} style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
                     กำลังโหลดข้อมูลทิกเก็ต...
                   </td>
                 </tr>
               ) : tickets.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: "40px", color: "#86868b" }}>
+                  <td colSpan={7} style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
                     ไม่พบข้อมูลทิกเก็ตในระบบ
                   </td>
                 </tr>
@@ -334,19 +331,19 @@ export default function TicketManager() {
                   <tr
                     key={t.id}
                     style={{
-                      borderBottom: "1px solid rgba(255,255,255,0.04)",
+                      borderBottom: "1px solid var(--border-subtle)",
                       transition: "background 0.15s ease",
                     }}
                   >
-                    <td style={{ padding: "14px 20px", fontSize: "13px", fontWeight: 600, color: "#ffffff" }}>
+                    <td style={{ padding: "14px 20px", fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>
                       {t.ticketId}
                     </td>
                     <td style={{ padding: "14px 20px", fontSize: "13px" }}>
                       <div style={{ display: "flex", flexDirection: "column" }}>
-                        <span style={{ color: "#ffffff", fontWeight: 500 }}>
+                        <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>
                           {t.creatorName}
                         </span>
-                        <span style={{ fontSize: "11px", color: "#86868b" }}>
+                        <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
                           ID: {t.creatorId}
                         </span>
                       </div>
@@ -401,16 +398,16 @@ export default function TicketManager() {
                         </span>
                       )}
                     </td>
-                    <td style={{ padding: "14px 20px", fontSize: "13px", color: "#86868b" }}>
+                    <td style={{ padding: "14px 20px", fontSize: "13px", color: "var(--text-muted)" }}>
                       {t.claimedBy ? (
-                        <span style={{ color: "#ffffff", fontWeight: 500 }}>
+                        <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>
                           {t.claimedBy.displayName || t.claimedBy.username}
                         </span>
                       ) : (
-                        <span style={{ color: "#48484a" }}>—</span>
+                        <span style={{ color: "var(--text-disabled)" }}>—</span>
                       )}
                     </td>
-                    <td style={{ padding: "14px 20px", fontSize: "12px", color: "#86868b" }}>
+                    <td style={{ padding: "14px 20px", fontSize: "12px", color: "var(--text-muted)" }}>
                       {formatDate(t.createdAt)}
                     </td>
                     <td style={{ padding: "14px 20px", textAlign: "right" }}>
@@ -491,17 +488,17 @@ export default function TicketManager() {
             <div
               style={{
                 padding: "20px 24px",
-                borderBottom: "1px solid rgba(255,255,255,0.07)",
+                borderBottom: "1px solid var(--border-subtle)",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
               }}
             >
               <div>
-                <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#ffffff", margin: 0 }}>
+                <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
                   บันทึกประวัติการสนทนา • {selectedTranscript.ticketId}
                 </h3>
-                <span style={{ fontSize: "12px", color: "#86868b" }}>
+                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
                   ผู้เปิด: {selectedTranscript.creatorName} ({selectedTranscript.creatorId})
                 </span>
               </div>

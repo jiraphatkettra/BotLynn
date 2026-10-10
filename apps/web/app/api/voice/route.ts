@@ -39,6 +39,19 @@ export async function GET(request: Request) {
       take: 100,
     });
 
+    // Safeguard: Automatically close any orphaned sessions older than 18 hours (e.g. from past server downtime)
+    const staleCutoff = new Date(Date.now() - 18 * 60 * 60 * 1000);
+    await prisma.voiceSession.updateMany({
+      where: {
+        leftAt: null,
+        joinedAt: { lt: staleCutoff },
+      },
+      data: {
+        leftAt: new Date(),
+        duration: 3600,
+      },
+    }).catch(() => null);
+
     // Currently active sessions (leftAt is null)
     const activeSessions = await prisma.voiceSession.findMany({
       where: {

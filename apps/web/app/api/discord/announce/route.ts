@@ -12,9 +12,9 @@ export async function POST(request: Request) {
     }
 
     const currentRole = (session.user as any).role;
-    if (currentRole !== "OWNER" && currentRole !== "MANAGER") {
+    if (currentRole !== "OWNER" && currentRole !== "MANAGER" && currentRole !== "ADMIN") {
       return NextResponse.json(
-        { error: "เฉพาะ Owner หรือ Manager เท่านั้นที่สามารถส่งประกาศได้" },
+        { error: "เฉพาะ Owner, Manager หรือ Admin เท่านั้นที่สามารถส่งประกาศได้" },
         { status: 403 }
       );
     }
@@ -29,10 +29,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const token = process.env.DISCORD_TOKEN;
+    let token = process.env.DISCORD_TOKEN?.trim();
+    if (token && ((token.startsWith('"') && token.endsWith('"')) || (token.startsWith("'") && token.endsWith("'")))) {
+      token = token.slice(1, -1).trim();
+    }
     if (!token) {
       return NextResponse.json(
-        { error: "Discord bot token not configured" },
+        { error: "DISCORD_TOKEN ยังไม่ได้ตั้งค่าใน Environment Variables บน Vercel" },
         { status: 500 }
       );
     }

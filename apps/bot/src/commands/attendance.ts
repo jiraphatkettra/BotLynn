@@ -27,7 +27,7 @@ export const attendanceCommand: BotCommand = {
 
     if (!user) {
       await interaction.editReply({
-        content: "ไม่พบข้อมูลผู้ใช้ กรุณาตอกบัตรเข้างานก่อน (`/clockin`)",
+        content: "🔍 ไม่พบประวัติผู้ใช้ในระบบนะคะ หากต้องการเริ่มบันทึกเวลาปฏิบัติงาน สามารถพิมพ์คำสั่ง `/clockin` ได้เลยค่ะ",
       });
       return;
     }
@@ -51,18 +51,18 @@ export const attendanceCommand: BotCommand = {
     );
 
     const embed = new EmbedBuilder()
-      .setColor(0x000000)
+      .setColor(0x2997ff)
       .setAuthor({
         name: user.displayName || user.username,
         iconURL: interaction.user.displayAvatarURL(),
       })
-      .setTitle(`ประวัติการเข้างาน (${days} วันที่ผ่านมา)`)
+      .setTitle(`📊 สรุปประวัติการปฏิบัติงาน (${days} วันที่ผ่านมา)`)
       .setDescription(
-        `• เข้างานทั้งหมด: **${totalDays} ครั้ง**\n• รวมเวลาปฏิบัติงาน: **${Math.floor(
-          totalMinutes / 60
-        )} ชม. ${totalMinutes % 60} นาที**`
+        `• 📋 **จำนวนครั้งที่เข้างาน:** **${totalDays} ครั้ง**\n` +
+          `• ⌛ **เวลารวมการปฏิบัติหน้าที่:** **${Math.floor(totalMinutes / 60)} ชั่วโมง ${totalMinutes % 60} นาที**\n\n` +
+          (totalDays === 0 ? "> 💡 *ยังไม่มีประวัติการตอกบัตรในช่วงเวลานี้นะคะ*" : "> ✨ *ขอบคุณสำหรับความตั้งใจและหน้าที่ที่รับผิดชอบนะคะ*")
       )
-      .setFooter({ text: "LynnBot Attendance" })
+      .setFooter({ text: "Lynn Operations • Attendance History" })
       .setTimestamp();
 
     if (attendances.length > 0) {
@@ -80,19 +80,19 @@ export const attendanceCommand: BotCommand = {
               hour: "2-digit",
               minute: "2-digit",
             })
-          : "กำลังทำงาน";
+          : "กำลังทำงานอยู่ ⚡";
         const statusText =
           att.status === "ON_TIME"
-            ? "ตรงเวลา"
+            ? "ตรงเวลา ✅"
             : att.status === "LATE"
-              ? "สาย"
-              : "ออกก่อน";
+              ? "สาย ⚠️"
+              : "ออกก่อน ℹ️";
 
-        return `\`${date}\` ${inTime} - ${outTime} (${statusText})`;
+        return `• \`${date}\` **${inTime}** - **${outTime}** (${statusText})`;
       });
 
       embed.addFields({
-        name: "รายการล่าสุด",
+        name: "📋 รายการบันทึกล่าสุด",
         value: historyLines.join("\n"),
       });
     }

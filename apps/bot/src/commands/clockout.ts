@@ -25,7 +25,7 @@ export const clockoutCommand: BotCommand = {
 
     if (!user) {
       await interaction.editReply({
-        content: "ไม่พบข้อมูลผู้ใช้ กรุณาตอกบัตรเข้างานก่อน (`/clockin`)",
+        content: "🔍 ไม่พบประวัติผู้ใช้ในระบบนะคะ หากต้องการเปิดกะ สามารถพิมพ์คำสั่ง `/clockin` ได้เลยค่ะ",
       });
       return;
     }
@@ -40,9 +40,11 @@ export const clockoutCommand: BotCommand = {
     if (!activeAttendance) {
       const embed = new EmbedBuilder()
         .setColor(0xff453a)
-        .setTitle("ไม่พบการตอกบัตรเข้างาน")
-        .setDescription("คุณยังไม่ได้ตอกบัตรเข้างาน ใช้คำสั่ง `/clockin` เพื่อเริ่มงาน")
-        .setFooter({ text: "LynnBot" });
+        .setTitle("🔍 ไม่พบบันทึกเวลาเข้างานในรอบนี้")
+        .setDescription(
+          "ดูเหมือนคุณยังไม่ได้กดตอกบัตรเข้างานนะคะ\n\n> 💡 หากกำลังเริ่มต้นปฏิบัติหน้าที่ สามารถพิมพ์คำสั่ง `/clockin` เพื่อเปิดกะได้ทันทีเลยค่ะ"
+        )
+        .setFooter({ text: "Lynn Operations • Attendance System" });
 
       await interaction.editReply({ embeds: [embed] });
       return;
@@ -74,20 +76,21 @@ export const clockoutCommand: BotCommand = {
     });
 
     const embed = new EmbedBuilder()
-      .setColor(0x000000)
+      .setColor(0x2997ff)
       .setAuthor({
         name: interaction.user.displayName || interaction.user.username,
         iconURL: interaction.user.displayAvatarURL(),
       })
-      .setTitle("🏁 บันทึกเวลาออกงานเรียบร้อย")
+      .setTitle("🎉 บันทึกเวลาออกงานเรียบร้อย ขอบคุณสำหรับความทุ่มเทค่ะ!")
       .setDescription(
-        `• **เวลาเข้างาน:** <t:${Math.floor(activeAttendance.clockIn.getTime() / 1000)}:T>\n` +
-          `• **เวลาออกงาน:** <t:${Math.floor(clockOut.getTime() / 1000)}:T>\n` +
-          `• **ระยะเวลาปฏิบัติงานรวม:** **${hours} ชม. ${minutes} นาที**${
-            note ? `\n• **หมายเหตุ:** ${note}` : ""
+        `เหนื่อยหน่อยนะคะในกะนี้ พักผ่อนให้เต็มที่แล้วพบกันใหม่รอบหน้าน้า ✨\n\n` +
+          `• ⏱️ **เวลาเข้างาน:** <t:${Math.floor(activeAttendance.clockIn.getTime() / 1000)}:T>\n` +
+          `• 🏁 **เวลาออกงาน:** <t:${Math.floor(clockOut.getTime() / 1000)}:T>\n` +
+          `• ⌛ **ระยะเวลาปฏิบัติหน้าที่รวม:** **${hours} ชั่วโมง ${minutes} นาที**${
+            note ? `\n• 📝 **บันทึกช่วยจำ:** ${note}` : ""
           }`
       )
-      .setFooter({ text: "LynnBot Attendance System" })
+      .setFooter({ text: "Lynn Operations • Attendance System" })
       .setTimestamp();
 
     await interaction.editReply({ embeds: [embed] });

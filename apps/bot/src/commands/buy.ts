@@ -71,9 +71,11 @@ export const buyCommand: BotCommand = {
     if (!shopRole) {
       const embed = new EmbedBuilder()
         .setColor(0xff453a)
-        .setTitle("ไม่พบยศที่ระบุ")
-        .setDescription(`ไม่พบยศ "${roleName}" ตรวจสอบรายการยศด้วยคำสั่ง \`/shop\``)
-        .setFooter({ text: "LynnBot" });
+        .setTitle("🔍 ไม่พบยศที่ระบุในระบบ")
+        .setDescription(
+          `ไม่พบยศชื่อ **"${roleName}"** ในรายการวางจำหน่ายปัจจุบันค่ะ\n\n> 💡 สามารถเปิดดูรายการยศทั้งหมดที่เปิดขายได้ด้วยคำสั่ง \`/shop\` นะคะ`
+        )
+        .setFooter({ text: "Lynn Operations • Role Store" });
 
       await interaction.editReply({ embeds: [embed] });
       return;
@@ -82,9 +84,11 @@ export const buyCommand: BotCommand = {
     if (shopRole.stock !== null && shopRole.stock <= 0) {
       const embed = new EmbedBuilder()
         .setColor(0xff453a)
-        .setTitle("ยศหมดแล้ว")
-        .setDescription(`ยศ "${shopRole.name}" ไม่มีจำนวนคงเหลือในระบบ`)
-        .setFooter({ text: "LynnBot" });
+        .setTitle("📦 ยศนี้ถูกจับจองหมดชั่วคราวแล้วค่ะ")
+        .setDescription(
+          `ขออภัยด้วยนะคะ ยศ **"${shopRole.name}"** ในคลังหมดสต็อกชั่วคราวแล้ว\n\n> 💡 รบกวนรอแอดมินเติมสต็อก หรือเลือกดูยศอื่น ๆ ใน \`/shop\` ได้เลยนะคะ`
+        )
+        .setFooter({ text: "Lynn Operations • Role Store" });
 
       await interaction.editReply({ embeds: [embed] });
       return;
@@ -100,10 +104,12 @@ export const buyCommand: BotCommand = {
 
     if (existingPurchases >= shopRole.maxPerUser) {
       const embed = new EmbedBuilder()
-        .setColor(0xff453a)
-        .setTitle("ไม่สามารถซื้อซ้ำได้")
-        .setDescription(`คุณครอบครองยศ "${shopRole.name}" ครบโควต้าแล้ว (${shopRole.maxPerUser} ครั้ง)`)
-        .setFooter({ text: "LynnBot" });
+        .setColor(0xffd60a)
+        .setTitle("🛡️ คุณครอบครองยศนี้อยู่แล้วนะคะ")
+        .setDescription(
+          `คุณได้รับสิทธิ์ยศ **"${shopRole.name}"** ครบตามจำนวนโควต้าสูงสุดแล้วค่ะ (${shopRole.maxPerUser} สิทธิ์)\n\n> 💡 หากต้องการดูยศอื่น ๆ สามารถพิมพ์ \`/shop\` ได้เลยนะคะ`
+        )
+        .setFooter({ text: "Lynn Operations • Role Store" });
 
       await interaction.editReply({ embeds: [embed] });
       return;
@@ -167,11 +173,14 @@ export const buyCommand: BotCommand = {
               name: interaction.user.displayName || interaction.user.username,
               iconURL: interaction.user.displayAvatarURL(),
             })
-            .setTitle("มีการสั่งซื้อยศใหม่")
+            .setTitle("🛒 แจ้งเตือนการสั่งซื้อยศใหม่")
             .setDescription(
-              `สมาชิก: <@${interaction.user.id}>\nยศที่ได้รับ: **${shopRole.name}**\nราคา: ฿${shopRole.price.toLocaleString("th-TH")} • อ้างอิง: \`${transaction.id.slice(-8)}\``
+              `✨ ขอแสดงความยินดีกับคุณ <@${interaction.user.id}> ด้วยนะคะ!\n\n` +
+                `• 🏷️ **ยศที่ได้รับ:** **${shopRole.name}**\n` +
+                `• 💰 **ยอดชำระ:** \`฿${shopRole.price.toLocaleString("th-TH")}\`\n` +
+                `• 🧾 **รหัสธุรกรรม:** \`#${transaction.id.slice(-8)}\``
             )
-            .setFooter({ text: "LynnBot Shop Notification" })
+            .setFooter({ text: "Lynn Operations • Shop Notification" })
             .setTimestamp();
 
           await channel.send({ embeds: [notifyEmbed] }).catch(() => null);
@@ -183,11 +192,15 @@ export const buyCommand: BotCommand = {
 
     const embed = new EmbedBuilder()
       .setColor(0x30d158)
-      .setTitle("ซื้อยศสำเร็จ")
+      .setTitle("✨ สั่งซื้อยศสำเร็จแล้วค่ะ ยินดีด้วยนะคะ!")
       .setDescription(
-        `คุณได้รับยศ **${shopRole.name}** เรียบร้อยแล้ว\nราคา: ฿${shopRole.price.toLocaleString("th-TH")} • อ้างอิง: \`${transaction.id.slice(-8)}\``
+        `ระบบได้มอบยศ **${shopRole.name}** เข้าบัญชี Discord ของคุณเรียบร้อยแล้วค่ะ 🎉\n\n` +
+          `• 🏷️ **ยศ:** **${shopRole.name}**\n` +
+          `• 💳 **ยอดชำระ:** \`฿${shopRole.price.toLocaleString("th-TH")}\`\n` +
+          `• 🧾 **รหัสธุรกรรม:** \`#${transaction.id.slice(-8)}\`\n\n` +
+          `> 💡 หากยศยังไม่ปรากฏบนโปรไฟล์ทันที ลองกดรีเฟรช Discord ดูนะคะ ✨`
       )
-      .setFooter({ text: "LynnBot" })
+      .setFooter({ text: "Lynn Operations • Role Store" })
       .setTimestamp();
 
     await interaction.editReply({ embeds: [embed] });

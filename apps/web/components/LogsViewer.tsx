@@ -135,25 +135,57 @@ export default function LogsViewer() {
             บันทึกกิจกรรม ({total.toLocaleString()} รายการ)
           </h3>
 
-          {isFiltered && (
-            <button
-              onClick={handleResetFilters}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+            {/* Export CSV Button */}
+            <a
+              href={`/api/export/logs?${new URLSearchParams({
+                ...(category !== "ALL" ? { category } : {}),
+                ...(debouncedSearch ? { search: debouncedSearch } : {}),
+                ...(startDate ? { startDate } : {}),
+                ...(endDate ? { endDate } : {}),
+              }).toString()}`}
+              download
               className="btn btn-secondary"
               style={{
                 fontSize: "12px",
-                padding: "6px 12px",
+                padding: "6px 14px",
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
+                textDecoration: "none",
+                fontWeight: 500,
+                color: "var(--text-primary)",
               }}
+              title="ดาวน์โหลดไฟล์ CSV สำหรับเปิดใน Microsoft Excel หรือ Sheets"
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
-              ล้างตัวกรอง
-            </button>
-          )}
+              <span>ส่งออก CSV</span>
+            </a>
+
+            {isFiltered && (
+              <button
+                onClick={handleResetFilters}
+                className="btn btn-secondary"
+                style={{
+                  fontSize: "12px",
+                  padding: "6px 12px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+                ล้างตัวกรอง
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Filter Bar */}
@@ -163,15 +195,15 @@ export default function LogsViewer() {
             gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
             gap: "12px",
             width: "100%",
-            background: "rgba(255, 255, 255, 0.02)",
+            background: "var(--bg-card)",
             padding: "12px",
             borderRadius: "10px",
-            border: "1px solid rgba(255, 255, 255, 0.06)",
+            border: "1px solid var(--border-subtle)",
           }}
         >
           {/* Category Dropdown */}
           <div>
-            <label style={{ display: "block", fontSize: "12px", color: "#86868b", marginBottom: "6px" }}>
+            <label style={{ display: "block", fontSize: "12px", color: "var(--text-secondary)", marginBottom: "6px" }}>
               หมวดหมู่กิจกรรม
             </label>
             <select
@@ -181,15 +213,15 @@ export default function LogsViewer() {
                 width: "100%",
                 padding: "8px 12px",
                 borderRadius: "8px",
-                background: "rgba(255, 255, 255, 0.06)",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                color: "#ffffff",
+                background: "var(--bg-elevated)",
+                border: "1px solid var(--border-subtle)",
+                color: "var(--text-primary)",
                 fontSize: "13px",
                 outline: "none",
               }}
             >
               {Object.entries(CATEGORY_MAP).map(([key, cat]) => (
-                <option key={key} value={key} style={{ background: "#1c1c1e", color: "#ffffff" }}>
+                <option key={key} value={key} style={{ background: "var(--bg-elevated)", color: "var(--text-primary)" }}>
                   {cat.icon} {cat.label}
                 </option>
               ))}
@@ -198,7 +230,7 @@ export default function LogsViewer() {
 
           {/* Search Input */}
           <div>
-            <label style={{ display: "block", fontSize: "12px", color: "#86868b", marginBottom: "6px" }}>
+            <label style={{ display: "block", fontSize: "12px", color: "var(--text-secondary)", marginBottom: "6px" }}>
               ค้นหาชื่อ หรือ รายละเอียด
             </label>
             <div style={{ position: "relative" }}>
@@ -211,9 +243,9 @@ export default function LogsViewer() {
                   width: "100%",
                   padding: "8px 12px 8px 32px",
                   borderRadius: "8px",
-                  background: "rgba(255, 255, 255, 0.06)",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  color: "#ffffff",
+                  background: "var(--bg-elevated)",
+                  border: "1px solid var(--border-subtle)",
+                  color: "var(--text-primary)",
                   fontSize: "13px",
                   outline: "none",
                 }}
@@ -223,7 +255,7 @@ export default function LogsViewer() {
                 height="14"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#86868b"
+                stroke="var(--text-muted)"
                 strokeWidth="2"
                 style={{ position: "absolute", left: "10px", top: "11px" }}
               >
@@ -235,7 +267,7 @@ export default function LogsViewer() {
 
           {/* Start Date */}
           <div>
-            <label style={{ display: "block", fontSize: "12px", color: "#86868b", marginBottom: "6px" }}>
+            <label style={{ display: "block", fontSize: "12px", color: "var(--text-secondary)", marginBottom: "6px" }}>
               ตั้งแต่วันที่
             </label>
             <input
@@ -249,19 +281,18 @@ export default function LogsViewer() {
                 width: "100%",
                 padding: "8px 12px",
                 borderRadius: "8px",
-                background: "rgba(255, 255, 255, 0.06)",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                color: "#ffffff",
+                background: "var(--bg-elevated)",
+                border: "1px solid var(--border-subtle)",
+                color: "var(--text-primary)",
                 fontSize: "13px",
                 outline: "none",
-                colorScheme: "dark",
               }}
             />
           </div>
 
           {/* End Date */}
           <div>
-            <label style={{ display: "block", fontSize: "12px", color: "#86868b", marginBottom: "6px" }}>
+            <label style={{ display: "block", fontSize: "12px", color: "var(--text-secondary)", marginBottom: "6px" }}>
               ถึงวันที่
             </label>
             <input
@@ -275,12 +306,11 @@ export default function LogsViewer() {
                 width: "100%",
                 padding: "8px 12px",
                 borderRadius: "8px",
-                background: "rgba(255, 255, 255, 0.06)",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                color: "#ffffff",
+                background: "var(--bg-elevated)",
+                border: "1px solid var(--border-subtle)",
+                color: "var(--text-primary)",
                 fontSize: "13px",
                 outline: "none",
-                colorScheme: "dark",
               }}
             />
           </div>

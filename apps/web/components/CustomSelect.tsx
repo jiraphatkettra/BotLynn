@@ -127,25 +127,26 @@ export default function CustomSelect({
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setIsOpen(!isOpen)}
+        className={`apple-custom-select-trigger ${className}`}
         style={{
           width: "100%",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           gap: 10,
-          background: "rgba(255, 255, 255, 0.04)",
+          background: "var(--bg-card)",
           border: isOpen
             ? "1px solid var(--accent)"
-            : "1px solid rgba(255, 255, 255, 0.12)",
+            : "1px solid var(--border-default)",
           borderRadius: "var(--radius-md)",
           padding: "9px 14px",
-          color: selectedOption ? "#f5f5f7" : "var(--text-muted)",
+          color: selectedOption ? "var(--text-primary)" : "var(--text-muted)",
           fontSize: 13,
           fontFamily: "var(--font-sans)",
           cursor: disabled ? "not-allowed" : "pointer",
           opacity: disabled ? 0.5 : 1,
           transition: "all 0.18s cubic-bezier(0.16, 1, 0.3, 1)",
-          boxShadow: isOpen ? "0 0 0 3px rgba(41, 151, 255, 0.25)" : "none",
+          boxShadow: isOpen ? "0 0 0 3px var(--accent-subtle)" : "none",
         }}
       >
         <div
@@ -223,6 +224,7 @@ export default function CustomSelect({
       {/* Dropdown Menu Popup */}
       {isOpen && (
         <div
+          className="apple-custom-select-menu"
           style={{
             position: "absolute",
             top: "calc(100% + 6px)",
@@ -231,11 +233,10 @@ export default function CustomSelect({
             width: "max-content",
             maxWidth: 380,
             zIndex: 1000,
-            background: "#0f0f14",
-            border: "1px solid rgba(255, 255, 255, 0.16)",
+            background: "var(--bg-elevated)",
+            border: "1px solid var(--border-default)",
             borderRadius: "var(--radius-md)",
-            boxShadow:
-              "0 18px 48px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.08)",
+            boxShadow: "var(--shadow-elevated)",
             backdropFilter: "blur(24px)",
             overflow: "hidden",
             animation: "fadeInDown 0.15s ease-out",
@@ -246,8 +247,8 @@ export default function CustomSelect({
             <div
               style={{
                 padding: "8px 10px",
-                borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-                background: "rgba(255, 255, 255, 0.02)",
+                borderBottom: "1px solid var(--border-subtle)",
+                background: "var(--bg-card)",
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
@@ -258,7 +259,7 @@ export default function CustomSelect({
                 height="14"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="rgba(255, 255, 255, 0.4)"
+                stroke="var(--text-muted)"
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -279,7 +280,7 @@ export default function CustomSelect({
                   outline: "none",
                   fontSize: 12,
                   fontFamily: "var(--font-sans)",
-                  color: "#ffffff",
+                  color: "var(--text-primary)",
                   padding: "4px 0",
                 }}
               />
@@ -328,6 +329,7 @@ export default function CustomSelect({
                   <div
                     key={opt.value}
                     onClick={() => handleSelect(opt.value)}
+                    className="apple-custom-select-item"
                     style={{
                       display: "flex",
                       alignItems: "center",
@@ -336,17 +338,17 @@ export default function CustomSelect({
                       padding: "8px 14px",
                       fontSize: 13,
                       fontFamily: "var(--font-sans)",
-                      color: isSelected ? "#ffffff" : "var(--text-primary)",
+                      color: isSelected ? "var(--accent)" : "var(--text-primary)",
+                      fontWeight: isSelected ? 600 : 400,
                       background: isSelected
-                        ? "rgba(41, 151, 255, 0.16)"
+                        ? "var(--accent-subtle)"
                         : "transparent",
                       cursor: "pointer",
                       transition: "background 0.12s ease",
                     }}
                     onMouseEnter={(e) => {
                       if (!isSelected) {
-                        e.currentTarget.style.background =
-                          "rgba(255, 255, 255, 0.06)";
+                        e.currentTarget.style.background = "var(--bg-card-hover)";
                       }
                     }}
                     onMouseLeave={(e) => {
