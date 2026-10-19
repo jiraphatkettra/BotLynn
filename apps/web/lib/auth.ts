@@ -8,6 +8,7 @@ export const authOptions: NextAuthOptions = {
     DiscordProvider({
       clientId: process.env.DISCORD_CLIENT_ID!,
       clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+      issuer: "https://discord.com",
       authorization: {
         params: {
           scope: "identify email guilds",
@@ -27,22 +28,22 @@ export const authOptions: NextAuthOptions = {
         await prisma.user.upsert({
           where: { discordId: account.providerAccountId },
           update: {
-            username: discordProfile.username,
-            displayName: discordProfile.global_name || discordProfile.username,
+            username: discordProfile.username || user.name || "User",
+            displayName: discordProfile.global_name || discordProfile.username || user.name || null,
             avatar: discordProfile.avatar
               ? `https://cdn.discordapp.com/avatars/${account.providerAccountId}/${discordProfile.avatar}.png`
-              : null,
-            email: discordProfile.email,
+              : user.image || null,
+            email: discordProfile.email || user.email || null,
             ...(isRoot ? { role: "OWNER", isActive: true } : {}),
           },
           create: {
             discordId: account.providerAccountId,
-            username: discordProfile.username,
-            displayName: discordProfile.global_name || discordProfile.username,
+            username: discordProfile.username || user.name || "User",
+            displayName: discordProfile.global_name || discordProfile.username || user.name || null,
             avatar: discordProfile.avatar
               ? `https://cdn.discordapp.com/avatars/${account.providerAccountId}/${discordProfile.avatar}.png`
-              : null,
-            email: discordProfile.email,
+              : user.image || null,
+            email: discordProfile.email || user.email || null,
             role: isRoot ? "OWNER" : "MEMBER",
             isActive: true,
           },
@@ -59,16 +60,15 @@ export const authOptions: NextAuthOptions = {
               userId: dbUser.id,
               action: "User logged in",
               category: "AUTH",
-              details: `${discordProfile.username} logged in via Discord OAuth2${isRoot ? " (Root Owner)" : ""}`,
+              details: `${discordProfile.username || user.name || "User"} logged in via Discord OAuth2${isRoot ? " (Root Owner)" : ""}`,
             },
           });
         }
-
-        return true;
       } catch (error) {
-        console.error("Error during sign in:", error);
-        return false;
+        console.error("Non-fatal error during sign in:", error);
       }
+
+      return true;
     },
     async jwt({ token, account, profile }) {
       if (account) {
