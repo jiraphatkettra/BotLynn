@@ -55,6 +55,7 @@ export async function handleInteraction(
     // 1. Handle Button Interactions
     if (interaction.isButton()) {
       const btn = interaction as ButtonInteraction;
+      if (btn.customId.startsWith('candy:')) return;
 
       try {
         // Attendance Panel Buttons
@@ -243,6 +244,7 @@ export async function handleInteraction(
     // 3. Handle Modal Submits
     if (interaction.isModalSubmit()) {
       const modal = interaction as ModalSubmitInteraction;
+      if (modal.customId.startsWith('candy:')) return;
       try {
         if (modal.customId === "modal_leave_request") {
           await handleLeaveModalSubmit(modal);
