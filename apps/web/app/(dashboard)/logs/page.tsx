@@ -14,21 +14,40 @@ async function getLogsStats() {
   return { totalLogs, categoryCounts };
 }
 
-const categoryIcons: Record<string, string> = {
-  AUTH: "🔐",
-  ATTENDANCE: "⏰",
-  SHOP: "🏷️",
-  ADMIN: "👤",
-  SYSTEM: "⚙️",
-  BOT: "🤖",
-  PERMISSION: "🔑",
-  VOICE: "🎙️",
-  TICKET: "🎫",
-  BACKUP: "💾",
-  WALLET: "💰",
-  ANNOUNCEMENT: "📢",
-  LEAVE: "🏖️",
-  SLIP: "🧾",
+import React from "react";
+import {
+  Lock,
+  Clock,
+  Tag,
+  User,
+  Settings,
+  Bot,
+  Key,
+  Mic,
+  Ticket,
+  Database,
+  Wallet,
+  Megaphone,
+  Calendar,
+  Receipt,
+  FileText,
+} from "lucide-react";
+
+const categoryIconMap: Record<string, React.ReactNode> = {
+  AUTH: <Lock className="w-3.5 h-3.5 text-sky-400" />,
+  ATTENDANCE: <Clock className="w-3.5 h-3.5 text-emerald-400" />,
+  SHOP: <Tag className="w-3.5 h-3.5 text-purple-400" />,
+  ADMIN: <User className="w-3.5 h-3.5 text-indigo-400" />,
+  SYSTEM: <Settings className="w-3.5 h-3.5 text-neutral-400" />,
+  BOT: <Bot className="w-3.5 h-3.5 text-amber-400" />,
+  PERMISSION: <Key className="w-3.5 h-3.5 text-rose-400" />,
+  VOICE: <Mic className="w-3.5 h-3.5 text-cyan-400" />,
+  TICKET: <Ticket className="w-3.5 h-3.5 text-violet-400" />,
+  BACKUP: <Database className="w-3.5 h-3.5 text-yellow-400" />,
+  WALLET: <Wallet className="w-3.5 h-3.5 text-emerald-400" />,
+  ANNOUNCEMENT: <Megaphone className="w-3.5 h-3.5 text-pink-400" />,
+  LEAVE: <Calendar className="w-3.5 h-3.5 text-teal-400" />,
+  SLIP: <Receipt className="w-3.5 h-3.5 text-blue-400" />,
 };
 
 const categoryLabels: Record<string, string> = {
@@ -81,7 +100,7 @@ export default async function LogsPage() {
                 fontSize: 13,
               }}
             >
-              <span>{categoryIcons[cat.category] || "📋"}</span>
+              <span>{categoryIconMap[cat.category] || <FileText className="w-3.5 h-3.5 text-neutral-400" />}</span>
               <span>{categoryLabels[cat.category] || cat.category}</span>
               <span
                 style={{

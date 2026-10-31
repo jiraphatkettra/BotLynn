@@ -1,5 +1,6 @@
 import { prisma } from "@lynnbot/database";
 import { formatCurrency } from "@/lib/utils";
+import { Tag } from "lucide-react";
 
 export const metadata = {
   title: "ร้านค้ายศสาธารณะ • LynnBot",
@@ -72,7 +73,9 @@ export default async function PublicShopPage() {
           >
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
-                <span style={{ fontSize: "24px" }}>{role.icon || "🏷️"}</span>
+                <span className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-indigo-400">
+                  {role.icon ? role.icon : <Tag className="w-4 h-4" />}
+                </span>
                 <h3 style={{ fontSize: "20px", fontWeight: 700, color: "#ffffff", margin: 0 }}>
                   {role.name}
                 </h3>

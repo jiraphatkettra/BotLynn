@@ -4,6 +4,21 @@ import React, { useState, useEffect } from "react";
 import { getRoleInfo, getDiscordAvatarUrl, isRootOwner, ROOT_OWNER_DISCORD_ID } from "@/lib/utils";
 import CustomSelect from "@/components/CustomSelect";
 import HolographicCard from "@/components/HolographicCard";
+import {
+  Crown,
+  Briefcase,
+  Shield,
+  ShieldCheck,
+  Trash2,
+  Plus,
+  Minus,
+  Wallet,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  X,
+  Settings,
+} from "lucide-react";
 
 interface PermissionItem {
   id: string;
@@ -421,47 +436,17 @@ export default function AdminManager({
             animation: "fadeIn 0.2s ease",
           }}
         >
-          {toastMessage.type === "success" ? "✓" : "✕"} {toastMessage.text}
+          {toastMessage.type === "success" ? <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" /> : <XCircle className="w-4 h-4 text-rose-400 shrink-0" />}
+          <span>{toastMessage.text}</span>
         </div>
       )}
 
-      {/* 1. Proportional Stats Row */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: 16,
-          marginBottom: 24,
-        }}
-      >
-        <div
-          style={{
-            background: "rgba(255, 255, 255, 0.025)",
-            border: "1px solid rgba(255, 255, 255, 0.07)",
-            borderRadius: 18,
-            padding: "20px 24px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.35)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-            <span style={{ fontSize: 13, color: "rgba(255, 255, 255, 0.5)", fontWeight: 500 }}>
-              แอดมินทั้งหมด
-            </span>
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 8,
-                background: "rgba(255, 255, 255, 0.05)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "rgba(255, 255, 255, 0.7)",
-              }}
-            >
+      {/* 1. Proportional Stats Row (Blueprint Bento Grid) */}
+      <div className="stats-grid mb-24">
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-label">แอดมินทั้งหมด</span>
+            <div className="stat-card-icon">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                 <circle cx="9" cy="7" r="4" />
@@ -470,141 +455,68 @@ export default function AdminManager({
               </svg>
             </div>
           </div>
-          <div style={{ fontSize: 32, fontWeight: 700, color: "#ffffff", letterSpacing: "-0.03em" }}>
+          <div className="stat-card-value">
             {admins.length}
           </div>
         </div>
 
-        <div
-          style={{
-            background: "rgba(255, 255, 255, 0.025)",
-            border: "1px solid rgba(255, 255, 255, 0.07)",
-            borderRadius: 18,
-            padding: "20px 24px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.35)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-            <span style={{ fontSize: 13, color: "rgba(255, 255, 255, 0.5)", fontWeight: 500 }}>
-              เปิดใช้งานอยู่
-            </span>
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 8,
-                background: "rgba(48, 209, 88, 0.12)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#30d158",
-              }}
-            >
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-label">เปิดใช้งานอยู่</span>
+            <div className="stat-card-icon" style={{ background: "rgba(48, 209, 88, 0.12)", color: "#30d158" }}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                 <polyline points="22 4 12 14.01 9 11.01" />
               </svg>
             </div>
           </div>
-          <div style={{ fontSize: 32, fontWeight: 700, color: "#ffffff", letterSpacing: "-0.03em" }}>
+          <div className="stat-card-value" style={{ color: "#30d158" }}>
             {admins.filter((a) => a.isActive).length}
           </div>
         </div>
 
-        <div
-          style={{
-            background: "rgba(255, 255, 255, 0.025)",
-            border: "1px solid rgba(255, 255, 255, 0.07)",
-            borderRadius: 18,
-            padding: "20px 24px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.35)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-            <span style={{ fontSize: 13, color: "rgba(255, 255, 255, 0.5)", fontWeight: 500 }}>
-              ผู้จัดการ / Owner
-            </span>
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 8,
-                background: "rgba(10, 132, 255, 0.12)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#2997ff",
-              }}
-            >
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-label">ผู้จัดการ / Owner</span>
+            <div className="stat-card-icon" style={{ background: "rgba(10, 132, 255, 0.12)", color: "#2997ff" }}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
               </svg>
             </div>
           </div>
-          <div style={{ fontSize: 32, fontWeight: 700, color: "#ffffff", letterSpacing: "-0.03em" }}>
+          <div className="stat-card-value">
             {admins.filter((a) => a.role === "OWNER" || a.role === "MANAGER").length}
           </div>
         </div>
 
-        <div
-          style={{
-            background: "rgba(255, 255, 255, 0.025)",
-            border: "1px solid rgba(255, 255, 255, 0.07)",
-            borderRadius: 18,
-            padding: "20px 24px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.35)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-            <span style={{ fontSize: 13, color: "rgba(255, 255, 255, 0.5)", fontWeight: 500 }}>
-              Admin / Mod
-            </span>
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 8,
-                background: "rgba(167, 139, 250, 0.12)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#a78bfa",
-              }}
-            >
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <span className="stat-card-label">Admin / Mod</span>
+            <div className="stat-card-icon" style={{ background: "rgba(167, 139, 250, 0.12)", color: "#a78bfa" }}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
               </svg>
             </div>
           </div>
-          <div style={{ fontSize: 32, fontWeight: 700, color: "#ffffff", letterSpacing: "-0.03em" }}>
+          <div className="stat-card-value">
             {admins.filter((a) => a.role === "ADMIN" || a.role === "MODERATOR").length}
           </div>
         </div>
       </div>
 
-      {/* 2. Management & Filter Bar (Apple Pro Toolbar) */}
+      {/* 2. Management & Filter Bar (Blueprint Bento Toolbar) */}
       <div
         style={{
-          background: "rgba(255, 255, 255, 0.02)",
+          background: "#070809",
           border: "1px solid rgba(255, 255, 255, 0.08)",
-          borderRadius: 18,
-          padding: "12px 18px",
+          borderRadius: "0px",
+          padding: "14px 18px",
           display: "flex",
           flexWrap: "wrap",
           alignItems: "center",
           justifyContent: "space-between",
           gap: 14,
           marginBottom: 28,
-          backdropFilter: "blur(20px)",
         }}
       >
         {/* Left: Search & Filter Tabs */}
@@ -621,20 +533,18 @@ export default function AdminManager({
                 paddingRight: 12,
                 fontSize: 13,
                 width: "100%",
-                background: "rgba(255, 255, 255, 0.04)",
+                background: "#000000",
                 border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: 10,
+                borderRadius: "0px",
                 color: "#ffffff",
                 outline: "none",
                 transition: "all 0.15s ease",
               }}
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = "rgba(10, 132, 255, 0.6)";
-                e.currentTarget.style.boxShadow = "0 0 0 3px rgba(10, 132, 255, 0.15)";
               }}
               onBlur={(e) => {
                 e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
-                e.currentTarget.style.boxShadow = "none";
               }}
             />
             <svg
@@ -678,19 +588,20 @@ export default function AdminManager({
             ))}
           </div>
 
-          {/* Apple View Switcher (Grid vs Table) */}
+          {/* View Switcher (Grid vs Table) */}
           <div className="apple-view-toggle">
             <button
               type="button"
               className={`apple-view-toggle-btn ${viewMode === "grid" ? "active" : ""}`}
               onClick={() => setViewMode("grid")}
               title="มุมมองการ์ด (Grid)"
+              style={{ borderRadius: "0px" }}
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="3" width="7" height="7" rx="1.5" />
-                <rect x="14" y="3" width="7" height="7" rx="1.5" />
-                <rect x="14" y="14" width="7" height="7" rx="1.5" />
-                <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                <rect x="3" y="3" width="7" height="7" rx="0" />
+                <rect x="14" y="3" width="7" height="7" rx="0" />
+                <rect x="14" y="14" width="7" height="7" rx="0" />
+                <rect x="3" y="14" width="7" height="7" rx="0" />
               </svg>
             </button>
             <button
@@ -698,6 +609,7 @@ export default function AdminManager({
               className={`apple-view-toggle-btn ${viewMode === "table" ? "active" : ""}`}
               onClick={() => setViewMode("table")}
               title="มุมมองตาราง (Table)"
+              style={{ borderRadius: "0px" }}
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="8" y1="6" x2="21" y2="6" />
@@ -723,7 +635,7 @@ export default function AdminManager({
                 gap: 8,
                 background: "rgba(255, 255, 255, 0.05)",
                 border: "1px solid rgba(255, 255, 255, 0.1)",
-                borderRadius: 10,
+                borderRadius: "0px",
               }}
               disabled={syncingStaff}
               onClick={handleQuickSync}
@@ -758,7 +670,7 @@ export default function AdminManager({
                 alignItems: "center",
                 background: "rgba(10, 132, 255, 0.14)",
                 border: "1px solid rgba(10, 132, 255, 0.32)",
-                borderRadius: 10,
+                borderRadius: "0px",
                 color: "#2997ff",
                 fontWeight: 550,
                 cursor: "pointer",
@@ -875,11 +787,11 @@ export default function AdminManager({
                       <td>
                         {admin.isActive ? (
                           <span className="apple-pill-badge apple-pill-badge-success">
-                            ✓ ใช้งาน
+                            ใช้งาน
                           </span>
                         ) : (
                           <span className="apple-pill-badge apple-pill-badge-danger">
-                            ✕ ระงับ
+                            ระงับ
                           </span>
                         )}
                       </td>
@@ -942,7 +854,7 @@ export default function AdminManager({
                           {isOwner && (
                             <button
                               type="button"
-                              className="btn btn-secondary btn-sm"
+                              className="btn btn-secondary btn-sm flex items-center gap-1"
                               style={{
                                 padding: "4px 9px",
                                 fontSize: 11,
@@ -962,7 +874,8 @@ export default function AdminManager({
                               }}
                               title="จัดการและปรับยอดเงินในกระเป๋า (Wallet)"
                             >
-                              💰 ฿{(admin.balance || 0).toLocaleString()}
+                              <Wallet className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                              <span>฿{(admin.balance || 0).toLocaleString()}</span>
                             </button>
                           )}
 
@@ -1234,7 +1147,7 @@ export default function AdminManager({
                   {isOwner && (
                     <button
                       type="button"
-                      className="btn btn-secondary btn-sm"
+                      className="btn btn-secondary btn-sm flex items-center gap-1"
                       style={{
                         padding: "0 8px",
                         fontSize: 11,
@@ -1254,7 +1167,8 @@ export default function AdminManager({
                       }}
                       title="จัดการและปรับยอดเงินในกระเป๋า (Wallet)"
                     >
-                      💰 ฿{(admin.balance || 0).toLocaleString()}
+                      <Wallet className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>฿{(admin.balance || 0).toLocaleString()}</span>
                     </button>
                   )}
 
@@ -1336,11 +1250,11 @@ export default function AdminManager({
             <div className="modal-header">
               <h3 className="modal-title">โปรไฟล์ทีมงาน</h3>
               <button
-                className="btn-ghost"
+                className="btn-ghost flex items-center justify-center"
                 onClick={() => setProfileTarget(null)}
                 style={{ cursor: "pointer" }}
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -1580,11 +1494,11 @@ export default function AdminManager({
                 จัดการสิทธิ์: {permTarget.displayName || permTarget.username}
               </h3>
               <button
-                className="btn-ghost"
+                className="btn-ghost flex items-center justify-center"
                 onClick={() => setPermTarget(null)}
                 style={{ cursor: "pointer" }}
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -1635,7 +1549,7 @@ export default function AdminManager({
                       color: "#fbbf24",
                     }}
                   >
-                    <span style={{ fontSize: 18 }}>👑</span>
+                    <Crown className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
                     <div style={{ fontSize: 13, lineHeight: 1.5 }}>
                       <strong>บัญชีนี้คือเจ้าของสูงสุดของระบบ (Root Owner)</strong>
                       <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2, color: "var(--text-secondary)" }}>
@@ -1794,15 +1708,16 @@ export default function AdminManager({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-header">
-              <h3 className="modal-title">
-                ⚙️ กำหนดยศ Discord สำหรับตำแหน่งแอดมิน
+              <h3 className="modal-title flex items-center gap-2">
+                <Settings className="w-4 h-4 text-sky-400 shrink-0" />
+                <span>กำหนดยศ Discord สำหรับตำแหน่งแอดมิน</span>
               </h3>
               <button
-                className="btn-ghost"
+                className="btn-ghost flex items-center justify-center p-1"
                 onClick={() => setShowRoleMappingModal(false)}
                 style={{ cursor: "pointer" }}
               >
-                ✕
+                <X className="w-4 h-4 text-neutral-400" />
               </button>
             </div>
 
@@ -1850,7 +1765,8 @@ export default function AdminManager({
                   {/* 1. Owner Role */}
                   <div>
                     <label className="form-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <span>👑 ยศระดับ Owner (ผู้ดูแลสูงสุด)</span>
+                      <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span>ยศระดับ Owner (ผู้ดูแลสูงสุด)</span>
                     </label>
                     <CustomSelect
                       value={roleMappings.owner}
@@ -1872,7 +1788,8 @@ export default function AdminManager({
                   {/* 2. Manager Role */}
                   <div>
                     <label className="form-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <span>💼 ยศระดับ Manager (ผู้จัดการ)</span>
+                      <Briefcase className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                      <span>ยศระดับ Manager (ผู้จัดการ)</span>
                     </label>
                     <CustomSelect
                       value={roleMappings.manager}
@@ -1894,7 +1811,8 @@ export default function AdminManager({
                   {/* 3. Admin Role */}
                   <div>
                     <label className="form-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <span>🛡️ ยศระดับ Admin (ผู้ดูแลระบบ)</span>
+                      <Shield className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                      <span>ยศระดับ Admin (ผู้ดูแลระบบ)</span>
                     </label>
                     <CustomSelect
                       value={roleMappings.admin}
@@ -1916,7 +1834,8 @@ export default function AdminManager({
                   {/* 4. Moderator Role */}
                   <div>
                     <label className="form-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <span>🔰 ยศระดับ Moderator (ผู้ช่วยแอดมิน)</span>
+                      <ShieldCheck className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+                      <span>ยศระดับ Moderator (ผู้ช่วยแอดมิน)</span>
                     </label>
                     <CustomSelect
                       value={roleMappings.moderator}
@@ -2011,16 +1930,17 @@ export default function AdminManager({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-header">
-              <h3 className="modal-title" style={{ color: "var(--danger)" }}>
-                🗑️ ยืนยันการลบแอดมินออกจากระบบ
+              <h3 className="modal-title flex items-center gap-2" style={{ color: "var(--danger)" }}>
+                <Trash2 className="w-4 h-4 text-rose-500 shrink-0" />
+                <span>ยืนยันการลบแอดมินออกจากระบบ</span>
               </h3>
               <button
-                className="btn-ghost"
+                className="btn-ghost flex items-center justify-center p-1"
                 disabled={deletingAdmin}
                 onClick={() => setDeleteTarget(null)}
                 style={{ cursor: "pointer" }}
               >
-                ✕
+                <X className="w-4 h-4 text-neutral-400" />
               </button>
             </div>
 
@@ -2043,8 +1963,10 @@ export default function AdminManager({
                   color: "var(--text-secondary)",
                   lineHeight: 1.5,
                 }}
+                className="flex items-start gap-1.5"
               >
-                ⚠️ <strong>ผลกระทบ:</strong> สิทธิ์การเข้าใช้งานระบบแอดมินทั้งหมดของผู้ใช้นี้จะถูกนำออกทันที (แต่ประวัติการตอกบัตรและกิจกรรมเดิมจะยังคงอยู่)
+                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <span><strong>ผลกระทบ:</strong> สิทธิ์การเข้าใช้งานระบบแอดมินทั้งหมดของผู้ใช้นี้จะถูกนำออกทันที (แต่ประวัติการตอกบัตรและกิจกรรมเดิมจะยังคงอยู่)</span>
               </div>
 
               {deleteError && (
@@ -2074,8 +1996,10 @@ export default function AdminManager({
                     marginTop: 12,
                     lineHeight: 1.5,
                   }}
+                  className="flex items-start gap-1.5"
                 >
-                  👑 <strong>ได้รับการปกป้อง:</strong> ผู้ใช้นี้คือเจ้าของสูงสุด (Root Owner) ระบบล็อคไม่ให้ลบออกจากระบบในทุกกรณี
+                  <Crown className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                  <span><strong>ได้รับการปกป้อง:</strong> ผู้ใช้นี้คือเจ้าของสูงสุด (Root Owner) ระบบล็อคไม่ให้ลบออกจากระบบในทุกกรณี</span>
                 </div>
               )}
             </div>
@@ -2120,16 +2044,16 @@ export default function AdminManager({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-header">
-              <h3 className="modal-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span>💰</span>
+              <h3 className="modal-title flex items-center gap-2">
+                <Wallet className="w-5 h-5 text-emerald-400 shrink-0" />
                 <span>ปรับปรุงยอดเงินกระเป๋า (Wallet)</span>
               </h3>
               <button
                 type="button"
-                className="btn-ghost"
+                className="btn-ghost flex items-center justify-center p-1"
                 onClick={() => setWalletTarget(null)}
               >
-                ✕
+                <X className="w-4 h-4 text-neutral-400" />
               </button>
             </div>
 
@@ -2142,14 +2066,14 @@ export default function AdminManager({
                   gap: 12,
                   padding: "12px 14px",
                   background: "rgba(255, 255, 255, 0.03)",
-                  borderRadius: 12,
-                  border: "1px solid rgba(255, 255, 255, 0.06)",
+                  borderRadius: "0px",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
                 }}
               >
                 <img
                   src={getDiscordAvatarUrl(walletTarget.discordId, walletTarget.avatar)}
                   alt={walletTarget.username}
-                  style={{ width: 42, height: 42, borderRadius: "50%", objectFit: "cover" }}
+                  style={{ width: 42, height: 42, borderRadius: "0px", objectFit: "cover" }}
                 />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600, color: "#ffffff", fontSize: 14 }}>
@@ -2172,19 +2096,21 @@ export default function AdminManager({
                 <div className="apple-segmented" style={{ width: "100%" }}>
                   <button
                     type="button"
-                    className={`apple-segmented-item ${walletType === "TOPUP" ? "active" : ""}`}
+                    className={`apple-segmented-item flex items-center justify-center gap-1.5 ${walletType === "TOPUP" ? "active" : ""}`}
                     onClick={() => setWalletType("TOPUP")}
-                    style={walletType === "TOPUP" ? { background: "#34c759", color: "#000", fontWeight: 600 } : { flex: 1 }}
+                    style={walletType === "TOPUP" ? { background: "#34c759", color: "#000", fontWeight: 600, borderRadius: "0px" } : { flex: 1, borderRadius: "0px" }}
                   >
-                    ➕ เติมเงิน (Top-up)
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>เติมเงิน (Top-up)</span>
                   </button>
                   <button
                     type="button"
-                    className={`apple-segmented-item ${walletType === "DEDUCT" ? "active" : ""}`}
+                    className={`apple-segmented-item flex items-center justify-center gap-1.5 ${walletType === "DEDUCT" ? "active" : ""}`}
                     onClick={() => setWalletType("DEDUCT")}
-                    style={walletType === "DEDUCT" ? { background: "#ff453a", color: "#fff", fontWeight: 600 } : { flex: 1 }}
+                    style={walletType === "DEDUCT" ? { background: "#ff453a", color: "#fff", fontWeight: 600, borderRadius: "0px" } : { flex: 1, borderRadius: "0px" }}
                   >
-                    ➖ หักเงิน (Deduct)
+                    <Minus className="w-3.5 h-3.5" />
+                    <span>หักเงิน (Deduct)</span>
                   </button>
                 </div>
               </div>
@@ -2202,7 +2128,7 @@ export default function AdminManager({
                   value={walletAmount}
                   onChange={(e) => setWalletAmount(e.target.value)}
                   placeholder="เช่น 100"
-                  style={{ width: "100%", fontSize: 15, fontWeight: 600 }}
+                  style={{ width: "100%", fontSize: 15, fontWeight: 600, borderRadius: "0px", background: "#000000" }}
                   autoFocus
                 />
                 {/* Preset Pills */}
@@ -2213,8 +2139,8 @@ export default function AdminManager({
                       type="button"
                       onClick={() => setWalletAmount(String(amt))}
                       style={{
-                        padding: "3px 8px",
-                        borderRadius: "var(--radius-pill)",
+                        padding: "4px 10px",
+                        borderRadius: "0px",
                         background: walletAmount === String(amt) ? "rgba(255, 255, 255, 0.15)" : "rgba(255, 255, 255, 0.04)",
                         border: "1px solid rgba(255, 255, 255, 0.08)",
                         color: walletAmount === String(amt) ? "#ffffff" : "var(--text-secondary)",
@@ -2239,14 +2165,15 @@ export default function AdminManager({
                   value={walletNote}
                   onChange={(e) => setWalletNote(e.target.value)}
                   placeholder="เช่น เติมเงินสดผ่านแอดมิน, ค่าตอบแทนพิเศษ, คืนเงิน"
-                  style={{ width: "100%", fontSize: 13 }}
+                  style={{ width: "100%", fontSize: 13, borderRadius: "0px", background: "#000000" }}
                 />
               </div>
 
               {/* Error Message */}
               {walletError && (
-                <div style={{ color: "#ff453a", fontSize: 12, background: "rgba(255, 69, 58, 0.08)", padding: "8px 12px", borderRadius: 8 }}>
-                  ⚠️ {walletError}
+                <div style={{ color: "#ff453a", fontSize: 12, background: "rgba(255, 69, 58, 0.08)", padding: "8px 12px", borderRadius: "0px" }} className="flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                  <span>{walletError}</span>
                 </div>
               )}
             </div>

@@ -113,16 +113,17 @@ export default function VoiceStandbyWidget() {
       </div>
 
       {/* Voice Standby Table */}
-      <div className="card" style={{ padding: "0px", overflow: "hidden" }}>
+      <div className="card" style={{ padding: "0px", overflow: "hidden", background: "#070809", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "0px" }}>
         <div
           style={{
             padding: "16px 20px",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            borderBottom: "1px solid rgba(255,255,255,0.08)",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
             flexWrap: "wrap",
             gap: "12px",
+            background: "#0a0c0e",
           }}
         >
           <div>
@@ -143,9 +144,9 @@ export default function VoiceStandbyWidget() {
               style={{
                 width: "70px",
                 padding: "4px 8px",
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "6px",
+                background: "#000000",
+                border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: "0px",
                 color: "#ffffff",
                 fontSize: "12px",
                 textAlign: "center",
@@ -235,7 +236,7 @@ export default function VoiceStandbyWidget() {
                               alignItems: "center",
                               gap: "6px",
                               padding: "4px 8px",
-                              borderRadius: "6px",
+                              borderRadius: "0px",
                               fontSize: "11px",
                               fontWeight: 600,
                               background: "rgba(52,199,89,0.12)",

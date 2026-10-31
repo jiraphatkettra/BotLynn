@@ -70,6 +70,7 @@ export const EMBED_CATEGORIES: { id: string; label: string; icon: string }[] = [
   { id: "leaves", label: "ระบบลางาน (Leaves)", icon: "🏖️" },
   { id: "wallet", label: "กระเป๋าเงิน & สลิป (Wallet & Slips)", icon: "💳" },
   { id: "welcome", label: "ต้อนรับสมาชิก (Welcome)", icon: "👋" },
+  { id: "fanday", label: "กิจกรรมแฟนเดย์ (Fanday)", icon: "🎀" },
 ];
 
 export const DEFAULT_EMBED_PRESETS: Record<string, EmbedConfigData> = {
@@ -994,6 +995,222 @@ export const DEFAULT_EMBED_PRESETS: Record<string, EmbedConfigData> = {
     footer: {
       enabled: true,
       text: "LynnBot Operations System • Wallet",
+      iconUrl: "",
+    },
+    timestamp: {
+      enabled: true,
+    },
+  },
+
+  // ==========================================
+  // 7. FANDAY COMMUNITY ACTIVITIES EMBEDS
+  // ==========================================
+  fanday_panel_main: {
+    key: "fanday_panel_main",
+    category: "fanday",
+    name: "แผงกิจกรรมแฟนเดย์หลัก (Fanday Main Panel)",
+    description: "แผงควบคุมกิจกรรมหลักที่ส่งลงห้องแชทให้ผู้เล่นกดเข้าร่วม อ่านกติกา หรือดูสถานะ (ตรงตามต้นแบบ)",
+    supportedVariables: [
+      { key: "{event_title}", label: "ชื่อกิจกรรม", example: "กิจกรรมแฟนเดย์ • 753BC" },
+      { key: "{player_count}", label: "จำนวนผู้เล่นปัจจุบัน", example: "12" },
+      { key: "{min_players}", label: "จำนวนผู้เล่นขั้นต่ำ", example: "7" },
+      { key: "{status_label}", label: "ป้ายสถานะห้อง", example: "เปิดรับสมัครผู้เข้าร่วม" },
+      { key: "{status_emoji}", label: "อิโมจิสถานะ", example: "🟢" },
+      { key: "{recent_players}", label: "รายชื่อผู้เล่นล่าสุด", example: "• บังก็รักหลิน" },
+      { key: "{brand_divider}", label: "เส้นคั่นแบรนด์", example: "୨ৎ . 753BC . ୨ৎ" },
+      { key: "{wave_divider}", label: "เส้นคั่นลอนคลื่น", example: "◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠" },
+    ],
+    author: {
+      enabled: false,
+      name: "753 BC Activities",
+      iconUrl: "",
+      url: "",
+    },
+    title: {
+      enabled: true,
+      text: "กิจกรรมแฟนเดย์ • 753BC",
+      url: "",
+    },
+    descriptionText: {
+      enabled: true,
+      text: "## จำนวนผู้เล่นปัจจุบัน\n`{player_count} คน (ต้องการขั้นต่ำ {min_players} คน)`\n\n### สถานะห้อง: {status_emoji} `{status_label}`\n\n```diff\n+ กดปุ่มด้านล่างเพื่อเข้าร่วม อ่านกติกา\n+ หรือตรวจสอบบทบาทของตัวเองได้เลย\n```\n\n୨ৎ . 753BC . ୨ৎ\n\n◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠◠\n\n📝 **รายชื่อผู้เข้าร่วมล่าสุด**\n{recent_players}",
+    },
+    color: {
+      enabled: true,
+      hex: "#A0714F",
+    },
+    thumbnail: {
+      enabled: false,
+      url: "",
+    },
+    image: {
+      enabled: true,
+      url: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&w=1000&q=80",
+    },
+    fields: {
+      enabled: false,
+      items: [],
+    },
+    footer: {
+      enabled: true,
+      text: "ระบบกิจกรรม แฟนเดย์ 753BC • มาร่วมสนุกไปด้วยกันน้า",
+      iconUrl: "",
+    },
+    timestamp: {
+      enabled: true,
+    },
+  },
+
+  fanday_rules: {
+    key: "fanday_rules",
+    category: "fanday",
+    name: "กติกาและระเบียบการเล่นแฟนเดย์ (Fanday Rules)",
+    description: "การ์ดแสดงกฎเกณฑ์ ข้อตกลง และมารยาทในการเข้าร่วมกิจกรรมแฟนเดย์",
+    supportedVariables: [
+      { key: "{event_title}", label: "ชื่อกิจกรรม", example: "กิจกรรมแฟนเดย์ • 753BC" },
+      { key: "{min_players}", label: "จำนวนผู้เล่นขั้นต่ำ", example: "7" },
+    ],
+    author: {
+      enabled: true,
+      name: "753BC Activities System",
+      iconUrl: "",
+      url: "",
+    },
+    title: {
+      enabled: true,
+      text: "📖 กฎกติกา & ระเบียบกิจกรรมแฟนเดย์ • 753BC",
+      url: "",
+    },
+    descriptionText: {
+      enabled: true,
+      text: "ยินดีต้อนรับสู่กิจกรรม **แฟนเดย์ (Fanday)** ของคอมมูนิตี้ 753BC!\nเพื่อความสนุกและบรรยากาศที่ดีของทุกคน กรุณาปฏิบัติตามกฎกติกาดังต่อไปนี้:\n\n**1. การสมัครและการให้ข้อมูล**\n• สมัครด้วยความสมัครใจ และต้องอยู่ในเซิร์ฟเวอร์ตลอดระยะเวลากิจกรรม\n• ระบุเพศและคำตอบตามความเป็นจริง เพื่อให้ระบบ AI และแบบประเมินจับคู่ได้อย่างเหมาะสมที่สุด\n\n**2. สิทธิ์การล็อกคู่ (Self-Lock)**\n• สมาชิกที่มีคู่อยู่แล้ว สามารถเลือก 'ขอล็อกคู่' ได้ โดยอีกฝ่ายต้องกดยืนยันการจับคู่\n• เมื่อยืนยันคู่สำเร็จ ทั้งสองจะถูกแยกออกจาก Pool การสุ่มเดี่ยวโดยอัตโนมัติ\n\n**3. มารยาทและความปลอดภัย**\n• ให้เกียรติและเคารพซึ่งกันและกัน ไม่ใช้ถ้อยคำคุกคาม หยาบคาย หรือเรียกร้องข้อมูลส่วนตัวเกินขอบเขต\n• กิจกรรมจัดขึ้นเพื่อมิตรภาพและความบันเทิง ไม่บังคับให้เกิดความสัมพันธ์จริงจัง\n• หากพบพฤติกรรมไม่เหมาะสม สามารถกดปุ่ม 'รายงาน/ขอความช่วยเหลือ' ได้ทันที ทีมงานจะเข้าดูแลอย่างลับๆ\n\n**4. มินิเกมและจดหมาย**\n• ร่วมเล่นมินิเกมกระชับความสัมพันธ์ในห้องส่วนตัว\n• เมื่อจบกิจกรรม สามารถเขียนจดหมายความรู้สึกส่งถึงคู่ของคุณได้ (เลือกแบบระบุชื่อหรือนิรนามได้)",
+    },
+    color: {
+      enabled: true,
+      hex: "#A0714F",
+    },
+    thumbnail: {
+      enabled: true,
+      url: "https://cdn.discordapp.com/emojis/1105478431871213598.webp?size=96&quality=lossless",
+    },
+    image: {
+      enabled: false,
+      url: "",
+    },
+    fields: {
+      enabled: false,
+      items: [],
+    },
+    footer: {
+      enabled: true,
+      text: "753BC Activities System • Fanday Rules",
+      iconUrl: "",
+    },
+    timestamp: {
+      enabled: true,
+    },
+  },
+
+  fanday_myrole: {
+    key: "fanday_myrole",
+    category: "fanday",
+    name: "สถานะและบทบาทของฉัน (My Fanday Role)",
+    description: "การ์ดแสดงสถานะส่วนตัวของผู้เล่น เช่น รหัสผู้เล่น, คู่ที่จับได้, สถานะล็อกคู่, และประวัติเกม",
+    supportedVariables: [
+      { key: "{user}", label: "แท็กผู้เล่น", example: "@Member" },
+      { key: "{status}", label: "สถานะปัจจุบัน", example: "จับคู่เรียบร้อยแล้ว" },
+      { key: "{partner}", label: "คู่ของคุณ", example: "@Partner" },
+      { key: "{type_name}", label: "ประเภทบุคลิกภาพ (Type)", example: "ผู้รับฟังที่อบอุ่น (The Warm Listener)" },
+      { key: "{type_summary}", label: "คำอธิบายบุคลิกภาพ", example: "ใจเย็น ช่างเอาใจใส่ และคุยสนุก" },
+      { key: "{pair_channel}", label: "ห้องส่วนตัวของคู่", example: "#fanday-001" },
+    ],
+    author: {
+      enabled: true,
+      name: "753BC Activities • บทบาทของฉัน",
+      iconUrl: "",
+      url: "",
+    },
+    title: {
+      enabled: true,
+      text: "🔎 ข้อมูลบทบาทและสถานะกิจกรรมของคุณ",
+      url: "",
+    },
+    descriptionText: {
+      enabled: true,
+      text: "• **ผู้เข้าร่วม:** {user}\n• **สถานะปัจจุบัน:** {status}\n• **คู่แฟนเดย์ของคุณ:** {partner}\n• **ห้องกิจกรรมคู่:** {pair_channel}\n\n**🌟 บุคลิกภาพของคุณ (AI Personality Type):**\n> **{type_name}**\n> *{type_summary}*\n\n-# คลิกปุ่มด้านล่างเพื่อไปยังห้องกิจกรรม หรือเขียนจดหมายถึงคู่ของคุณ",
+    },
+    color: {
+      enabled: true,
+      hex: "#FF6B8B",
+    },
+    thumbnail: {
+      enabled: true,
+      url: "",
+    },
+    image: {
+      enabled: false,
+      url: "",
+    },
+    fields: {
+      enabled: false,
+      items: [],
+    },
+    footer: {
+      enabled: true,
+      text: "753BC Activities System • Fanday Profile",
+      iconUrl: "",
+    },
+    timestamp: {
+      enabled: true,
+    },
+  },
+
+  fanday_match_reveal: {
+    key: "fanday_match_reveal",
+    category: "fanday",
+    name: "ประกาศผลการจับคู่ (Match Reveal)",
+    description: "การ์ดเปิดเผยคู่แฟนเดย์ พร้อมค่าความเข้ากันและเหตุผลจาก AI",
+    supportedVariables: [
+      { key: "{player_a}", label: "ผู้เล่นคนที่หนึ่ง", example: "@MemberA" },
+      { key: "{player_b}", label: "ผู้เล่นคนที่สอง", example: "@MemberB" },
+      { key: "{compat_score}", label: "คะแนนความเข้ากัน", example: "94%" },
+      { key: "{match_reason}", label: "เหตุผลจาก AI", example: "ทั้งสองชอบเล่นเกมแนวผจญภัยและมีช่วงเวลาออนไลน์ที่ตรงกัน" },
+      { key: "{pair_channel}", label: "ห้องส่วนตัว", example: "#fanday-room-1" },
+    ],
+    author: {
+      enabled: true,
+      name: "753BC Activities • ผลการจับคู่แฟนเดย์",
+      iconUrl: "",
+      url: "",
+    },
+    title: {
+      enabled: true,
+      text: "💘 จับคู่แฟนเดย์สำเร็จแล้ว! (Matched Pair)",
+      url: "",
+    },
+    descriptionText: {
+      enabled: true,
+      text: "ยินดีด้วยครับ! ระบบ 753BC Activities ได้จับคู่แฟนเดย์ให้กับคุณเรียบร้อยแล้ว:\n\n💞 **คู่แฟนเดย์:** {player_a}  ❤️  {player_b}\n🎯 **ดัชนีความเข้ากัน (Compatibility):** `{compat_score}`\n\n**💡 เหตุผลการจับคู่ (AI Matching Insight):**\n> *\"{match_reason}\"*`\n\n🚪 **ห้องกิจกรรมส่วนตัวของคุณ:** {pair_channel}\n-# กรุณาเข้าไปทักทายและเริ่มเล่นมินิเกมกระชับความสัมพันธ์ได้เลย!",
+    },
+    color: {
+      enabled: true,
+      hex: "#FF6B8B",
+    },
+    thumbnail: {
+      enabled: true,
+      url: "",
+    },
+    image: {
+      enabled: false,
+      url: "",
+    },
+    fields: {
+      enabled: false,
+      items: [],
+    },
+    footer: {
+      enabled: true,
+      text: "753BC Activities System • Fanday Matching",
       iconUrl: "",
     },
     timestamp: {

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import React from "react";
+import { ShoppingBag, Users, Zap, FileText } from "lucide-react";
 
 export default function PublicLayout({
   children,
@@ -74,9 +75,13 @@ export default function PublicLayout({
                 fontWeight: 500,
                 textDecoration: "none",
                 transition: "color 0.15s ease",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
               }}
             >
-              🛒 ร้านค้ายศ
+              <ShoppingBag className="w-4 h-4 text-emerald-400" />
+              ร้านค้ายศ
             </Link>
             <Link
               href="/public/staff"
@@ -86,9 +91,13 @@ export default function PublicLayout({
                 fontWeight: 500,
                 textDecoration: "none",
                 transition: "color 0.15s ease",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
               }}
             >
-              👥 ทำเนียบทีมงาน
+              <Users className="w-4 h-4 text-blue-400" />
+              ทำเนียบทีมงาน
             </Link>
             <Link
               href="/public/status"
@@ -98,9 +107,13 @@ export default function PublicLayout({
                 fontWeight: 500,
                 textDecoration: "none",
                 transition: "color 0.15s ease",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
               }}
             >
-              ⚡ สถานะเซิร์ฟเวอร์
+              <Zap className="w-4 h-4 text-amber-400" />
+              สถานะเซิร์ฟเวอร์
             </Link>
             <Link
               href="/rules"
@@ -110,9 +123,13 @@ export default function PublicLayout({
                 fontWeight: 500,
                 textDecoration: "none",
                 transition: "color 0.15s ease",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
               }}
             >
-              📜 กฎระเบียบ
+              <FileText className="w-4 h-4 text-purple-400" />
+              กฎระเบียบ
             </Link>
             <Link
               href="/login"

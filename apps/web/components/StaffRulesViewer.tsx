@@ -6,6 +6,7 @@ import {
   STAFF_RULES_METADATA,
   RuleChapter,
 } from "@/lib/rulesData";
+import { X } from "lucide-react";
 
 // Vector SVG Icon Renderer
 function VectorIcon({
@@ -272,7 +273,7 @@ export default function StaffRulesViewer() {
                 alignItems: "center",
                 gap: 6,
                 padding: "4px 10px",
-                borderRadius: 6,
+                borderRadius: 0,
                 background: "rgba(41, 151, 255, 0.12)",
                 color: "#2997ff",
                 border: "1px solid rgba(41, 151, 255, 0.3)",
@@ -291,7 +292,7 @@ export default function StaffRulesViewer() {
                 alignItems: "center",
                 gap: 5,
                 padding: "4px 10px",
-                borderRadius: 6,
+                borderRadius: 0,
                 background: "rgba(48, 209, 88, 0.12)",
                 color: "#30d158",
                 border: "1px solid rgba(48, 209, 88, 0.3)",
@@ -338,7 +339,7 @@ export default function StaffRulesViewer() {
                 style={{
                   width: 36,
                   height: 36,
-                  borderRadius: 8,
+                  borderRadius: 0,
                   background: "rgba(41, 151, 255, 0.12)",
                   display: "flex",
                   alignItems: "center",
@@ -358,7 +359,7 @@ export default function StaffRulesViewer() {
                 style={{
                   width: 36,
                   height: 36,
-                  borderRadius: 8,
+                  borderRadius: 0,
                   background: "rgba(255, 159, 10, 0.12)",
                   display: "flex",
                   alignItems: "center",
@@ -378,7 +379,7 @@ export default function StaffRulesViewer() {
                 style={{
                   width: 36,
                   height: 36,
-                  borderRadius: 8,
+                  borderRadius: 0,
                   background: "rgba(48, 209, 88, 0.12)",
                   display: "flex",
                   alignItems: "center",
@@ -398,7 +399,7 @@ export default function StaffRulesViewer() {
                 style={{
                   width: 36,
                   height: 36,
-                  borderRadius: 8,
+                  borderRadius: 0,
                   background: "rgba(255, 69, 58, 0.12)",
                   display: "flex",
                   alignItems: "center",
@@ -450,20 +451,22 @@ export default function StaffRulesViewer() {
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
+                title="ล้างคำค้นหา"
                 style={{
                   position: "absolute",
                   right: 10,
                   top: "50%",
                   transform: "translateY(-50%)",
                   background: "none",
+                  border: "none",
                   color: "var(--text-muted)",
                   cursor: "pointer",
-                  fontSize: "14px",
+                  display: "flex",
+                  alignItems: "center",
                   padding: 4,
                 }}
-                title="ล้างคำค้นหา"
               >
-                ✕
+                <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
@@ -554,9 +557,9 @@ export default function StaffRulesViewer() {
               id={chapter.id}
               className="card"
               style={{
-                background: "rgba(255, 255, 255, 0.02)",
+                background: "#070809",
                 border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: 16,
+                borderRadius: 0,
                 overflow: "hidden",
                 transition: "border-color 0.2s",
               }}
@@ -579,7 +582,7 @@ export default function StaffRulesViewer() {
                     style={{
                       width: 42,
                       height: 42,
-                      borderRadius: 10,
+                      borderRadius: 0,
                       background: `color-mix(in srgb, ${chapter.accentColor} 15%, transparent)`,
                       border: `1px solid color-mix(in srgb, ${chapter.accentColor} 30%, transparent)`,
                       display: "flex",
@@ -623,7 +626,7 @@ export default function StaffRulesViewer() {
                   <div
                     style={{
                       padding: "12px 16px",
-                      borderRadius: 10,
+                      borderRadius: 0,
                       background: "rgba(255, 255, 255, 0.03)",
                       border: "1px solid rgba(255, 255, 255, 0.08)",
                       color: "var(--text-secondary)",
@@ -653,7 +656,7 @@ export default function StaffRulesViewer() {
                           gap: 12,
                           alignItems: "flex-start",
                           padding: "10px 14px",
-                          borderRadius: 8,
+                          borderRadius: 0,
                           background: "rgba(255, 255, 255, 0.015)",
                           border: "1px solid rgba(255, 255, 255, 0.04)",
                         }}
@@ -695,7 +698,7 @@ export default function StaffRulesViewer() {
                           key={sub.id}
                           style={{
                             padding: "18px 20px",
-                            borderRadius: 12,
+                            borderRadius: 0,
                             background: isDanger
                               ? "rgba(255, 69, 58, 0.03)"
                               : isWarning
@@ -728,7 +731,7 @@ export default function StaffRulesViewer() {
                                   fontWeight: 700,
                                   color: isDanger ? "#ff453a" : isWarning ? "#ff9f0a" : "var(--accent)",
                                   padding: "2px 8px",
-                                  borderRadius: 4,
+                                  borderRadius: 0,
                                   background: isDanger
                                     ? "rgba(255, 69, 58, 0.15)"
                                     : isWarning
@@ -749,7 +752,7 @@ export default function StaffRulesViewer() {
                                   fontSize: "11px",
                                   fontWeight: 600,
                                   padding: "3px 8px",
-                                  borderRadius: 6,
+                                  borderRadius: 0,
                                   background: "rgba(255, 69, 58, 0.18)",
                                   color: "#ff453a",
                                   border: "1px solid rgba(255, 69, 58, 0.35)",
@@ -793,7 +796,7 @@ export default function StaffRulesViewer() {
                     <h4 style={{ fontSize: "14px", fontWeight: 600, color: "#fff", marginBottom: 12 }}>
                       ตารางระดับโทษสมาชิก 4 ระดับ (ใช้เป็นแนวทางมาตรฐาน)
                     </h4>
-                    <div className="data-table-wrapper" style={{ border: "1px solid rgba(255, 255, 255, 0.08)", borderRadius: 12 }}>
+                    <div className="data-table-wrapper" style={{ border: "1px solid rgba(255, 255, 255, 0.08)", borderRadius: 0 }}>
                       <table className="data-table">
                         <thead>
                           <tr>
@@ -825,7 +828,7 @@ export default function StaffRulesViewer() {
                                         background: `color-mix(in srgb, ${badgeColor} 12%, transparent)`,
                                         border: `1px solid color-mix(in srgb, ${badgeColor} 30%, transparent)`,
                                         padding: "3px 8px",
-                                        borderRadius: 6,
+                                        borderRadius: 0,
                                         display: "inline-block",
                                         textAlign: "center",
                                       }}
@@ -870,7 +873,7 @@ export default function StaffRulesViewer() {
                           key={gIdx}
                           style={{
                             padding: "12px 14px",
-                            borderRadius: 10,
+                            borderRadius: 0,
                             background: "rgba(255, 255, 255, 0.02)",
                             border: "1px solid rgba(255, 255, 255, 0.05)",
                             display: "flex",
@@ -893,7 +896,7 @@ export default function StaffRulesViewer() {
                 {/* Staff Penalty Table (For หมวด 9: โทษของทีมงาน) */}
                 {chapter.staffPenaltyTable && chapter.staffPenaltyTable.length > 0 && (
                   <div>
-                    <div className="data-table-wrapper" style={{ border: "1px solid rgba(255, 255, 255, 0.08)", borderRadius: 12 }}>
+                    <div className="data-table-wrapper" style={{ border: "1px solid rgba(255, 255, 255, 0.08)", borderRadius: 0 }}>
                       <table className="data-table">
                         <thead>
                           <tr>
@@ -934,7 +937,7 @@ export default function StaffRulesViewer() {
                                         color: "var(--accent)",
                                         background: "rgba(41, 151, 255, 0.12)",
                                         padding: "2px 6px",
-                                        borderRadius: 4,
+                                        borderRadius: 0,
                                         display: "inline-block",
                                       }}
                                     >

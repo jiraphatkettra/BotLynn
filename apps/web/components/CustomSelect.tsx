@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
+import { X } from "lucide-react";
 
 export interface CustomSelectOption {
   value: string;
@@ -293,9 +294,11 @@ export default function CustomSelect({
                     color: "rgba(255, 255, 255, 0.4)",
                     cursor: "pointer",
                     padding: 2,
+                    display: "flex",
+                    alignItems: "center",
                   }}
                 >
-                  ✕
+                  <X className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>

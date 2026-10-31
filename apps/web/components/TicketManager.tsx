@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { formatDate } from "@/lib/utils";
 import EmbedEditorModal from "@/components/EmbedEditorModal";
+import { Clock, MessageSquare, CheckCircle2, Palette, Receipt, Paperclip } from "lucide-react";
 
 interface Ticket {
   id: string;
@@ -177,17 +178,17 @@ export default function TicketManager() {
           alignItems: "center",
           flexWrap: "wrap",
           gap: "16px",
-          background: "#080808",
-          border: "1px solid rgba(255,255,255,0.07)",
-          borderRadius: "12px",
+          background: "#070809",
+          border: "1px solid rgba(255,255,255,0.08)",
+          borderRadius: "0px",
         }}
       >
         <div className="apple-segmented">
           {[
             { id: "ALL", label: `ทั้งหมด (${stats.total})` },
-            { id: "OPEN", label: `⏳ รอดำเนินการ (${stats.open})` },
-            { id: "CLAIMED", label: `💬 กำลังดูแล (${stats.claimed})` },
-            { id: "CLOSED", label: `✓ ปิดแล้ว (${stats.closed})` },
+            { id: "OPEN", label: "รอดำเนินการ", count: stats.open, icon: <Clock className="w-3.5 h-3.5 inline mr-1 text-amber-400" /> },
+            { id: "CLAIMED", label: "กำลังดูแล", count: stats.claimed, icon: <MessageSquare className="w-3.5 h-3.5 inline mr-1 text-sky-400" /> },
+            { id: "CLOSED", label: "ปิดแล้ว", count: stats.closed, icon: <CheckCircle2 className="w-3.5 h-3.5 inline mr-1 text-neutral-400" /> },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -195,7 +196,8 @@ export default function TicketManager() {
               className={`apple-segmented-item ${filterStatus === tab.id ? "active" : ""}`}
               onClick={() => setFilterStatus(tab.id)}
             >
-              {tab.label}
+              {tab.icon}
+              {tab.label} {tab.count !== undefined ? `(${tab.count})` : ""}
             </button>
           ))}
         </div>
@@ -230,9 +232,9 @@ export default function TicketManager() {
               style={{
                 width: "100%",
                 padding: "8px 12px 8px 34px",
-                background: "rgba(255,255,255,0.04)",
+                background: "#000000",
                 border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: "8px",
+                borderRadius: "0px",
                 color: "#ffffff",
                 fontSize: "13px",
                 outline: "none",
@@ -242,7 +244,7 @@ export default function TicketManager() {
           <button
             type="submit"
             className="btn btn-secondary"
-            style={{ padding: "8px 14px", fontSize: "13px" }}
+            style={{ padding: "8px 14px", fontSize: "13px", borderRadius: "0px" }}
           >
             ค้นหา
           </button>
@@ -264,7 +266,7 @@ export default function TicketManager() {
             }}
             title="ตั้งค่าข้อความ Embed แผงทิกเก็ต, ข้อความต้อนรับ, และบันทึกประวัติปิดทิกเก็ตใน Discord"
           >
-            <span>🎨</span>
+            <Palette className="w-3.5 h-3.5 text-sky-400 shrink-0" />
             <span>ตั้งค่า Embed ทิกเก็ต</span>
           </button>
         </form>
@@ -359,7 +361,7 @@ export default function TicketManager() {
                         <span
                           style={{
                             padding: "4px 8px",
-                            borderRadius: "6px",
+                            borderRadius: "0px",
                             fontSize: "11px",
                             fontWeight: 600,
                             background: "rgba(255,149,0,0.12)",
@@ -374,7 +376,7 @@ export default function TicketManager() {
                         <span
                           style={{
                             padding: "4px 8px",
-                            borderRadius: "6px",
+                            borderRadius: "0px",
                             fontSize: "11px",
                             fontWeight: 600,
                             background: "rgba(52,199,89,0.12)",
@@ -389,7 +391,7 @@ export default function TicketManager() {
                         <span
                           style={{
                             padding: "4px 8px",
-                            borderRadius: "6px",
+                            borderRadius: "0px",
                             fontSize: "11px",
                             fontWeight: 500,
                             background: "rgba(255,255,255,0.05)",
@@ -437,7 +439,7 @@ export default function TicketManager() {
                             style={{
                               padding: "5px 10px",
                               fontSize: "12px",
-                              borderRadius: "6px",
+                              borderRadius: "0px",
                               background: "rgba(255,59,48,0.1)",
                               color: "#ff453a",
                               border: "1px solid rgba(255,59,48,0.2)",
@@ -475,15 +477,15 @@ export default function TicketManager() {
         >
           <div
             style={{
-              background: "#0c0c0c",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: "16px",
+              background: "#070809",
+              border: "1px solid rgba(255,255,255,0.12)",
+              borderRadius: "0px",
               width: "100%",
               maxWidth: "680px",
               maxHeight: "85vh",
               display: "flex",
               flexDirection: "column",
-              boxShadow: "0 25px 50px -12px rgba(0,0,0,0.7)",
+              boxShadow: "0 24px 48px rgba(0,0,0,0.85)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -491,13 +493,17 @@ export default function TicketManager() {
             <div
               style={{
                 padding: "20px 24px",
-                borderBottom: "1px solid rgba(255,255,255,0.07)",
+                borderBottom: "1px solid rgba(255,255,255,0.08)",
+                background: "#0a0c0e",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
               }}
             >
               <div>
+                <div style={{ fontSize: "10px", fontFamily: "var(--font-mono, monospace)", color: "var(--accent)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>
+                  [TRANSCRIPT_VIEWER // ID: {selectedTranscript.ticketId}]
+                </div>
                 <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#ffffff", margin: 0 }}>
                   บันทึกประวัติการสนทนา • {selectedTranscript.ticketId}
                 </h3>
@@ -512,7 +518,8 @@ export default function TicketManager() {
                   border: "none",
                   color: "#86868b",
                   cursor: "pointer",
-                  padding: "4px",
+                  padding: "6px",
+                  borderRadius: "0px",
                 }}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -528,9 +535,9 @@ export default function TicketManager() {
                 padding: "20px 24px",
                 overflowY: "auto",
                 flex: 1,
-                background: "rgba(0,0,0,0.5)",
+                background: "#000000",
                 color: "#e5e5e7",
-                borderRadius: "0 0 16px 16px",
+                borderRadius: "0px",
               }}
             >
               {(() => {
@@ -552,12 +559,14 @@ export default function TicketManager() {
                   return (
                     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "8px" }}>
-                        <span className="badge badge-purple" style={{ fontSize: "12px" }}>
-                          💬 {parsedData.totalMessages} ข้อความ
+                        <span className="badge badge-purple flex items-center gap-1" style={{ fontSize: "12px" }}>
+                          <MessageSquare className="w-3.5 h-3.5 inline shrink-0" />
+                          <span>{parsedData.totalMessages} ข้อความ</span>
                         </span>
                         {parsedData.slipsCount > 0 && (
-                          <span className="badge badge-warning" style={{ fontSize: "12px" }}>
-                            🧾 มีสลิปแนบ {parsedData.slipsCount} ภาพ
+                          <span className="badge badge-warning flex items-center gap-1" style={{ fontSize: "12px" }}>
+                            <Receipt className="w-3.5 h-3.5 inline shrink-0" />
+                            <span>มีสลิปแนบ {parsedData.slipsCount} ภาพ</span>
                           </span>
                         )}
                       </div>
@@ -570,7 +579,7 @@ export default function TicketManager() {
                             gap: "12px",
                             alignItems: "flex-start",
                             padding: "8px 12px",
-                            borderRadius: "10px",
+                            borderRadius: "0px",
                             background: m.bot ? "rgba(41, 151, 255, 0.05)" : "transparent",
                           }}
                         >
@@ -578,9 +587,10 @@ export default function TicketManager() {
                             style={{
                               width: "36px",
                               height: "36px",
-                              borderRadius: "50%",
+                              borderRadius: "0px",
                               overflow: "hidden",
-                              background: "rgba(255,255,255,0.1)",
+                              background: "rgba(255,255,255,0.08)",
+                              border: "1px solid rgba(255,255,255,0.1)",
                               flexShrink: 0,
                               display: "flex",
                               alignItems: "center",
@@ -646,7 +656,7 @@ export default function TicketManager() {
                                     <div
                                       key={att.id || aIdx}
                                       style={{
-                                        borderRadius: "10px",
+                                        borderRadius: "0px",
                                         overflow: "hidden",
                                         border: "1px solid rgba(255,255,255,0.15)",
                                         background: "rgba(0,0,0,0.5)",
@@ -669,10 +679,11 @@ export default function TicketManager() {
                                       href={att.url}
                                       target="_blank"
                                       rel="noreferrer"
-                                      className="btn btn-secondary btn-sm"
+                                      className="btn btn-secondary btn-sm flex items-center gap-1"
                                       style={{ fontSize: "11px", textDecoration: "none" }}
                                     >
-                                      📎 {att.name}
+                                      <Paperclip className="w-3 h-3 shrink-0" />
+                                      <span>{att.name}</span>
                                     </a>
                                   )
                                 )}
@@ -727,8 +738,9 @@ export default function TicketManager() {
               maxWidth: "92vw",
               maxHeight: "92vh",
               objectFit: "contain",
-              borderRadius: "12px",
-              boxShadow: "0 16px 48px rgba(0,0,0,0.8)",
+              borderRadius: "0px",
+              border: "1px solid rgba(255, 255, 255, 0.15)",
+              boxShadow: "0 16px 48px rgba(0,0,0,0.9)",
             }}
           />
         </div>

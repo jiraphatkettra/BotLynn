@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@lynnbot/database";
 import Link from "next/link";
 import { Metadata } from "next";
+import { Clock, Flame, Ticket, Calendar, Award, History, ScrollText } from "lucide-react";
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const user = await prisma.user.findUnique({
@@ -255,7 +256,10 @@ export default async function StaffProfilePage({
             gap: "0.5rem",
           }}
         >
-          <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>⏱️ ชั่วโมงงานสะสม</span>
+          <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }} className="flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5 text-sky-400" />
+            <span>ชั่วโมงงานสะสม</span>
+          </span>
           <div style={{ fontSize: "1.8rem", fontWeight: 700, color: "var(--accent-blue)" }}>
             {totalHours} <span style={{ fontSize: "1rem", fontWeight: 500, color: "var(--text-muted)" }}>ชม.</span>
           </div>
@@ -275,7 +279,10 @@ export default async function StaffProfilePage({
             gap: "0.5rem",
           }}
         >
-          <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>🔥 ตอกบัตรต่อเนื่อง (Streak)</span>
+          <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }} className="flex items-center gap-1.5">
+            <Flame className="w-3.5 h-3.5 text-amber-400" />
+            <span>ตอกบัตรต่อเนื่อง (Streak)</span>
+          </span>
           <div style={{ fontSize: "1.8rem", fontWeight: 700, color: "var(--accent-warning)" }}>
             {streak} <span style={{ fontSize: "1rem", fontWeight: 500, color: "var(--text-muted)" }}>วัน</span>
           </div>
@@ -295,7 +302,10 @@ export default async function StaffProfilePage({
             gap: "0.5rem",
           }}
         >
-          <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>🎫 ทิกเก็ตที่ดูแล</span>
+          <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }} className="flex items-center gap-1.5">
+            <Ticket className="w-3.5 h-3.5 text-emerald-400" />
+            <span>ทิกเก็ตที่ดูแล</span>
+          </span>
           <div style={{ fontSize: "1.8rem", fontWeight: 700, color: "var(--accent-success)" }}>
             {closedTicketsCount}{" "}
             <span style={{ fontSize: "1rem", fontWeight: 500, color: "var(--text-muted)" }}>เคส</span>
@@ -316,7 +326,10 @@ export default async function StaffProfilePage({
             gap: "0.5rem",
           }}
         >
-          <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>🏖️ วันลาที่อนุมัติ</span>
+          <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }} className="flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5 text-neutral-400" />
+            <span>วันลาที่อนุมัติ</span>
+          </span>
           <div style={{ fontSize: "1.8rem", fontWeight: 700, color: "var(--text-primary)" }}>
             {approvedLeavesCount} <span style={{ fontSize: "1rem", fontWeight: 500, color: "var(--text-muted)" }}>ครั้ง</span>
           </div>
@@ -338,8 +351,9 @@ export default async function StaffProfilePage({
           gap: "1rem",
         }}
       >
-        <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)" }}>
-          🏅 เหรียญรางวัลที่ได้รับ ({staff.userBadges.length})
+        <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)" }} className="flex items-center gap-2">
+          <Award className="w-5 h-5 text-amber-400" />
+          <span>เหรียญรางวัลที่ได้รับ ({staff.userBadges.length})</span>
         </h3>
         {staff.userBadges.length === 0 ? (
           <p style={{ margin: 0, color: "var(--text-muted)", fontSize: "0.875rem" }}>
@@ -360,7 +374,9 @@ export default async function StaffProfilePage({
                   gap: "0.75rem",
                 }}
               >
-                <span style={{ fontSize: "1.75rem" }}>{ub.badge.icon || "🎖️"}</span>
+                <div className="w-8 h-8 rounded-lg bg-amber-400/10 border border-amber-400/20 flex items-center justify-center shrink-0">
+                  <Award className="w-5 h-5 text-amber-400" />
+                </div>
                 <div>
                   <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text-primary)" }}>
                     {ub.badge.name}
@@ -389,8 +405,9 @@ export default async function StaffProfilePage({
             gap: "1rem",
           }}
         >
-          <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)" }}>
-            🕒 ประวัติตอกบัตรล่าสุด (30 กะล่าสุด)
+          <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)" }} className="flex items-center gap-2">
+            <History className="w-5 h-5 text-sky-400" />
+            <span>ประวัติตอกบัตรล่าสุด (30 กะล่าสุด)</span>
           </h3>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxHeight: "400px", overflowY: "auto" }}>
             {staff.attendances.map((att) => (
@@ -454,8 +471,9 @@ export default async function StaffProfilePage({
             gap: "1rem",
           }}
         >
-          <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)" }}>
-            📜 ไทม์ไลน์กิจกรรม (Audit Log Timeline)
+          <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)" }} className="flex items-center gap-2">
+            <ScrollText className="w-5 h-5 text-neutral-300" />
+            <span>ไทม์ไลน์กิจกรรม (Audit Log Timeline)</span>
           </h3>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", maxHeight: "400px", overflowY: "auto" }}>
             {staff.auditLogs.map((log) => (

@@ -7,12 +7,39 @@ import {
   type EmbedConfigData,
   type EmbedFieldConfig,
 } from "@/lib/embedPresets";
+import {
+  Palette,
+  Globe,
+  User,
+  Tag,
+  AlignLeft,
+  Layers,
+  Image as ImageIcon,
+  ImagePlus,
+  Paperclip,
+  Clock,
+  Info,
+  Send,
+  Save,
+  RotateCcw,
+  X,
+  Plus,
+  Trash2,
+  ChevronDown,
+  ChevronUp,
+  ShoppingBag,
+  Scale,
+  Ticket,
+  Calendar,
+  Wallet,
+  UserCheck,
+} from "lucide-react";
 
 interface EmbedEditorModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialCategory?: string; // e.g. "shop", "moderation", "tickets", or "all"
-  initialKey?: string;      // e.g. "shop_catalog"
+  initialCategory?: string;
+  initialKey?: string;
   onSaved?: () => void;
 }
 
@@ -32,6 +59,27 @@ const PRESET_COLORS = [
   { name: "Obsidian Dark", hex: "#1c1c24" },
 ];
 
+function getCategoryIcon(catId: string, className = "w-4 h-4") {
+  switch (catId) {
+    case "shop":
+      return <ShoppingBag className={className} />;
+    case "moderation":
+      return <Scale className={className} />;
+    case "tickets":
+      return <Ticket className={className} />;
+    case "attendance":
+      return <Clock className={className} />;
+    case "leaves":
+      return <Calendar className={className} />;
+    case "wallet":
+      return <Wallet className={className} />;
+    case "welcome":
+      return <UserCheck className={className} />;
+    default:
+      return <Globe className={className} />;
+  }
+}
+
 export default function EmbedEditorModal({
   isOpen,
   onClose,
@@ -39,7 +87,7 @@ export default function EmbedEditorModal({
   initialKey,
   onSaved,
 }: EmbedEditorModalProps) {
-  // Category & Selected Embed
+  // Navigation & View Mode
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
   const [selectedKey, setSelectedKey] = useState<string | null>(initialKey || null);
   const [viewMode, setViewMode] = useState<"selector" | "editor">(
@@ -53,19 +101,32 @@ export default function EmbedEditorModal({
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
 
-  // Channels for test send
+  // Accordion open/close state for sections
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    color: true,
+    author: true,
+    title: true,
+    description: true,
+    fields: true,
+    thumbnail: true,
+    image: true,
+    footer: true,
+    timestamp: true,
+  });
+
+  // Discord channels for test sending
   const [channels, setChannels] = useState<DiscordChannel[]>([]);
   const [selectedTestChannel, setSelectedTestChannel] = useState<string>("");
   const [testingSend, setTestingSend] = useState(false);
   const [showTestPanel, setShowTestPanel] = useState(false);
 
-  // Toast
+  // Toast feedback
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
-  // Textarea Ref for cursor-based variable insertion
+  // Textarea Ref for cursor-based variable token insertion
   const descriptionTextareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Synchronize on modal open
+  // Modal open synchronizer
   useEffect(() => {
     if (isOpen) {
       setSelectedCategory(initialCategory || "all");
@@ -97,7 +158,7 @@ export default function EmbedEditorModal({
     }
   }
 
-  // Load Discord channels
+  // Load guild channels
   async function loadChannels() {
     try {
       const res = await fetch("/api/discord/guild-data");
@@ -111,11 +172,11 @@ export default function EmbedEditorModal({
         }
       }
     } catch (err) {
-      console.error("Error loading guild channels:", err);
+      console.error("Error loading channels:", err);
     }
   }
 
-  // Load specific embed config when selected
+  // Load config when selectedKey changes
   useEffect(() => {
     if (!selectedKey) {
       setConfig(null);
@@ -131,7 +192,6 @@ export default function EmbedEditorModal({
           setConfig(data.embed);
           setViewMode("editor");
         } else {
-          // Fallback to preset
           const preset = DEFAULT_EMBED_PRESETS[selectedKey!];
           if (preset) {
             setConfig(JSON.parse(JSON.stringify(preset)));
@@ -159,7 +219,43 @@ export default function EmbedEditorModal({
     setTimeout(() => setToast(null), 3500);
   }
 
-  // Handle Save
+  // Toggle Accordion section
+  function toggleSection(sectionKey: string) {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [sectionKey]: !prev[sectionKey],
+    }));
+  }
+
+  function expandAll() {
+    setExpandedSections({
+      color: true,
+      author: true,
+      title: true,
+      description: true,
+      fields: true,
+      thumbnail: true,
+      image: true,
+      footer: true,
+      timestamp: true,
+    });
+  }
+
+  function collapseAll() {
+    setExpandedSections({
+      color: false,
+      author: false,
+      title: false,
+      description: false,
+      fields: false,
+      thumbnail: false,
+      image: false,
+      footer: false,
+      timestamp: false,
+    });
+  }
+
+  // Save Config
   async function handleSave() {
     if (!config || !selectedKey) return;
     try {
@@ -167,11 +263,11 @@ export default function EmbedEditorModal({
       const res = await fetch(`/api/embeds/${selectedKey}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ config }),
+        body: JSON.stringify({ config, ...config }),
       });
 
       if (res.ok) {
-        showToast("บันทึกการตั้งค่า Embed เรียบร้อยแล้ว", "success");
+        showToast("บันทึกการตั้งค่า Discord Embed เรียบร้อยแล้ว", "success");
         loadEmbeds(selectedCategory);
         if (onSaved) onSaved();
       } else {
@@ -185,7 +281,7 @@ export default function EmbedEditorModal({
     }
   }
 
-  // Handle Reset to Default
+  // Reset to Default
   async function handleReset() {
     if (!selectedKey) return;
     const confirmReset = window.confirm("คุณต้องการคืนค่า Embed นี้กลับเป็นค่าเริ่มต้นใช่หรือไม่?");
@@ -212,7 +308,7 @@ export default function EmbedEditorModal({
     }
   }
 
-  // Handle Test Send
+  // Test Send to Discord Channel
   async function handleTestSend() {
     if (!config || !selectedTestChannel) {
       showToast("กรุณาเลือกห้อง Discord ที่ต้องการทดสอบ", "error");
@@ -226,6 +322,7 @@ export default function EmbedEditorModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           channelId: selectedTestChannel,
+          embedConfig: config,
           config,
         }),
       });
@@ -235,7 +332,7 @@ export default function EmbedEditorModal({
         showToast(`ส่ง Embed ทดสอบเข้าห้อง #${data.channelName || "Discord"} สำเร็จ!`, "success");
         setShowTestPanel(false);
       } else {
-        showToast(data.error || "ส่งทดสอบไม่สำเร็จ กรุณาตรวจสอบสิทธิ์ของบอท", "error");
+        showToast(data.error || "ส่งทดสอบไม่สำเร็จ กรุณาตรวจสอบสิทธิ์บอทในห้องดังกล่าว", "error");
       }
     } catch (err: any) {
       showToast(err.message || "เกิดข้อผิดพลาดในการส่ง", "error");
@@ -253,7 +350,7 @@ export default function EmbedEditorModal({
         ...config,
         descriptionText: {
           ...config.descriptionText,
-          text: config.descriptionText.text + " " + token,
+          text: (config.descriptionText.text || "") + " " + token,
         },
       });
       return;
@@ -278,7 +375,7 @@ export default function EmbedEditorModal({
     }, 0);
   }
 
-  // Add New Field
+  // Add Field
   function handleAddField() {
     if (!config) return;
     const currentFields = config.fields?.items || [];
@@ -302,6 +399,8 @@ export default function EmbedEditorModal({
         items: [...currentFields, newField],
       },
     });
+
+    setExpandedSections((prev) => ({ ...prev, fields: true }));
   }
 
   // Remove Field
@@ -340,284 +439,127 @@ export default function EmbedEditorModal({
 
   return (
     <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 2100,
-        backgroundColor: "rgba(0, 0, 0, 0.78)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "16px",
-      }}
+      className="fixed inset-0 z-[2100] flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div
-        style={{
-          width: "min(1240px, 96vw)",
-          maxHeight: "92vh",
-          backgroundColor: "#0d0d12",
-          borderRadius: "20px",
-          border: "1px solid rgba(255, 255, 255, 0.12)",
-          boxShadow: "0 24px 64px rgba(0, 0, 0, 0.8)",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-          color: "var(--text-primary)",
-        }}
-      >
+      <div className="w-[96vw] max-w-[1440px] h-[92vh] max-h-[92vh] flex flex-col bg-[#070809] border border-white/[0.08] rounded-none overflow-hidden text-[#f5f5f7] shadow-2xl">
         {/* ================================================================= */}
-        {/* MODAL HEADER */}
+        {/* HEADER BAR                                                        */}
         {/* ================================================================= */}
-        <div
-          style={{
-            padding: "18px 24px",
-            borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "16px",
-            background: "rgba(255, 255, 255, 0.02)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#0c0d0f]/95 shrink-0">
+          <div className="flex items-center gap-4 min-w-0">
             {viewMode === "editor" ? (
               <button
                 type="button"
                 onClick={() => setViewMode("selector")}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "6px 12px",
-                  borderRadius: "8px",
-                  background: "rgba(255, 255, 255, 0.06)",
-                  border: "1px solid rgba(255, 255, 255, 0.12)",
-                  color: "var(--text-secondary)",
-                  fontSize: "12px",
-                  fontWeight: 500,
-                  cursor: "pointer",
-                  transition: "all 0.15s ease",
-                }}
+                className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-mono font-medium text-neutral-300 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.1] rounded-none transition-colors"
               >
                 <span>←</span>
                 <span>เลือก Embed อื่น</span>
               </button>
             ) : (
-              <div
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "10px",
-                  background: "rgba(41, 151, 255, 0.15)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "18px",
-                }}
-              >
-                🎨
+              <div className="w-8 h-8 flex items-center justify-center bg-blue-500/10 border border-blue-500/30 text-blue-400 shrink-0">
+                <Palette className="w-4 h-4" />
               </div>
             )}
 
-            <div style={{ minWidth: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <h2
-                  style={{
-                    fontSize: "16px",
-                    fontWeight: 600,
-                    color: "#ffffff",
-                    margin: 0,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {viewMode === "editor" && config
-                    ? config.name
-                    : "ศูนย์ปรับแต่ง Discord Embed (Embed Studio)"}
-                </h2>
-
+            <div className="min-w-0">
+              <div className="flex items-center gap-3">
+                <span className="font-mono text-[10px] tracking-wider text-blue-400 uppercase">
+                  EMBED_STUDIO // {viewMode === "editor" ? "CONFIG" : "CATALOG"}
+                </span>
                 {viewMode === "editor" && config && (
                   <span
-                    style={{
-                      fontSize: "11px",
-                      padding: "2px 8px",
-                      borderRadius: "6px",
-                      fontWeight: 600,
-                      background: (config as any).isCustomized
-                        ? "rgba(41, 151, 255, 0.18)"
-                        : "rgba(255, 255, 255, 0.08)",
-                      color: (config as any).isCustomized ? "#2997ff" : "var(--text-muted)",
-                      border: `1px solid ${
-                        (config as any).isCustomized
-                          ? "rgba(41, 151, 255, 0.3)"
-                          : "rgba(255, 255, 255, 0.12)"
-                      }`,
-                    }}
+                    className={`font-mono text-[10px] px-2 py-0.5 border ${
+                      (config as any).isCustomized
+                        ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
+                        : "bg-white/[0.04] border-white/[0.08] text-neutral-400"
+                    }`}
                   >
-                    {(config as any).isCustomized ? "🎨 กำหนดเองแล้ว" : "ค่าเริ่มต้น"}
+                    {(config as any).isCustomized ? "CUSTOMIZED" : "DEFAULT_PRESET"}
                   </span>
                 )}
               </div>
-
-              <p
-                style={{
-                  fontSize: "12px",
-                  color: "var(--text-muted)",
-                  margin: "2px 0 0 0",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
+              <h2 className="text-base sm:text-lg font-semibold text-white tracking-tight truncate">
                 {viewMode === "editor" && config
-                  ? config.description
-                  : "เลือก Embed ที่ต้องการแก้ไขเพื่อปรับแต่งข้อความ สี ฟิลด์ และเปิด/ปิดได้ทุกส่วน"}
-              </p>
+                  ? config.name
+                  : "ศูนย์ปรับแต่ง Discord Embed (Discord Embed Studio)"}
+              </h2>
             </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            {/* Quick Embed Switcher in Editor Mode */}
+          <div className="flex items-center gap-3 shrink-0">
             {viewMode === "editor" && (
               <select
                 value={selectedKey || ""}
                 onChange={(e) => setSelectedKey(e.target.value)}
-                style={{
-                  padding: "6px 12px",
-                  borderRadius: "8px",
-                  background: "rgba(255, 255, 255, 0.05)",
-                  border: "1px solid rgba(255, 255, 255, 0.12)",
-                  color: "#ffffff",
-                  fontSize: "12px",
-                  maxWidth: "220px",
-                  outline: "none",
-                  cursor: "pointer",
-                }}
+                className="hidden sm:block px-3 py-1.5 bg-[#000000] border border-white/[0.12] text-xs text-white rounded-none focus:outline-none focus:border-blue-500 max-w-[260px]"
               >
                 {filteredEmbeds.map((e) => (
-                  <option key={e.key} value={e.key} style={{ background: "#16161c", color: "#ffffff" }}>
+                  <option key={e.key} value={e.key} className="bg-[#070809] text-white">
                     {e.name}
                   </option>
                 ))}
               </select>
             )}
 
-            {/* Close Button */}
             <button
               type="button"
               onClick={onClose}
-              style={{
-                width: "32px",
-                height: "32px",
-                borderRadius: "8px",
-                background: "rgba(255, 255, 255, 0.06)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                color: "var(--text-secondary)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                fontSize: "14px",
-                transition: "all 0.15s ease",
-              }}
+              className="w-8 h-8 flex items-center justify-center bg-white/[0.04] hover:bg-white/[0.1] border border-white/[0.08] text-neutral-400 hover:text-white rounded-none transition-colors"
               title="ปิดหน้าต่าง"
             >
-              ✕
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
         {/* ================================================================= */}
-        {/* TOAST ALERT NOTIFICATION */}
+        {/* TOAST NOTIFICATION                                                */}
         {/* ================================================================= */}
         {toast && (
           <div
-            style={{
-              padding: "10px 20px",
-              background:
-                toast.type === "success"
-                  ? "rgba(48, 209, 88, 0.18)"
-                  : "rgba(255, 69, 58, 0.18)",
-              borderBottom: `1px solid ${
-                toast.type === "success"
-                  ? "rgba(48, 209, 88, 0.3)"
-                  : "rgba(255, 69, 58, 0.3)"
-              }`,
-              color: toast.type === "success" ? "#30d158" : "#ff453a",
-              fontSize: "13px",
-              fontWeight: 500,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
+            className={`px-6 py-2.5 flex items-center justify-between text-xs font-mono font-medium border-b shrink-0 ${
+              toast.type === "success"
+                ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                : "bg-red-500/10 border-red-500/20 text-red-400"
+            }`}
           >
             <span>{toast.message}</span>
             <button
               type="button"
               onClick={() => setToast(null)}
-              style={{
-                background: "none",
-                border: "none",
-                color: "inherit",
-                cursor: "pointer",
-                fontSize: "12px",
-              }}
+              className="text-current hover:opacity-75"
             >
-              ✕
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         )}
 
         {/* ================================================================= */}
-        {/* MODAL BODY */}
+        {/* MODAL MAIN CONTENT AREA                                           */}
         {/* ================================================================= */}
-        <div style={{ flex: 1, overflowY: "auto", display: "flex", minHeight: 0 }}>
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
           {viewMode === "selector" ? (
             /* ============================================================= */
-            /* 1. EMBED SELECTOR VIEW (User picks which embed to configure)  */
+            /* 1. SELECTOR VIEW (Template Picker)                            */
             /* ============================================================= */
-            <div style={{ flex: 1, padding: "24px", overflowY: "auto" }}>
+            <div className="flex-1 overflow-y-auto p-6 sm:p-8 bg-[#000000]">
               {/* Category Filter Tabs */}
-              <div
-                style={{
-                  display: "flex",
-                  gap: "8px",
-                  overflowX: "auto",
-                  paddingBottom: "16px",
-                  borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-                  marginBottom: "20px",
-                }}
-              >
+              <div className="flex items-center gap-2 overflow-x-auto pb-4 border-b border-white/[0.08] mb-6">
                 <button
                   type="button"
                   onClick={() => setSelectedCategory("all")}
-                  style={{
-                    padding: "8px 16px",
-                    borderRadius: "10px",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    background:
-                      selectedCategory === "all"
-                        ? "rgba(41, 151, 255, 0.2)"
-                        : "rgba(255, 255, 255, 0.04)",
-                    border: `1px solid ${
-                      selectedCategory === "all"
-                        ? "rgba(41, 151, 255, 0.4)"
-                        : "rgba(255, 255, 255, 0.08)"
-                    }`,
-                    color: selectedCategory === "all" ? "#2997ff" : "var(--text-secondary)",
-                    whiteSpace: "nowrap",
-                    transition: "all 0.15s ease",
-                  }}
+                  className={`inline-flex items-center gap-2 px-3.5 py-2 text-xs font-mono rounded-none transition-colors shrink-0 ${
+                    selectedCategory === "all"
+                      ? "bg-blue-500/15 border border-blue-500 text-blue-400 font-semibold"
+                      : "bg-[#070809] border border-white/[0.08] text-neutral-400 hover:text-white hover:border-white/[0.15]"
+                  }`}
                 >
-                  🌐 ทั้งหมด ({embedsList.length})
+                  <Globe className="w-3.5 h-3.5" />
+                  <span>ทั้งหมด ({embedsList.length})</span>
                 </button>
 
                 {EMBED_CATEGORIES.map((cat) => {
@@ -628,44 +570,22 @@ export default function EmbedEditorModal({
                       key={cat.id}
                       type="button"
                       onClick={() => setSelectedCategory(cat.id)}
-                      style={{
-                        padding: "8px 16px",
-                        borderRadius: "10px",
-                        fontSize: "13px",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        background: isActive
-                          ? "rgba(41, 151, 255, 0.2)"
-                          : "rgba(255, 255, 255, 0.04)",
-                        border: `1px solid ${
-                          isActive
-                            ? "rgba(41, 151, 255, 0.4)"
-                            : "rgba(255, 255, 255, 0.08)"
-                        }`,
-                        color: isActive ? "#2997ff" : "var(--text-secondary)",
-                        whiteSpace: "nowrap",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        transition: "all 0.15s ease",
-                      }}
+                      className={`inline-flex items-center gap-2 px-3.5 py-2 text-xs font-mono rounded-none transition-colors shrink-0 ${
+                        isActive
+                          ? "bg-blue-500/15 border border-blue-500 text-blue-400 font-semibold"
+                          : "bg-[#070809] border border-white/[0.08] text-neutral-400 hover:text-white hover:border-white/[0.15]"
+                      }`}
                     >
-                      <span>{cat.icon}</span>
+                      {getCategoryIcon(cat.id, "w-3.5 h-3.5")}
                       <span>{cat.label}</span>
-                      <span style={{ fontSize: "11px", opacity: 0.6 }}>({count})</span>
+                      <span className="text-[10px] text-neutral-500 font-mono">[{count}]</span>
                     </button>
                   );
                 })}
               </div>
 
-              {/* Embed Cards Grid */}
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-                  gap: "16px",
-                }}
-              >
+              {/* Template Cards Bento Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredEmbeds.map((item) => (
                   <div
                     key={item.key}
@@ -673,116 +593,46 @@ export default function EmbedEditorModal({
                       setSelectedKey(item.key);
                       setViewMode("editor");
                     }}
-                    style={{
-                      padding: "20px",
-                      borderRadius: "14px",
-                      background: "rgba(255, 255, 255, 0.03)",
-                      border: "1px solid rgba(255, 255, 255, 0.08)",
-                      cursor: "pointer",
-                      transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "space-between",
-                      gap: "14px",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = "rgba(255, 255, 255, 0.06)";
-                      e.currentTarget.style.borderColor = "rgba(41, 151, 255, 0.35)";
-                      e.currentTarget.style.transform = "translateY(-2px)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
-                      e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
-                      e.currentTarget.style.transform = "translateY(0)";
-                    }}
+                    className="group relative flex flex-col justify-between p-5 bg-[#070809] hover:bg-[#0c0e11] border border-white/[0.08] hover:border-blue-500/50 rounded-none cursor-pointer transition-all duration-150"
                   >
                     <div>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "flex-start",
-                          justifyContent: "space-between",
-                          gap: "10px",
-                          marginBottom: "8px",
-                        }}
-                      >
-                        <h4
-                          style={{
-                            fontSize: "14px",
-                            fontWeight: 600,
-                            color: "#ffffff",
-                            margin: 0,
-                          }}
-                        >
-                          {item.name}
-                        </h4>
-
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <span className="font-mono text-[10px] text-neutral-500 group-hover:text-blue-400 transition-colors uppercase">
+                          EMBED // {item.category}
+                        </span>
                         <span
-                          style={{
-                            fontSize: "10px",
-                            fontWeight: 600,
-                            padding: "2px 7px",
-                            borderRadius: "6px",
-                            whiteSpace: "nowrap",
-                            background: item.isCustomized
-                              ? "rgba(41, 151, 255, 0.15)"
-                              : "rgba(255, 255, 255, 0.06)",
-                            color: item.isCustomized ? "#2997ff" : "var(--text-muted)",
-                            border: `1px solid ${
-                              item.isCustomized
-                                ? "rgba(41, 151, 255, 0.3)"
-                                : "rgba(255, 255, 255, 0.1)"
-                            }`,
-                          }}
+                          className={`font-mono text-[9px] px-1.5 py-0.5 border ${
+                            item.isCustomized
+                              ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
+                              : "bg-white/[0.04] border-white/[0.08] text-neutral-500"
+                          }`}
                         >
-                          {item.isCustomized ? "🎨 ปรับแต่งแล้ว" : "ค่าเริ่มต้น"}
+                          {item.isCustomized ? "CUSTOM" : "DEFAULT"}
                         </span>
                       </div>
 
-                      <p
-                        style={{
-                          fontSize: "12px",
-                          color: "var(--text-secondary)",
-                          lineHeight: 1.5,
-                          margin: 0,
-                        }}
-                      >
+                      <h3 className="text-sm font-semibold text-white group-hover:text-blue-400 transition-colors mb-2">
+                        {item.name}
+                      </h3>
+
+                      <p className="text-xs text-neutral-400 leading-relaxed line-clamp-2">
                         {item.description}
                       </p>
                     </div>
 
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        paddingTop: "12px",
-                        borderTop: "1px solid rgba(255, 255, 255, 0.06)",
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <div className="flex items-center justify-between pt-4 mt-4 border-t border-white/[0.06] text-xs font-mono">
+                      <div className="flex items-center gap-2">
                         <span
-                          style={{
-                            width: "10px",
-                            height: "10px",
-                            borderRadius: "50%",
-                            backgroundColor: item.color?.hex || "#2997ff",
-                            display: "inline-block",
-                          }}
+                          className="w-2.5 h-2.5 rounded-none"
+                          style={{ backgroundColor: item.color?.hex || "#2997ff" }}
                         />
-                        <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                        <span className="text-neutral-500 text-[11px]">
                           {item.supportedVariables?.length || 0} ตัวแปร
                         </span>
                       </div>
 
-                      <span
-                        style={{
-                          fontSize: "12px",
-                          color: "var(--accent)",
-                          fontWeight: 500,
-                        }}
-                      >
-                        คลิกเพื่อแก้ไข →
+                      <span className="text-blue-400 group-hover:translate-x-0.5 transition-transform">
+                        แก้ไข Embed →
                       </span>
                     </div>
                   </div>
@@ -791,78 +641,52 @@ export default function EmbedEditorModal({
             </div>
           ) : (
             /* ============================================================= */
-            /* 2. EMBED DETAILED EDITOR VIEW (Split Screen: Edit + Preview)  */
+            /* 2. SPLIT-SCREEN EDITOR VIEW                                   */
             /* ============================================================= */
             config && (
-              <div
-                style={{
-                  flex: 1,
-                  display: "grid",
-                  gridTemplateColumns: "1.15fr 0.85fr",
-                  minHeight: 0,
-                  overflow: "hidden",
-                }}
-              >
+              <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
                 {/* --------------------------------------------------------- */}
                 {/* LEFT COLUMN: EDIT FORM CONTROLS                           */}
                 {/* --------------------------------------------------------- */}
-                <div
-                  style={{
-                    padding: "20px 24px",
-                    overflowY: "auto",
-                    borderRight: "1px solid rgba(255, 255, 255, 0.08)",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "20px",
-                  }}
-                >
-                  {/* VARIABLE PLACEHOLDER CHIPS TOOLBAR */}
+                <div className="col-span-12 lg:col-span-7 h-full overflow-y-auto flex flex-col gap-4 p-5 sm:p-6 bg-[#000000] border-r border-white/[0.08] min-h-0">
+                  {/* Variable Chips Toolbar */}
                   {config.supportedVariables && config.supportedVariables.length > 0 && (
-                    <div
-                      style={{
-                        padding: "14px 16px",
-                        borderRadius: "12px",
-                        background: "rgba(41, 151, 255, 0.06)",
-                        border: "1px solid rgba(41, 151, 255, 0.2)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: "12px",
-                          fontWeight: 600,
-                          color: "#2997ff",
-                          marginBottom: "8px",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "6px",
-                        }}
-                      >
-                        <span>💡</span>
-                        <span>ตัวแปรระบบที่แทรกได้ (คลิกเพื่อแทรกลงในข้อความ):</span>
+                    <div className="flex-shrink-0 p-4 bg-[#070809] border border-blue-500/20 rounded-none">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2 text-xs font-mono text-blue-400">
+                          <Info className="w-3.5 h-3.5" />
+                          <span>ตัวแปรระบบที่แทรกได้ (คลิกเพื่อแทรกลงในข้อความ):</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={expandAll}
+                            className="text-[10px] font-mono text-neutral-400 hover:text-white hover:underline"
+                          >
+                            [ขยายทั้งหมด]
+                          </button>
+                          <span className="text-neutral-600">/</span>
+                          <button
+                            type="button"
+                            onClick={collapseAll}
+                            className="text-[10px] font-mono text-neutral-400 hover:text-white hover:underline"
+                          >
+                            [ยุบทั้งหมด]
+                          </button>
+                        </div>
                       </div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+
+                      <div className="flex flex-wrap gap-2">
                         {config.supportedVariables.map((v) => (
                           <button
                             key={v.key}
                             type="button"
                             onClick={() => insertVariable(v.key)}
-                            style={{
-                              padding: "4px 8px",
-                              borderRadius: "6px",
-                              background: "rgba(255, 255, 255, 0.08)",
-                              border: "1px solid rgba(255, 255, 255, 0.12)",
-                              color: "#ffffff",
-                              fontSize: "11px",
-                              fontFamily: "var(--font-mono, monospace)",
-                              cursor: "pointer",
-                              transition: "all 0.15s ease",
-                            }}
-                            title={`คลิกเพื่อใส่ ${v.key} (${v.label} เช่น: ${v.example})`}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.1] hover:border-blue-500/50 text-white rounded-none transition-colors"
+                            title={`คลิกเพื่อแทรก ${v.key} (${v.label} เช่น: ${v.example})`}
                           >
-                            <span style={{ color: "var(--accent)" }}>{v.key}</span>
-                            <span style={{ color: "var(--text-muted)", marginLeft: "4px" }}>
-                              • {v.label}
-                            </span>
+                            <span className="text-blue-400">{v.key}</span>
+                            <span className="text-neutral-400 text-[11px]">• {v.label}</span>
                           </button>
                         ))}
                       </div>
@@ -870,16 +694,19 @@ export default function EmbedEditorModal({
                   )}
 
                   {/* 1. ACCENT COLOR SECTION */}
-                  <SectionCard
-                    title="1. สีแถบไฮไลท์ (Accent Border Color)"
-                    icon="🎨"
+                  <BentoSectionCard
+                    index="01"
+                    title="สีแถบไฮไลท์ (Accent Border Color)"
+                    icon={<Palette className="w-4 h-4 text-blue-400" />}
                     enabled={config.color.enabled}
-                    onToggle={(enabled) =>
+                    isExpanded={expandedSections.color}
+                    onToggleExpand={() => toggleSection("color")}
+                    onToggleEnabled={(enabled) =>
                       setConfig({ ...config, color: { ...config.color, enabled } })
                     }
                   >
-                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-center gap-3">
                         <input
                           type="color"
                           value={config.color.hex}
@@ -889,98 +716,81 @@ export default function EmbedEditorModal({
                               color: { ...config.color, hex: e.target.value },
                             })
                           }
-                          style={{
-                            width: "36px",
-                            height: "36px",
-                            border: "none",
-                            borderRadius: "8px",
-                            cursor: "pointer",
-                            background: "transparent",
-                          }}
+                          className="w-10 h-10 border border-white/[0.15] bg-transparent cursor-pointer rounded-none p-0.5"
                         />
-                        <input
-                          type="text"
-                          value={config.color.hex}
-                          onChange={(e) =>
-                            setConfig({
-                              ...config,
-                              color: { ...config.color, hex: e.target.value },
-                            })
-                          }
-                          placeholder="#2997ff"
-                          style={{
-                            flex: 1,
-                            padding: "8px 12px",
-                            borderRadius: "8px",
-                            background: "rgba(255, 255, 255, 0.04)",
-                            border: "1px solid rgba(255, 255, 255, 0.1)",
-                            color: "#ffffff",
-                            fontSize: "13px",
-                            fontFamily: "var(--font-mono, monospace)",
-                          }}
-                        />
-                      </div>
-
-                      {/* Color Presets */}
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                        {PRESET_COLORS.map((p) => (
-                          <button
-                            key={p.hex}
-                            type="button"
-                            onClick={() =>
+                        <div className="flex-1">
+                          <label className="block text-[11px] font-mono text-neutral-400 mb-1">
+                            HEX COLOR CODE
+                          </label>
+                          <input
+                            type="text"
+                            value={config.color.hex}
+                            onChange={(e) =>
                               setConfig({
                                 ...config,
-                                color: { ...config.color, hex: p.hex },
+                                color: { ...config.color, hex: e.target.value },
                               })
                             }
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "5px",
-                              padding: "4px 8px",
-                              borderRadius: "6px",
-                              background:
-                                config.color.hex.toLowerCase() === p.hex.toLowerCase()
-                                  ? "rgba(255, 255, 255, 0.15)"
-                                  : "rgba(255, 255, 255, 0.04)",
-                              border: `1px solid ${
-                                config.color.hex.toLowerCase() === p.hex.toLowerCase()
-                                  ? p.hex
-                                  : "rgba(255, 255, 255, 0.08)"
-                              }`,
-                              color: "#ffffff",
-                              fontSize: "11px",
-                              cursor: "pointer",
-                            }}
-                          >
-                            <span
-                              style={{
-                                width: "8px",
-                                height: "8px",
-                                borderRadius: "50%",
-                                backgroundColor: p.hex,
-                              }}
-                            />
-                            <span>{p.name}</span>
-                          </button>
-                        ))}
+                            placeholder="#2997ff"
+                            className="w-full px-3 py-2 bg-[#000000] border border-white/[0.12] focus:border-blue-500 text-xs font-mono text-white rounded-none outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Quick Color Presets */}
+                      <div>
+                        <span className="block text-[11px] font-mono text-neutral-500 mb-1.5">
+                          QUICK PRESETS:
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {PRESET_COLORS.map((p) => {
+                            const isSelected =
+                              config.color.hex.toLowerCase() === p.hex.toLowerCase();
+                            return (
+                              <button
+                                key={p.hex}
+                                type="button"
+                                onClick={() =>
+                                  setConfig({
+                                    ...config,
+                                    color: { ...config.color, hex: p.hex },
+                                  })
+                                }
+                                className={`inline-flex items-center gap-1.5 px-2 py-1 text-xs font-mono border rounded-none transition-colors ${
+                                  isSelected
+                                    ? "bg-white/[0.12] border-white text-white"
+                                    : "bg-white/[0.03] border-white/[0.08] text-neutral-400 hover:text-white hover:border-white/[0.2]"
+                                }`}
+                              >
+                                <span
+                                  className="w-2.5 h-2.5 rounded-none shrink-0"
+                                  style={{ backgroundColor: p.hex }}
+                                />
+                                <span>{p.name}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
-                  </SectionCard>
+                  </BentoSectionCard>
 
                   {/* 2. AUTHOR SECTION */}
-                  <SectionCard
-                    title="2. ข้อมูลผู้ส่ง (Author)"
-                    icon="👤"
+                  <BentoSectionCard
+                    index="02"
+                    title="ข้อมูลผู้ส่ง (Author)"
+                    icon={<User className="w-4 h-4 text-emerald-400" />}
                     enabled={config.author.enabled}
-                    onToggle={(enabled) =>
+                    isExpanded={expandedSections.author}
+                    onToggleExpand={() => toggleSection("author")}
+                    onToggleEnabled={(enabled) =>
                       setConfig({ ...config, author: { ...config.author, enabled } })
                     }
                   >
-                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                    <div className="flex flex-col gap-3">
                       <div>
-                        <label style={{ fontSize: "11px", color: "var(--text-secondary)", display: "block", marginBottom: "4px" }}>
-                          ชื่อ Author (Author Name)
+                        <label className="block text-[11px] font-mono text-neutral-400 mb-1">
+                          ชื่อ AUTHOR (AUTHOR NAME)
                         </label>
                         <input
                           type="text"
@@ -992,22 +802,14 @@ export default function EmbedEditorModal({
                             })
                           }
                           placeholder="เช่น LynnBot Operations System"
-                          style={{
-                            width: "100%",
-                            padding: "8px 12px",
-                            borderRadius: "8px",
-                            background: "rgba(255, 255, 255, 0.04)",
-                            border: "1px solid rgba(255, 255, 255, 0.1)",
-                            color: "#ffffff",
-                            fontSize: "13px",
-                          }}
+                          className="w-full px-3 py-2 bg-[#000000] border border-white/[0.12] focus:border-blue-500 text-xs text-white rounded-none outline-none"
                         />
                       </div>
 
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                          <label style={{ fontSize: "11px", color: "var(--text-secondary)", display: "block", marginBottom: "4px" }}>
-                            ไอคอน Author (Icon URL)
+                          <label className="block text-[11px] font-mono text-neutral-400 mb-1">
+                            ไอคอน AUTHOR (ICON URL)
                           </label>
                           <input
                             type="text"
@@ -1018,21 +820,13 @@ export default function EmbedEditorModal({
                                 author: { ...config.author, iconUrl: e.target.value },
                               })
                             }
-                            placeholder="https://..."
-                            style={{
-                              width: "100%",
-                              padding: "8px 12px",
-                              borderRadius: "8px",
-                              background: "rgba(255, 255, 255, 0.04)",
-                              border: "1px solid rgba(255, 255, 255, 0.1)",
-                              color: "#ffffff",
-                              fontSize: "12px",
-                            }}
+                            placeholder="https://... (URL รูปภาพ)"
+                            className="w-full px-3 py-2 bg-[#000000] border border-white/[0.12] focus:border-blue-500 text-xs text-white rounded-none outline-none"
                           />
                         </div>
                         <div>
-                          <label style={{ fontSize: "11px", color: "var(--text-secondary)", display: "block", marginBottom: "4px" }}>
-                            ลิงก์ Author (Author URL)
+                          <label className="block text-[11px] font-mono text-neutral-400 mb-1">
+                            ลิงก์ AUTHOR (CLICK URL)
                           </label>
                           <input
                             type="text"
@@ -1043,35 +837,30 @@ export default function EmbedEditorModal({
                                 author: { ...config.author, url: e.target.value },
                               })
                             }
-                            placeholder="https://..."
-                            style={{
-                              width: "100%",
-                              padding: "8px 12px",
-                              borderRadius: "8px",
-                              background: "rgba(255, 255, 255, 0.04)",
-                              border: "1px solid rgba(255, 255, 255, 0.1)",
-                              color: "#ffffff",
-                              fontSize: "12px",
-                            }}
+                            placeholder="https://... (เว้นว่างได้)"
+                            className="w-full px-3 py-2 bg-[#000000] border border-white/[0.12] focus:border-blue-500 text-xs text-white rounded-none outline-none"
                           />
                         </div>
                       </div>
                     </div>
-                  </SectionCard>
+                  </BentoSectionCard>
 
                   {/* 3. TITLE SECTION */}
-                  <SectionCard
-                    title="3. หัวข้อหลัก (Title)"
-                    icon="🏷️"
+                  <BentoSectionCard
+                    index="03"
+                    title="หัวข้อหลัก (Title)"
+                    icon={<Tag className="w-4 h-4 text-purple-400" />}
                     enabled={config.title.enabled}
-                    onToggle={(enabled) =>
+                    isExpanded={expandedSections.title}
+                    onToggleExpand={() => toggleSection("title")}
+                    onToggleEnabled={(enabled) =>
                       setConfig({ ...config, title: { ...config.title, enabled } })
                     }
                   >
-                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                    <div className="flex flex-col gap-3">
                       <div>
-                        <label style={{ fontSize: "11px", color: "var(--text-secondary)", display: "block", marginBottom: "4px" }}>
-                          ข้อความหัวข้อ (Title Text)
+                        <label className="block text-[11px] font-mono text-neutral-400 mb-1">
+                          ข้อความหัวข้อ (TITLE TEXT)
                         </label>
                         <input
                           type="text"
@@ -1083,22 +872,13 @@ export default function EmbedEditorModal({
                             })
                           }
                           placeholder="หัวข้อการ์ด..."
-                          style={{
-                            width: "100%",
-                            padding: "8px 12px",
-                            borderRadius: "8px",
-                            background: "rgba(255, 255, 255, 0.04)",
-                            border: "1px solid rgba(255, 255, 255, 0.1)",
-                            color: "#ffffff",
-                            fontSize: "13px",
-                            fontWeight: 600,
-                          }}
+                          className="w-full px-3 py-2.5 bg-[#000000] border border-white/[0.12] focus:border-blue-500 text-sm font-semibold text-white rounded-none outline-none"
                         />
                       </div>
 
                       <div>
-                        <label style={{ fontSize: "11px", color: "var(--text-secondary)", display: "block", marginBottom: "4px" }}>
-                          ลิงก์หัวข้อ (Title URL - เมื่อคลิกหัวข้อ)
+                        <label className="block text-[11px] font-mono text-neutral-400 mb-1">
+                          ลิงก์หัวข้อเมื่อคลิก (TITLE URL)
                         </label>
                         <input
                           type="text"
@@ -1110,36 +890,31 @@ export default function EmbedEditorModal({
                             })
                           }
                           placeholder="https://... (เว้นว่างได้)"
-                          style={{
-                            width: "100%",
-                            padding: "8px 12px",
-                            borderRadius: "8px",
-                            background: "rgba(255, 255, 255, 0.04)",
-                            border: "1px solid rgba(255, 255, 255, 0.1)",
-                            color: "#ffffff",
-                            fontSize: "12px",
-                          }}
+                          className="w-full px-3 py-2 bg-[#000000] border border-white/[0.12] focus:border-blue-500 text-xs text-white rounded-none outline-none"
                         />
                       </div>
                     </div>
-                  </SectionCard>
+                  </BentoSectionCard>
 
                   {/* 4. DESCRIPTION SECTION */}
-                  <SectionCard
-                    title="4. ข้อความรายละเอียด (Description)"
-                    icon="📝"
+                  <BentoSectionCard
+                    index="04"
+                    title="ข้อความรายละเอียด (Description)"
+                    icon={<AlignLeft className="w-4 h-4 text-cyan-400" />}
                     enabled={config.descriptionText.enabled}
-                    onToggle={(enabled) =>
+                    isExpanded={expandedSections.description}
+                    onToggleExpand={() => toggleSection("description")}
+                    onToggleEnabled={(enabled) =>
                       setConfig({
                         ...config,
                         descriptionText: { ...config.descriptionText, enabled },
                       })
                     }
                   >
-                    <div>
+                    <div className="flex flex-col gap-2">
                       <textarea
                         ref={descriptionTextareaRef}
-                        rows={7}
+                        rows={8}
                         value={config.descriptionText.text}
                         onChange={(e) =>
                           setConfig({
@@ -1150,89 +925,47 @@ export default function EmbedEditorModal({
                             },
                           })
                         }
-                        placeholder="พิมพ์เนื้อหาที่นี่... รองรับการขึ้นบรรทัดใหม่ ตัวหนา **คำ** และตัวแปร {user}"
-                        style={{
-                          width: "100%",
-                          padding: "10px 12px",
-                          borderRadius: "8px",
-                          background: "rgba(255, 255, 255, 0.04)",
-                          border: "1px solid rgba(255, 255, 255, 0.1)",
-                          color: "#ffffff",
-                          fontSize: "13px",
-                          lineHeight: 1.6,
-                          fontFamily: "var(--font-mono, monospace)",
-                          resize: "vertical",
-                        }}
+                        placeholder="พิมพ์เนื้อหาที่นี่... รองรับการขึ้นบรรทัดใหม่ ตัวหนา **คำ** และตัวแปร {server_name}"
+                        className="w-full p-3 bg-[#000000] border border-white/[0.12] focus:border-blue-500 text-xs font-mono text-white rounded-none outline-none leading-relaxed resize-y"
                       />
-                      <div
-                        style={{
-                          fontSize: "11px",
-                          color: "var(--text-muted)",
-                          marginTop: "6px",
-                          display: "flex",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <span>รองรับ Markdown Discord (เช่น **หนา**, *เอียง*, &gt; อ้างอิง)</span>
+                      <div className="flex items-center justify-between text-[11px] font-mono text-neutral-500">
+                        <span>Markdown: **หนา**, *เอียง*, &gt; อ้างอิง</span>
                         <span>{config.descriptionText.text?.length || 0} / 4096 ตัวอักษร</span>
                       </div>
                     </div>
-                  </SectionCard>
+                  </BentoSectionCard>
 
                   {/* 5. FIELDS SECTION */}
-                  <SectionCard
-                    title={`5. ฟิลด์ข้อมูลเสริม (Fields - ${config.fields?.items?.length || 0})`}
-                    icon="📑"
+                  <BentoSectionCard
+                    index="05"
+                    title={`ฟิลด์ข้อมูลเสริม (Fields - ${config.fields?.items?.length || 0})`}
+                    icon={<Layers className="w-4 h-4 text-amber-400" />}
                     enabled={config.fields.enabled}
-                    onToggle={(enabled) =>
+                    isExpanded={expandedSections.fields}
+                    onToggleExpand={() => toggleSection("fields")}
+                    onToggleEnabled={(enabled) =>
                       setConfig({ ...config, fields: { ...config.fields, enabled } })
                     }
                   >
-                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                    <div className="flex flex-col gap-3">
                       {config.fields?.items?.map((field, idx) => (
                         <div
                           key={field.id}
-                          style={{
-                            padding: "12px",
-                            borderRadius: "10px",
-                            background: "rgba(255, 255, 255, 0.03)",
-                            border: "1px solid rgba(255, 255, 255, 0.08)",
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "8px",
-                          }}
+                          className="p-3 bg-[#000000] border border-white/[0.08] flex flex-col gap-2 rounded-none"
                         >
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                            }}
-                          >
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                              <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--accent)" }}>
-                                ฟิลด์ #{idx + 1}
-                              </span>
-                              <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", color: "var(--text-secondary)", cursor: "pointer" }}>
-                                <input
-                                  type="checkbox"
-                                  checked={field.enabled}
-                                  onChange={(e) =>
-                                    handleUpdateField(field.id, { enabled: e.target.checked })
-                                  }
-                                />
-                                แสดงผล
-                              </label>
-                            </div>
-
-                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                              <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", color: "var(--text-secondary)", cursor: "pointer" }}>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-mono font-medium text-blue-400">
+                              FIELD #{idx + 1}
+                            </span>
+                            <div className="flex items-center gap-3">
+                              <label className="flex items-center gap-1.5 text-[11px] font-mono text-neutral-400 cursor-pointer">
                                 <input
                                   type="checkbox"
                                   checked={field.inline}
                                   onChange={(e) =>
                                     handleUpdateField(field.id, { inline: e.target.checked })
                                   }
+                                  className="rounded-none border-white/20 bg-black"
                                 />
                                 จัดแนวนอน (Inline)
                               </label>
@@ -1240,38 +973,23 @@ export default function EmbedEditorModal({
                               <button
                                 type="button"
                                 onClick={() => handleRemoveField(field.id)}
-                                style={{
-                                  background: "none",
-                                  border: "none",
-                                  color: "var(--danger)",
-                                  fontSize: "12px",
-                                  cursor: "pointer",
-                                  padding: "2px 6px",
-                                }}
+                                className="text-red-400 hover:text-red-300 p-1"
                                 title="ลบฟิลด์นี้"
                               >
-                                ✕
+                                <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           </div>
 
-                          <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "8px" }}>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                             <input
                               type="text"
                               value={field.name}
                               onChange={(e) =>
                                 handleUpdateField(field.id, { name: e.target.value })
                               }
-                              placeholder="ชื่อฟิลด์"
-                              style={{
-                                padding: "6px 10px",
-                                borderRadius: "6px",
-                                background: "rgba(255, 255, 255, 0.04)",
-                                border: "1px solid rgba(255, 255, 255, 0.1)",
-                                color: "#ffffff",
-                                fontSize: "12px",
-                                fontWeight: 600,
-                              }}
+                              placeholder="ชื่อฟิลด์..."
+                              className="col-span-1 px-3 py-1.5 bg-[#070809] border border-white/[0.1] text-xs font-semibold text-white rounded-none outline-none focus:border-blue-500"
                             />
                             <input
                               type="text"
@@ -1279,15 +997,8 @@ export default function EmbedEditorModal({
                               onChange={(e) =>
                                 handleUpdateField(field.id, { value: e.target.value })
                               }
-                              placeholder="รายละเอียดฟิลด์"
-                              style={{
-                                padding: "6px 10px",
-                                borderRadius: "6px",
-                                background: "rgba(255, 255, 255, 0.04)",
-                                border: "1px solid rgba(255, 255, 255, 0.1)",
-                                color: "#ffffff",
-                                fontSize: "12px",
-                              }}
+                              placeholder="รายละเอียดฟิลด์..."
+                              className="col-span-2 px-3 py-1.5 bg-[#070809] border border-white/[0.1] text-xs text-white rounded-none outline-none focus:border-blue-500"
                             />
                           </div>
                         </div>
@@ -1296,36 +1007,27 @@ export default function EmbedEditorModal({
                       <button
                         type="button"
                         onClick={handleAddField}
-                        style={{
-                          padding: "8px 12px",
-                          borderRadius: "8px",
-                          background: "rgba(255, 255, 255, 0.04)",
-                          border: "1px dashed rgba(255, 255, 255, 0.16)",
-                          color: "var(--text-secondary)",
-                          fontSize: "12px",
-                          fontWeight: 500,
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "6px",
-                        }}
+                        className="inline-flex items-center justify-center gap-2 py-2.5 px-4 bg-white/[0.03] hover:bg-white/[0.06] border border-dashed border-white/[0.15] hover:border-blue-500/50 text-xs font-mono text-neutral-300 hover:text-white rounded-none transition-colors"
                       >
-                        <span>+ เพิ่มฟิลด์ใหม่ (Add Field)</span>
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>เพิ่มฟิลด์ใหม่ (Add Field)</span>
                       </button>
                     </div>
-                  </SectionCard>
+                  </BentoSectionCard>
 
                   {/* 6. THUMBNAIL SECTION */}
-                  <SectionCard
-                    title="6. รูปภาพขนาดย่อ (Thumbnail - มุมขวาบน)"
-                    icon="🖼️"
+                  <BentoSectionCard
+                    index="06"
+                    title="รูปภาพขนาดย่อ (Thumbnail - มุมขวาบน)"
+                    icon={<ImageIcon className="w-4 h-4 text-orange-400" />}
                     enabled={config.thumbnail.enabled}
-                    onToggle={(enabled) =>
+                    isExpanded={expandedSections.thumbnail}
+                    onToggleExpand={() => toggleSection("thumbnail")}
+                    onToggleEnabled={(enabled) =>
                       setConfig({ ...config, thumbnail: { ...config.thumbnail, enabled } })
                     }
                   >
-                    <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                    <div className="flex items-center gap-3">
                       <input
                         type="text"
                         value={config.thumbnail.url}
@@ -1336,45 +1038,36 @@ export default function EmbedEditorModal({
                           })
                         }
                         placeholder="https://... (URL รูปภาพ PNG, JPG, WEBP)"
-                        style={{
-                          flex: 1,
-                          padding: "8px 12px",
-                          borderRadius: "8px",
-                          background: "rgba(255, 255, 255, 0.04)",
-                          border: "1px solid rgba(255, 255, 255, 0.1)",
-                          color: "#ffffff",
-                          fontSize: "12px",
-                        }}
+                        className="flex-1 px-3 py-2 bg-[#000000] border border-white/[0.12] focus:border-blue-500 text-xs text-white rounded-none outline-none font-mono"
                       />
                       {config.thumbnail.url && (
-                        <img
-                          src={config.thumbnail.url}
-                          alt="Thumbnail preview"
-                          style={{
-                            width: "36px",
-                            height: "36px",
-                            borderRadius: "6px",
-                            objectFit: "cover",
-                            border: "1px solid rgba(255, 255, 255, 0.12)",
-                          }}
-                          onError={(e) => {
-                            (e.target as HTMLElement).style.display = "none";
-                          }}
-                        />
+                        <div className="w-10 h-10 border border-white/[0.15] bg-black shrink-0 overflow-hidden">
+                          <img
+                            src={config.thumbnail.url}
+                            alt="Thumbnail"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = "none";
+                            }}
+                          />
+                        </div>
                       )}
                     </div>
-                  </SectionCard>
+                  </BentoSectionCard>
 
-                  {/* 7. LARGE IMAGE SECTION */}
-                  <SectionCard
-                    title="7. รูปภาพแบนเนอร์ใหญ่ (Large Image Banner)"
-                    icon="🌄"
+                  {/* 7. LARGE IMAGE BANNER SECTION */}
+                  <BentoSectionCard
+                    index="07"
+                    title="รูปภาพแบนเนอร์ใหญ่ (Large Banner Image)"
+                    icon={<ImagePlus className="w-4 h-4 text-pink-400" />}
                     enabled={config.image.enabled}
-                    onToggle={(enabled) =>
+                    isExpanded={expandedSections.image}
+                    onToggleExpand={() => toggleSection("image")}
+                    onToggleEnabled={(enabled) =>
                       setConfig({ ...config, image: { ...config.image, enabled } })
                     }
                   >
-                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <div className="flex flex-col gap-2">
                       <input
                         type="text"
                         value={config.image.url}
@@ -1384,49 +1077,40 @@ export default function EmbedEditorModal({
                             image: { ...config.image, url: e.target.value },
                           })
                         }
-                        placeholder="https://... (URL รูปภาพขนาดใหญ่แสดงใต้ Embed)"
-                        style={{
-                          width: "100%",
-                          padding: "8px 12px",
-                          borderRadius: "8px",
-                          background: "rgba(255, 255, 255, 0.04)",
-                          border: "1px solid rgba(255, 255, 255, 0.1)",
-                          color: "#ffffff",
-                          fontSize: "12px",
-                        }}
+                        placeholder="https://... (URL รูปภาพขนาดใหญ่แสดงใต้เนื้อหา)"
+                        className="w-full px-3 py-2 bg-[#000000] border border-white/[0.12] focus:border-blue-500 text-xs text-white rounded-none outline-none font-mono"
                       />
                       {config.image.url && (
-                        <img
-                          src={config.image.url}
-                          alt="Banner preview"
-                          style={{
-                            width: "100%",
-                            maxHeight: "120px",
-                            borderRadius: "6px",
-                            objectFit: "cover",
-                            border: "1px solid rgba(255, 255, 255, 0.12)",
-                          }}
-                          onError={(e) => {
-                            (e.target as HTMLElement).style.display = "none";
-                          }}
-                        />
+                        <div className="max-h-36 w-full border border-white/[0.15] bg-black overflow-hidden mt-1">
+                          <img
+                            src={config.image.url}
+                            alt="Banner Preview"
+                            className="w-full max-h-36 object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = "none";
+                            }}
+                          />
+                        </div>
                       )}
                     </div>
-                  </SectionCard>
+                  </BentoSectionCard>
 
                   {/* 8. FOOTER SECTION */}
-                  <SectionCard
-                    title="8. ข้อความส่วนท้าย (Footer)"
-                    icon="📎"
+                  <BentoSectionCard
+                    index="08"
+                    title="ข้อความส่วนท้าย (Footer)"
+                    icon={<Paperclip className="w-4 h-4 text-indigo-400" />}
                     enabled={config.footer.enabled}
-                    onToggle={(enabled) =>
+                    isExpanded={expandedSections.footer}
+                    onToggleExpand={() => toggleSection("footer")}
+                    onToggleEnabled={(enabled) =>
                       setConfig({ ...config, footer: { ...config.footer, enabled } })
                     }
                   >
-                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                    <div className="flex flex-col gap-3">
                       <div>
-                        <label style={{ fontSize: "11px", color: "var(--text-secondary)", display: "block", marginBottom: "4px" }}>
-                          ข้อความ Footer (Footer Text)
+                        <label className="block text-[11px] font-mono text-neutral-400 mb-1">
+                          ข้อความ FOOTER (FOOTER TEXT)
                         </label>
                         <input
                           type="text"
@@ -1437,22 +1121,13 @@ export default function EmbedEditorModal({
                               footer: { ...config.footer, text: e.target.value },
                             })
                           }
-                          placeholder="เช่น LynnBot Operations System • Shop"
-                          style={{
-                            width: "100%",
-                            padding: "8px 12px",
-                            borderRadius: "8px",
-                            background: "rgba(255, 255, 255, 0.04)",
-                            border: "1px solid rgba(255, 255, 255, 0.1)",
-                            color: "#ffffff",
-                            fontSize: "12px",
-                          }}
+                          placeholder="เช่น LynnBot Operations System • Wallet"
+                          className="w-full px-3 py-2 bg-[#000000] border border-white/[0.12] focus:border-blue-500 text-xs text-white rounded-none outline-none"
                         />
                       </div>
-
                       <div>
-                        <label style={{ fontSize: "11px", color: "var(--text-secondary)", display: "block", marginBottom: "4px" }}>
-                          ไอคอน Footer (Footer Icon URL)
+                        <label className="block text-[11px] font-mono text-neutral-400 mb-1">
+                          ไอคอน FOOTER (ICON URL)
                         </label>
                         <input
                           type="text"
@@ -1463,180 +1138,86 @@ export default function EmbedEditorModal({
                               footer: { ...config.footer, iconUrl: e.target.value },
                             })
                           }
-                          placeholder="https://... (เว้นว่างได้)"
-                          style={{
-                            width: "100%",
-                            padding: "8px 12px",
-                            borderRadius: "8px",
-                            background: "rgba(255, 255, 255, 0.04)",
-                            border: "1px solid rgba(255, 255, 255, 0.1)",
-                            color: "#ffffff",
-                            fontSize: "12px",
-                          }}
+                          placeholder="https://... (URL รูปภาพขนาดเล็ก)"
+                          className="w-full px-3 py-2 bg-[#000000] border border-white/[0.12] focus:border-blue-500 text-xs text-white rounded-none outline-none"
                         />
                       </div>
                     </div>
-                  </SectionCard>
+                  </BentoSectionCard>
 
                   {/* 9. TIMESTAMP SECTION */}
-                  <SectionCard
-                    title="9. เวลาประทับ (Timestamp)"
-                    icon="⏰"
+                  <BentoSectionCard
+                    index="09"
+                    title="เวลาประทับ (Timestamp)"
+                    icon={<Clock className="w-4 h-4 text-slate-400" />}
                     enabled={config.timestamp.enabled}
-                    onToggle={(enabled) =>
-                      setConfig({
-                        ...config,
-                        timestamp: { enabled },
-                      })
+                    isExpanded={expandedSections.timestamp}
+                    onToggleExpand={() => toggleSection("timestamp")}
+                    onToggleEnabled={(enabled) =>
+                      setConfig({ ...config, timestamp: { enabled } })
                     }
                   >
-                    <p style={{ fontSize: "12px", color: "var(--text-secondary)", margin: 0 }}>
-                      เมื่อเปิดใช้งาน Discord จะแสดงเวลาส่งข้อความอัตโนมัติ (เช่น วันนี้ เวลา 18:00) ต่อท้ายข้อความ Footer
+                    <p className="text-xs text-neutral-400 leading-relaxed m-0">
+                      เมื่อเปิดใช้งาน Discord จะแสดงเวลาส่งข้อความตามเวลาสากลต่อท้ายข้อความ Footer โดยอัตโนมัติ (เช่น วันนี้ เวลา 18:00)
                     </p>
-                  </SectionCard>
+                  </BentoSectionCard>
+
+                  <div className="p-3 bg-white/[0.02] border border-white/[0.06] text-xs font-mono text-neutral-500 shrink-0">
+                    💡 คำแนะนำ: คุณสามารถเปิดหรือปิดสวิตช์ได้ทุกส่วน หากปิดส่วนใด ส่วนนั้นจะไม่ถูกส่งไปยัง Discord
+                  </div>
                 </div>
 
                 {/* --------------------------------------------------------- */}
                 {/* RIGHT COLUMN: DISCORD LIVE DARK THEME PREVIEW             */}
                 {/* --------------------------------------------------------- */}
-                <div
-                  style={{
-                    padding: "24px",
-                    backgroundColor: "#1e1f22",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "14px",
-                    overflowY: "auto",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <span
-                        style={{
-                          width: "8px",
-                          height: "8px",
-                          borderRadius: "50%",
-                          background: "#30d158",
-                          display: "inline-block",
-                        }}
-                      />
-                      <span
-                        style={{
-                          fontSize: "12px",
-                          fontWeight: 600,
-                          color: "var(--text-secondary)",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.5px",
-                        }}
-                      >
-                        Discord Dark Theme Preview
+                <div className="col-span-12 lg:col-span-5 h-full overflow-y-auto p-5 sm:p-6 bg-[#070809] flex flex-col gap-4 min-h-0">
+                  <div className="flex items-center justify-between pb-3 border-b border-white/[0.08] shrink-0">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-none bg-emerald-400 animate-pulse" />
+                      <span className="font-mono text-xs font-semibold tracking-wider text-neutral-300 uppercase">
+                        DISCORD_LIVE // SIMULATOR
                       </span>
                     </div>
-
-                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-                      อัปเดตแบบเรียลไทม์
+                    <span className="font-mono text-[10px] text-neutral-500">
+                      REALTIME PREVIEW
                     </span>
                   </div>
 
-                  {/* Discord Chat Bubble Emulation */}
-                  <div
-                    style={{
-                      backgroundColor: "#313338",
-                      borderRadius: "12px",
-                      padding: "16px",
-                      display: "flex",
-                      gap: "16px",
-                      border: "1px solid rgba(255, 255, 255, 0.05)",
-                    }}
-                  >
+                  {/* Discord Chat Container */}
+                  <div className="bg-[#313338] border border-white/[0.08] p-4 flex gap-4 rounded-none">
                     {/* Bot Avatar */}
-                    <div
-                      style={{
-                        width: "40px",
-                        height: "40px",
-                        borderRadius: "50%",
-                        backgroundColor: "#5865F2",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                        fontWeight: 700,
-                        color: "#ffffff",
-                        fontSize: "16px",
-                      }}
-                    >
+                    <div className="w-10 h-10 rounded-full bg-[#5865F2] flex items-center justify-center shrink-0 text-white font-bold text-sm select-none">
                       L
                     </div>
 
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="flex-1 min-w-0">
                       {/* Bot Header Line */}
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                          marginBottom: "6px",
-                        }}
-                      >
-                        <span style={{ fontSize: "14px", fontWeight: 600, color: "#ffffff" }}>
-                          LynnBot
-                        </span>
-                        <span
-                          style={{
-                            fontSize: "10px",
-                            fontWeight: 700,
-                            padding: "1px 5px",
-                            borderRadius: "4px",
-                            backgroundColor: "#5865F2",
-                            color: "#ffffff",
-                          }}
-                        >
+                      <div className="flex items-center gap-2 mb-2 select-none">
+                        <span className="text-sm font-semibold text-white">LynnBot</span>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-none bg-[#5865F2] text-white">
                           BOT
                         </span>
-                        <span style={{ fontSize: "11px", color: "#949ba4" }}>
+                        <span className="text-[11px] text-[#949ba4]">
                           วันนี้ เวลา 18:00
                         </span>
                       </div>
 
                       {/* Discord Embed Box */}
                       <div
+                        className="bg-[#2b2d31] rounded-none p-4 flex flex-col gap-3 relative max-w-[540px]"
                         style={{
-                          backgroundColor: "#2b2d31",
-                          borderRadius: "4px",
                           borderLeft: config.color.enabled
                             ? `4px solid ${config.color.hex || "#2997ff"}`
                             : "4px solid #1e1f22",
-                          padding: "14px 16px",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "10px",
-                          maxWidth: "520px",
-                          position: "relative",
                         }}
                       >
-                        {/* Top-Right Thumbnail */}
+                        {/* Thumbnail in Top Right */}
                         {config.thumbnail.enabled && config.thumbnail.url && (
-                          <div
-                            style={{
-                              position: "absolute",
-                              top: "14px",
-                              right: "16px",
-                              width: "72px",
-                              height: "72px",
-                              borderRadius: "4px",
-                              overflow: "hidden",
-                            }}
-                          >
+                          <div className="absolute top-4 right-4 w-16 h-16 rounded-none overflow-hidden bg-black/40 border border-white/10 shrink-0">
                             <img
                               src={config.thumbnail.url}
-                              alt="thumbnail"
-                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                              alt="Thumbnail"
+                              className="w-full h-full object-cover"
                               onError={(e) => {
                                 (e.target as HTMLElement).style.display = "none";
                               }}
@@ -1646,138 +1227,71 @@ export default function EmbedEditorModal({
 
                         {/* Author */}
                         {config.author.enabled && config.author.name && (
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "8px",
-                              fontSize: "12px",
-                              fontWeight: 600,
-                              color: "#ffffff",
-                            }}
-                          >
+                          <div className="flex items-center gap-2 select-none pr-16">
                             {config.author.iconUrl && (
                               <img
                                 src={config.author.iconUrl}
-                                alt="author icon"
-                                style={{
-                                  width: "20px",
-                                  height: "20px",
-                                  borderRadius: "50%",
-                                  objectFit: "cover",
-                                }}
+                                alt="Author icon"
+                                className="w-5 h-5 rounded-full object-cover"
                                 onError={(e) => {
                                   (e.target as HTMLElement).style.display = "none";
                                 }}
                               />
                             )}
-                            <span>{config.author.name}</span>
+                            <span className="text-xs font-semibold text-[#f2f3f5] hover:underline cursor-pointer">
+                              {config.author.name}
+                            </span>
                           </div>
                         )}
 
                         {/* Title */}
                         {config.title.enabled && config.title.text && (
-                          <div
-                            style={{
-                              fontSize: "15px",
-                              fontWeight: 700,
-                              color: config.title.url ? "#00a8fc" : "#ffffff",
-                              cursor: config.title.url ? "pointer" : "default",
-                              paddingRight:
-                                config.thumbnail.enabled && config.thumbnail.url
-                                  ? "80px"
-                                  : "0px",
-                            }}
-                          >
-                            {config.title.text}
+                          <div className="pr-16">
+                            <h4 className="text-sm font-bold text-white hover:underline cursor-pointer leading-snug">
+                              {formatDiscordMarkdown(config.title.text)}
+                            </h4>
                           </div>
                         )}
 
                         {/* Description */}
                         {config.descriptionText.enabled && config.descriptionText.text && (
-                          <div
-                            style={{
-                              fontSize: "13px",
-                              color: "#dbdee1",
-                              lineHeight: 1.5,
-                              whiteSpace: "pre-wrap",
-                              wordBreak: "break-word",
-                              paddingRight:
-                                config.thumbnail.enabled && config.thumbnail.url
-                                  ? "80px"
-                                  : "0px",
-                            }}
-                          >
-                            {config.descriptionText.text}
+                          <div className="text-xs text-[#dbdee1] leading-relaxed whitespace-pre-wrap font-sans">
+                            {formatDiscordMarkdown(config.descriptionText.text)}
                           </div>
                         )}
 
-                        {/* Fields Grid */}
+                        {/* Fields */}
                         {config.fields.enabled &&
                           config.fields.items &&
-                          config.fields.items.filter((f) => f.enabled).length > 0 && (
-                            <div
-                              style={{
-                                display: "flex",
-                                flexWrap: "wrap",
-                                gap: "10px",
-                                marginTop: "4px",
-                              }}
-                            >
+                          config.fields.items.length > 0 && (
+                            <div className="grid grid-cols-12 gap-2 mt-1">
                               {config.fields.items
-                                .filter((f) => f.enabled)
-                                .map((f) => (
+                                .filter((f) => f.enabled !== false)
+                                .map((field) => (
                                   <div
-                                    key={f.id}
-                                    style={{
-                                      flex: f.inline ? "1 1 30%" : "1 1 100%",
-                                      minWidth: f.inline ? "120px" : "100%",
-                                    }}
+                                    key={field.id}
+                                    className={
+                                      field.inline ? "col-span-6 sm:col-span-4" : "col-span-12"
+                                    }
                                   >
-                                    <div
-                                      style={{
-                                        fontSize: "12px",
-                                        fontWeight: 600,
-                                        color: "#ffffff",
-                                        marginBottom: "2px",
-                                      }}
-                                    >
-                                      {f.name}
+                                    <div className="text-xs font-bold text-white mb-0.5">
+                                      {formatDiscordMarkdown(field.name)}
                                     </div>
-                                    <div
-                                      style={{
-                                        fontSize: "13px",
-                                        color: "#dbdee1",
-                                        lineHeight: 1.4,
-                                        wordBreak: "break-word",
-                                      }}
-                                    >
-                                      {f.value}
+                                    <div className="text-xs text-[#dbdee1] leading-relaxed">
+                                      {formatDiscordMarkdown(field.value)}
                                     </div>
                                   </div>
                                 ))}
                             </div>
                           )}
 
-                        {/* Image Banner */}
+                        {/* Large Image Banner */}
                         {config.image.enabled && config.image.url && (
-                          <div
-                            style={{
-                              marginTop: "8px",
-                              borderRadius: "4px",
-                              overflow: "hidden",
-                              maxWidth: "100%",
-                            }}
-                          >
+                          <div className="mt-1 max-h-48 rounded-none overflow-hidden bg-black/40 border border-white/10">
                             <img
                               src={config.image.url}
-                              alt="banner"
-                              style={{
-                                width: "100%",
-                                maxHeight: "240px",
-                                objectFit: "cover",
-                                display: "block",
-                              }}
+                              alt="Banner"
+                              className="w-full max-h-48 object-cover"
                               onError={(e) => {
                                 (e.target as HTMLElement).style.display = "none";
                               }}
@@ -1787,56 +1301,30 @@ export default function EmbedEditorModal({
 
                         {/* Footer & Timestamp */}
                         {(config.footer.enabled || config.timestamp.enabled) && (
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "6px",
-                              fontSize: "11px",
-                              color: "#949ba4",
-                              marginTop: "4px",
-                            }}
-                          >
+                          <div className="flex items-center gap-2 pt-2 border-t border-white/[0.04] text-[11px] text-[#949ba4] select-none">
                             {config.footer.enabled && config.footer.iconUrl && (
                               <img
                                 src={config.footer.iconUrl}
-                                alt="footer icon"
-                                style={{
-                                  width: "16px",
-                                  height: "16px",
-                                  borderRadius: "50%",
-                                  objectFit: "cover",
-                                }}
+                                alt="Footer icon"
+                                className="w-4 h-4 rounded-full object-cover"
                                 onError={(e) => {
                                   (e.target as HTMLElement).style.display = "none";
                                 }}
                               />
                             )}
-                            {config.footer.enabled && (
-                              <span>{config.footer.text || "LynnBot"}</span>
-                            )}
-                            {config.footer.enabled && config.timestamp.enabled && (
-                              <span>•</span>
-                            )}
-                            {config.timestamp.enabled && <span>วันนี้ เวลา 18:00</span>}
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {config.footer.enabled && config.footer.text && (
+                                <span>{formatDiscordMarkdown(config.footer.text)}</span>
+                              )}
+                              {config.footer.enabled &&
+                                config.footer.text &&
+                                config.timestamp.enabled && <span>•</span>}
+                              {config.timestamp.enabled && <span>วันนี้ เวลา 18:00</span>}
+                            </div>
                           </div>
                         )}
                       </div>
                     </div>
-                  </div>
-
-                  <div
-                    style={{
-                      padding: "12px 14px",
-                      borderRadius: "10px",
-                      background: "rgba(255, 255, 255, 0.03)",
-                      border: "1px solid rgba(255, 255, 255, 0.06)",
-                      fontSize: "11px",
-                      color: "var(--text-muted)",
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    💡 **คำแนะนำ:** ทุกส่วนของการ์ดสามารถเปิดหรือปิดสวิตช์ได้ตามต้องการ หากปิดส่วนใด ส่วนนั้นจะไม่ถูกส่งไปยัง Discord
                   </div>
                 </div>
               </div>
@@ -1845,124 +1333,55 @@ export default function EmbedEditorModal({
         </div>
 
         {/* ================================================================= */}
-        {/* MODAL FOOTER ACTIONS */}
+        {/* BOTTOM ACTION FOOTER                                              */}
         {/* ================================================================= */}
         {viewMode === "editor" && config && (
-          <div
-            style={{
-              padding: "16px 24px",
-              borderTop: "1px solid rgba(255, 255, 255, 0.08)",
-              background: "rgba(255, 255, 255, 0.02)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "12px",
-              flexWrap: "wrap",
-            }}
-          >
-            {/* Left: Reset to Default */}
+          <div className="flex items-center justify-between px-6 py-4 border-t border-white/[0.08] bg-[#0c0d0f] shrink-0">
+            {/* Left: Reset */}
             <button
               type="button"
               disabled={resetting || saving}
               onClick={handleReset}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "8px 14px",
-                borderRadius: "10px",
-                background: "rgba(255, 69, 58, 0.1)",
-                border: "1px solid rgba(255, 69, 58, 0.25)",
-                color: "#ff453a",
-                fontSize: "12px",
-                fontWeight: 600,
-                cursor: resetting ? "not-allowed" : "pointer",
-                transition: "all 0.15s ease",
-              }}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 text-xs font-mono font-medium rounded-none transition-colors disabled:opacity-50"
             >
-              <span>↺</span>
+              <RotateCcw className="w-3.5 h-3.5" />
               <span>{resetting ? "กำลังรีเซ็ต..." : "รีเซ็ตค่าเริ่มต้น"}</span>
             </button>
 
             {/* Right: Test Send + Save */}
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div className="flex items-center gap-3">
               {/* Test Send Dropdown Panel */}
-              <div style={{ position: "relative" }}>
+              <div className="relative">
                 <button
                   type="button"
                   onClick={() => setShowTestPanel(!showTestPanel)}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    padding: "8px 14px",
-                    borderRadius: "10px",
-                    background: "rgba(255, 255, 255, 0.06)",
-                    border: "1px solid rgba(255, 255, 255, 0.12)",
-                    color: "var(--text-secondary)",
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.12] text-neutral-300 hover:text-white text-xs font-mono font-medium rounded-none transition-colors"
                 >
-                  <span>🚀</span>
+                  <Send className="w-3.5 h-3.5 text-blue-400" />
                   <span>ทดสอบส่งเข้า Discord</span>
                 </button>
 
                 {showTestPanel && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      bottom: "100%",
-                      right: 0,
-                      marginBottom: "8px",
-                      width: "320px",
-                      padding: "16px",
-                      borderRadius: "14px",
-                      background: "#16161c",
-                      border: "1px solid rgba(255, 255, 255, 0.14)",
-                      boxShadow: "0 12px 32px rgba(0, 0, 0, 0.6)",
-                      zIndex: 100,
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "10px",
-                    }}
-                  >
-                    <div style={{ fontSize: "12px", fontWeight: 600, color: "#ffffff" }}>
-                      เลือกห้อง Discord เพื่อทดสอบ
-                    </div>
+                  <div className="absolute bottom-full right-0 mb-2 w-80 p-4 bg-[#070809] border border-white/[0.15] shadow-2xl rounded-none z-50 flex flex-col gap-3">
+                    <span className="text-xs font-mono font-semibold text-white">
+                      เลือกห้อง Discord เพื่อทดสอบส่ง
+                    </span>
                     <select
                       value={selectedTestChannel}
                       onChange={(e) => setSelectedTestChannel(e.target.value)}
-                      style={{
-                        padding: "8px 10px",
-                        borderRadius: "8px",
-                        background: "rgba(255, 255, 255, 0.06)",
-                        border: "1px solid rgba(255, 255, 255, 0.12)",
-                        color: "#ffffff",
-                        fontSize: "12px",
-                        outline: "none",
-                      }}
+                      className="w-full px-3 py-2 bg-[#000000] border border-white/[0.12] text-xs text-white rounded-none outline-none focus:border-blue-500 font-mono"
                     >
                       {channels.map((ch) => (
-                        <option key={ch.id} value={ch.id} style={{ background: "#16161c" }}>
+                        <option key={ch.id} value={ch.id} className="bg-[#070809]">
                           #{ch.name}
                         </option>
                       ))}
                     </select>
-                    <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+                    <div className="flex items-center justify-end gap-2 pt-1">
                       <button
                         type="button"
                         onClick={() => setShowTestPanel(false)}
-                        style={{
-                          padding: "6px 10px",
-                          borderRadius: "6px",
-                          background: "none",
-                          border: "none",
-                          color: "var(--text-muted)",
-                          fontSize: "11px",
-                          cursor: "pointer",
-                        }}
+                        className="px-3 py-1.5 text-xs text-neutral-400 hover:text-white font-mono"
                       >
                         ยกเลิก
                       </button>
@@ -1970,16 +1389,7 @@ export default function EmbedEditorModal({
                         type="button"
                         disabled={testingSend}
                         onClick={handleTestSend}
-                        style={{
-                          padding: "6px 12px",
-                          borderRadius: "6px",
-                          background: "var(--accent)",
-                          border: "none",
-                          color: "#ffffff",
-                          fontSize: "12px",
-                          fontWeight: 600,
-                          cursor: testingSend ? "not-allowed" : "pointer",
-                        }}
+                        className="px-4 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-mono font-medium rounded-none disabled:opacity-50"
                       >
                         {testingSend ? "กำลังส่ง..." : "ส่งทันที"}
                       </button>
@@ -1993,22 +1403,9 @@ export default function EmbedEditorModal({
                 type="button"
                 disabled={saving}
                 onClick={handleSave}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "8px 20px",
-                  borderRadius: "10px",
-                  background: "var(--accent)",
-                  border: "none",
-                  color: "#ffffff",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  cursor: saving ? "not-allowed" : "pointer",
-                  boxShadow: "0 2px 8px rgba(41, 151, 255, 0.3)",
-                }}
+                className="inline-flex items-center gap-2 px-6 py-2 bg-blue-500 hover:bg-blue-600 border border-blue-400 text-white text-xs font-mono font-semibold rounded-none shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50"
               >
-                <span>💾</span>
+                <Save className="w-3.5 h-3.5" />
                 <span>{saving ? "กำลังบันทึก..." : "บันทึกการตั้งค่า"}</span>
               </button>
             </div>
@@ -2019,91 +1416,170 @@ export default function EmbedEditorModal({
   );
 }
 
-// Sub-Component: Section Card with Toggle Switch
-function SectionCard({
+// Sub-Component: Raycast / Linear Bento Accordion Card
+function BentoSectionCard({
+  index,
   title,
   icon,
   enabled,
-  onToggle,
+  isExpanded,
+  onToggleExpand,
+  onToggleEnabled,
   children,
 }: {
+  index: string;
   title: string;
-  icon: string;
+  icon: React.ReactNode;
   enabled: boolean;
-  onToggle: (enabled: boolean) => void;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+  onToggleEnabled: (enabled: boolean) => void;
   children: React.ReactNode;
 }) {
   return (
     <div
-      style={{
-        borderRadius: "14px",
-        background: enabled ? "rgba(255, 255, 255, 0.03)" : "rgba(255, 255, 255, 0.015)",
-        border: `1px solid ${enabled ? "rgba(255, 255, 255, 0.08)" : "rgba(255, 255, 255, 0.04)"}`,
-        overflow: "hidden",
-        transition: "all 0.15s ease",
-      }}
+      className={`w-full flex-shrink-0 border rounded-none transition-colors duration-150 ${
+        enabled
+          ? "bg-[#070809] border-white/[0.12]"
+          : "bg-[#000000] border-white/[0.04] opacity-75"
+      }`}
     >
-      {/* Section Header */}
-      <div
-        style={{
-          padding: "12px 16px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          borderBottom: enabled ? "1px solid rgba(255, 255, 255, 0.06)" : "none",
-          background: enabled ? "rgba(255, 255, 255, 0.02)" : "transparent",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span>{icon}</span>
-          <span style={{ fontSize: "13px", fontWeight: 600, color: enabled ? "#ffffff" : "var(--text-disabled)" }}>
+      {/* Accordion Header */}
+      <div className="flex items-center justify-between p-3.5 sm:p-4 bg-white/[0.02] border-b border-white/[0.04]">
+        <div
+          onClick={onToggleExpand}
+          className="flex items-center gap-3 cursor-pointer select-none flex-1 min-w-0"
+        >
+          <span className="font-mono text-[10px] text-neutral-500 tracking-wider">
+            {index} //
+          </span>
+          <span className="text-neutral-400">{icon}</span>
+          <span
+            className={`text-xs sm:text-sm font-semibold truncate ${
+              enabled ? "text-white" : "text-neutral-500"
+            }`}
+          >
             {title}
           </span>
         </div>
 
-        {/* Toggle Switch */}
-        <label
-          style={{
-            position: "relative",
-            display: "inline-block",
-            width: "38px",
-            height: "22px",
-            cursor: "pointer",
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={enabled}
-            onChange={(e) => onToggle(e.target.checked)}
-            style={{ opacity: 0, width: 0, height: 0 }}
-          />
-          <span
-            style={{
-              position: "absolute",
-              inset: 0,
-              backgroundColor: enabled ? "var(--accent)" : "rgba(255, 255, 255, 0.15)",
-              borderRadius: "22px",
-              transition: "0.2s",
-            }}
-          >
-            <span
-              style={{
-                position: "absolute",
-                height: "16px",
-                width: "16px",
-                left: enabled ? "19px" : "3px",
-                bottom: "3px",
-                backgroundColor: "#ffffff",
-                borderRadius: "50%",
-                transition: "0.2s",
+        <div className="flex items-center gap-3 shrink-0 ml-3">
+          {/* Bento Sharp Switch */}
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={enabled}
+              onChange={(e) => {
+                onToggleEnabled(e.target.checked);
+                if (e.target.checked && !isExpanded) {
+                  onToggleExpand();
+                }
               }}
+              className="sr-only"
             />
-          </span>
-        </label>
+            <div
+              className={`w-10 h-5 border transition-colors duration-150 rounded-none relative ${
+                enabled
+                  ? "bg-blue-500 border-blue-400"
+                  : "bg-white/[0.06] border-white/[0.15]"
+              }`}
+            >
+              <div
+                className={`absolute top-0.5 bottom-0.5 w-3.5 bg-white rounded-none transition-transform duration-150 ${
+                  enabled ? "translate-x-5" : "translate-x-0.5"
+                }`}
+              />
+            </div>
+          </label>
+
+          {/* Chevron expand toggle */}
+          <button
+            type="button"
+            onClick={onToggleExpand}
+            className="p-1 text-neutral-400 hover:text-white transition-colors"
+            title={isExpanded ? "ยุบเนื้อหา" : "ขยายเนื้อหา"}
+          >
+            {isExpanded ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+          </button>
+        </div>
       </div>
 
-      {/* Section Content */}
-      {enabled && <div style={{ padding: "16px" }}>{children}</div>}
+      {/* Accordion Content */}
+      {isExpanded && enabled && (
+        <div className="p-4 sm:p-5 border-t border-white/[0.06] bg-[#0c0d0f]/60">
+          {children}
+        </div>
+      )}
     </div>
   );
+}
+
+// Discord Markdown & Custom Emoji Helper for Live Simulator Preview
+function formatDiscordMarkdown(text: string): React.ReactNode {
+  if (!text) return "";
+
+  // 1. System variable interpolation
+  let parsed = text;
+  parsed = parsed.replaceAll("{roles_count}", "0");
+  parsed = parsed.replaceAll("{server_name}", "753 BC");
+  parsed = parsed.replaceAll("{user}", "@สมาชิก");
+  parsed = parsed.replaceAll("{username}", "คุณ");
+  parsed = parsed.replaceAll("{balance}", "0");
+  parsed = parsed.replaceAll("{price}", "100");
+  parsed = parsed.replaceAll("{role_name}", "VIP Member");
+
+  // 2. Auto-resolve incomplete known emojis (e.g. <:70661email:> without ID)
+  parsed = parsed.replaceAll(/<:70661email:\s*>/g, "<:70661email:1561687861894447155>");
+
+  const lines = parsed.split("\n");
+  return lines.map((line, idx) => {
+    const isQuote = line.trim().startsWith(">");
+    const cleanLine = isQuote ? line.trim().replace(/^>\s*/, "") : line;
+
+    // Tokenize for bold (**text**) and custom emojis (<:name:id> or <a:name:id>)
+    const parts = cleanLine.split(/(<a?:[a-zA-Z0-9_]+:\d+>|\*\*[^*]+\*\*)/g);
+    const content = parts.map((part, pIdx) => {
+      if (part.startsWith("**") && part.endsWith("**")) {
+        return <strong key={pIdx} className="font-bold text-white">{part.slice(2, -2)}</strong>;
+      }
+
+      // Check Discord custom emoji pattern
+      const emojiMatch = part.match(/^<(a)?:([a-zA-Z0-9_]+):(\d+)>$/);
+      if (emojiMatch) {
+        const [, , emojiName, emojiId] = emojiMatch;
+        return (
+          <img
+            key={pIdx}
+            src={`https://cdn.discordapp.com/emojis/${emojiId}.webp?size=48&quality=lossless`}
+            alt={`:${emojiName}:`}
+            title={`:${emojiName}:`}
+            className="inline-block w-4 h-4 align-text-bottom mx-0.5 object-contain"
+            onError={(e) => {
+              (e.target as HTMLElement).style.display = "none";
+            }}
+          />
+        );
+      }
+
+      return part;
+    });
+
+    if (isQuote) {
+      return (
+        <div key={idx} className="border-l-4 border-neutral-600 pl-2 text-neutral-400 my-0.5">
+          {content}
+        </div>
+      );
+    }
+
+    return (
+      <div key={idx} className="min-h-[1.25em]">
+        {content}
+      </div>
+    );
+  });
 }

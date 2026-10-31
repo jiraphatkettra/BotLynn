@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { formatDateTime, formatRelativeTime, getDiscordAvatarUrl } from "@/lib/utils";
+import { Megaphone } from "lucide-react";
 
 interface AnnouncementHistoryItem {
   id: string;
@@ -124,7 +125,9 @@ export default function AnnouncementHistory() {
           </div>
         ) : history.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-state-icon">📢</div>
+            <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto mb-3">
+              <Megaphone className="w-6 h-6 text-amber-400" />
+            </div>
             <p className="empty-state-title">ยังไม่มีประวัติการส่งประกาศ</p>
             <p className="empty-state-text">
               เมื่อส่งประกาศลงห้อง Discord แล้ว ประวัติและรายละเอียดจะแสดงที่นี่

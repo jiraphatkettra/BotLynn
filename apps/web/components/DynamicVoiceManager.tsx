@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { X } from "lucide-react";
 
 interface DynamicVoiceConfig {
   id: string;
@@ -616,9 +617,9 @@ export default function DynamicVoiceManager() {
               </h4>
               <button
                 onClick={() => setModalOpen(false)}
-                style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "18px" }}
+                style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center" }}
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 

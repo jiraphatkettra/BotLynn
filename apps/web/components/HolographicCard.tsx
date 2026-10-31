@@ -51,20 +51,20 @@ export default function HolographicCard({
       className={`holographic-foil-card ${isOwner ? "owner-foil" : ""} ${className}`}
       style={{
         position: "relative",
-        borderRadius: "20px",
+        borderRadius: "0px",
         overflow: "hidden",
         transformStyle: "preserve-3d",
         transform: isHovered
-          ? `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) scale3d(1.025, 1.025, 1.025)`
+          ? `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) scale3d(1.01, 1.01, 1.01)`
           : "perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)",
         transition: isHovered
           ? "transform 0.08s ease-out, box-shadow 0.2s ease"
           : "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease",
         boxShadow: isHovered
           ? isOwner
-            ? "0 20px 40px -10px rgba(251, 191, 36, 0.35), 0 0 25px rgba(251, 191, 36, 0.2)"
-            : "0 20px 40px -10px rgba(0, 240, 255, 0.25), 0 0 20px rgba(112, 0, 255, 0.15)"
-          : "0 8px 24px rgba(0, 0, 0, 0.4)",
+            ? "0 10px 30px -10px rgba(251, 191, 36, 0.2)"
+            : "0 10px 30px -10px rgba(0, 240, 255, 0.15)"
+          : "none",
         ...style,
       }}
     >

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { getDiscordAvatarUrl } from "@/lib/utils";
 import BadgeShowcase from "./BadgeShowcase";
+import { Clock, Ticket, Calendar, Trophy, Crown, Medal } from "lucide-react";
 
 interface StaffRankItem {
   id: string;
@@ -73,17 +74,17 @@ export default function Leaderboard() {
           display: "flex",
           gap: "8px",
           marginBottom: "28px",
-          background: "rgba(255, 255, 255, 0.04)",
+          background: "#070809",
           padding: "4px",
-          borderRadius: "14px",
+          borderRadius: "0px",
           border: "1px solid rgba(255, 255, 255, 0.08)",
           width: "fit-content",
         }}
       >
         {[
-          { id: "hours", label: "⏱️ ชั่วโมงทำงานสะสม" },
-          { id: "tickets", label: "🎫 จัดการทิกเก็ต" },
-          { id: "attendance", label: "📅 กะการเข้างาน" },
+          { id: "hours", label: "ชั่วโมงทำงานสะสม", icon: <Clock className="w-3.5 h-3.5" /> },
+          { id: "tickets", label: "จัดการทิกเก็ต", icon: <Ticket className="w-3.5 h-3.5" /> },
+          { id: "attendance", label: "กะการเข้างาน", icon: <Calendar className="w-3.5 h-3.5" /> },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -91,16 +92,20 @@ export default function Leaderboard() {
             onClick={() => setActiveTab(tab.id as any)}
             style={{
               padding: "8px 18px",
-              borderRadius: "10px",
+              borderRadius: "0px",
               border: "none",
               fontSize: "13px",
               fontWeight: 600,
               cursor: "pointer",
-              background: activeTab === tab.id ? "#2997ff" : "transparent",
-              color: activeTab === tab.id ? "#ffffff" : "var(--text-secondary)",
+              background: activeTab === tab.id ? "rgba(41, 151, 255, 0.15)" : "transparent",
+              color: activeTab === tab.id ? "#2997ff" : "var(--text-secondary)",
               transition: "all 0.15s ease",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
             }}
           >
+            {tab.icon}
             {tab.label}
           </button>
         ))}
@@ -109,7 +114,9 @@ export default function Leaderboard() {
       {/* Empty State */}
       {!loading && currentList.length === 0 && (
         <div className="empty-state" style={{ margin: "40px auto" }}>
-          <div className="empty-state-icon">🏆</div>
+          <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto mb-3">
+            <Trophy className="w-6 h-6 text-amber-400" />
+          </div>
           <p className="empty-state-title">ยังไม่มีข้อมูลอันดับทีมงาน</p>
           <p className="empty-state-text">ข้อมูลจะแสดงที่นี่เมื่อมีการบันทึกเวลาทำงาน ทิกเก็ต หรือการเข้างาน</p>
         </div>
@@ -130,23 +137,26 @@ export default function Leaderboard() {
             <div
               style={{
                 padding: "24px",
-                borderRadius: "20px",
-                background: "rgba(255, 255, 255, 0.03)",
-                border: "1px solid rgba(192, 192, 192, 0.3)",
-                boxShadow: "0 10px 30px rgba(192, 192, 192, 0.1)",
+                borderRadius: "0px",
+                background: "#070809",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+                borderTop: "2px solid #c0c0c0",
+                boxShadow: "none",
                 textAlign: "center",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
               }}
             >
-              <div style={{ fontSize: "24px", marginBottom: "8px" }}>🥈</div>
+              <div className="w-8 h-8 bg-slate-300/10 border border-slate-300/30 flex items-center justify-center mb-2">
+                <Medal className="w-4 h-4 text-slate-300" />
+              </div>
               <img
                 src={getDiscordAvatarUrl(top2.discordId, top2.avatar)}
                 alt={top2.displayName}
                 loading="lazy"
                 decoding="async"
-                style={{ width: "64px", height: "64px", borderRadius: "50%", marginBottom: "12px", border: "2px solid #c0c0c0" }}
+                style={{ width: "64px", height: "64px", borderRadius: "0px", marginBottom: "12px", border: "1px solid #c0c0c0" }}
               />
               <div style={{ fontSize: "16px", fontWeight: 700, color: "#ffffff" }}>{top2.displayName}</div>
               <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "8px" }}>@{top2.username}</div>
@@ -159,24 +169,26 @@ export default function Leaderboard() {
             <div
               style={{
                 padding: "28px 24px",
-                borderRadius: "20px",
-                background: "rgba(255, 215, 0, 0.05)",
-                border: "1px solid rgba(255, 215, 0, 0.4)",
-                boxShadow: "0 14px 40px rgba(255, 215, 0, 0.15)",
+                borderRadius: "0px",
+                background: "#070809",
+                border: "1px solid rgba(255, 255, 255, 0.12)",
+                borderTop: "2px solid #ffd700",
+                boxShadow: "none",
                 textAlign: "center",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                transform: "translateY(-6px)",
               }}
             >
-              <div style={{ fontSize: "30px", marginBottom: "8px" }}>👑 🥇</div>
+              <div className="w-10 h-10 bg-amber-400/10 border border-amber-400/40 flex items-center justify-center mb-2">
+                <Crown className="w-5 h-5 text-amber-400" />
+              </div>
               <img
                 src={getDiscordAvatarUrl(top1.discordId, top1.avatar)}
                 alt={top1.displayName}
                 loading="lazy"
                 decoding="async"
-                style={{ width: "76px", height: "76px", borderRadius: "50%", marginBottom: "12px", border: "3px solid #ffd700", boxShadow: "0 0 20px rgba(255, 215, 0, 0.5)" }}
+                style={{ width: "76px", height: "76px", borderRadius: "0px", marginBottom: "12px", border: "2px solid #ffd700" }}
               />
               <div style={{ fontSize: "18px", fontWeight: 800, color: "#ffffff" }}>{top1.displayName}</div>
               <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "8px" }}>@{top1.username}</div>
@@ -189,23 +201,26 @@ export default function Leaderboard() {
             <div
               style={{
                 padding: "24px",
-                borderRadius: "20px",
-                background: "rgba(255, 255, 255, 0.03)",
-                border: "1px solid rgba(205, 127, 50, 0.3)",
-                boxShadow: "0 10px 30px rgba(205, 127, 50, 0.1)",
+                borderRadius: "0px",
+                background: "#070809",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+                borderTop: "2px solid #cd7f32",
+                boxShadow: "none",
                 textAlign: "center",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
               }}
             >
-              <div style={{ fontSize: "24px", marginBottom: "8px" }}>🥉</div>
+              <div className="w-8 h-8 bg-amber-700/10 border border-amber-700/30 flex items-center justify-center mb-2">
+                <Medal className="w-4 h-4 text-amber-600" />
+              </div>
               <img
                 src={getDiscordAvatarUrl(top3.discordId, top3.avatar)}
                 alt={top3.displayName}
                 loading="lazy"
                 decoding="async"
-                style={{ width: "64px", height: "64px", borderRadius: "50%", marginBottom: "12px", border: "2px solid #cd7f32" }}
+                style={{ width: "64px", height: "64px", borderRadius: "0px", marginBottom: "12px", border: "1px solid #cd7f32" }}
               />
               <div style={{ fontSize: "16px", fontWeight: 700, color: "#ffffff" }}>{top3.displayName}</div>
               <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "8px" }}>@{top3.username}</div>
@@ -219,9 +234,9 @@ export default function Leaderboard() {
       {rest.length > 0 && (
         <div
           style={{
-            background: "rgba(255, 255, 255, 0.02)",
+            background: "#070809",
             border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "16px",
+            borderRadius: "0px",
             overflow: "hidden",
             marginBottom: "40px",
           }}
@@ -233,6 +248,7 @@ export default function Leaderboard() {
               fontSize: "14px",
               fontWeight: 700,
               color: "#ffffff",
+              background: "#0a0c0e",
             }}
           >
             อันดับที่ 4 - 10
@@ -251,7 +267,7 @@ export default function Leaderboard() {
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                  <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--text-muted)", width: "24px" }}>
+                  <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--text-muted)", width: "24px", fontFamily: "var(--font-mono, monospace)" }}>
                     #{idx + 4}
                   </span>
                   <img
@@ -259,7 +275,7 @@ export default function Leaderboard() {
                     alt={item.displayName}
                     loading="lazy"
                     decoding="async"
-                    style={{ width: "36px", height: "36px", borderRadius: "50%" }}
+                    style={{ width: "36px", height: "36px", borderRadius: "0px", border: "1px solid rgba(255,255,255,0.08)" }}
                   />
                   <div>
                     <div style={{ fontSize: "14px", fontWeight: 600, color: "#ffffff" }}>{item.displayName}</div>
@@ -267,7 +283,7 @@ export default function Leaderboard() {
                   </div>
                 </div>
 
-                <div style={{ fontSize: "15px", fontWeight: 700, color: "#2997ff" }}>
+                <div style={{ fontSize: "14px", fontWeight: 700, color: "#2997ff", fontFamily: "var(--font-mono, monospace)" }}>
                   {getMetricValue(item)}
                 </div>
               </div>

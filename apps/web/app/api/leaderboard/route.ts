@@ -47,30 +47,30 @@ export async function GET() {
       await prisma.badge.createMany({
         data: [
           {
-            name: "🔥 ผู้รักษาเวลาดีเด่น (Streak 7)",
+            name: "ผู้รักษาเวลาดีเด่น (Streak 7)",
             description: "ตอกบัตรเข้างานต่อเนื่องครบ 7 วัน",
-            icon: "🔥",
+            icon: "flame",
             criteria: "attendance_streak_7",
             tier: "BRONZE",
           },
           {
-            name: "⚡ มือปราบเคส (10 Tickets)",
+            name: "มือปราบเคส (10 Tickets)",
             description: "ปิดทิกเก็ตและช่วยเหลือสมาชิกครบ 10 เคส",
-            icon: "⚡",
+            icon: "zap",
             criteria: "tickets_closed_10",
             tier: "SILVER",
           },
           {
-            name: "🛡️ เสาหลักคอมมูนิตี้ (50h Work)",
+            name: "เสาหลักคอมมูนิตี้ (50h Work)",
             description: "สะสมชั่วโมงการทำงานมากกว่า 50 ชั่วโมง",
-            icon: "🛡️",
+            icon: "shield",
             criteria: "hours_worked_50",
             tier: "GOLD",
           },
           {
-            name: "💎 แอดมินระดับตำนาน (Top Tier)",
+            name: "แอดมินระดับตำนาน (Top Tier)",
             description: "ได้รับคะแนนประเมินและความไว้วางใจสูงสุดจากทีมงาน",
-            icon: "💎",
+            icon: "gem",
             criteria: "admin_legendary",
             tier: "DIAMOND",
           },

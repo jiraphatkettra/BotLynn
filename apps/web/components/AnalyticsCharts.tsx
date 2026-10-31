@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { formatCurrency } from "@/lib/utils";
+import { TrendingUp, Clock, Ticket } from "lucide-react";
 
 interface DailySalesData {
   date: string;
@@ -447,7 +448,7 @@ export default function AnalyticsCharts() {
   }, [data]);
 
   return (
-    <section className="dashboard-analytics-section" style={{ width: "100%", maxWidth: "1080px", margin: "32px auto 0" }}>
+    <section className="w-full">
       {/* Section Header */}
       <div
         style={{
@@ -494,18 +495,19 @@ export default function AnalyticsCharts() {
             display: "inline-flex",
             alignItems: "center",
             gap: "8px",
-            padding: "8px 16px",
-            borderRadius: "9999px",
-            background: "rgba(255, 255, 255, 0.05)",
+            padding: "6px 14px",
+            borderRadius: "0px",
+            background: "rgba(255, 255, 255, 0.04)",
             border: "1px solid rgba(255, 255, 255, 0.12)",
             color: "#ffffff",
             fontSize: "12px",
             fontWeight: 500,
             cursor: loading ? "not-allowed" : "pointer",
-            transition: "all 0.2s ease",
+            transition: "all 0.15s ease",
+            fontFamily: "var(--font-mono, monospace)",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)")}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)")}
         >
           <svg
             width="13"
@@ -518,7 +520,7 @@ export default function AnalyticsCharts() {
           >
             <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
           </svg>
-          <span>{loading ? "กำลังโหลด..." : "อัปเดตข้อมูล"}</span>
+          <span>{loading ? "กำลังโหลด..." : "อัปเดตสถิติ"}</span>
         </button>
       </div>
 
@@ -527,7 +529,7 @@ export default function AnalyticsCharts() {
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-          gap: "20px",
+          gap: "16px",
         }}
       >
         {/* ======================================================== */}
@@ -536,12 +538,11 @@ export default function AnalyticsCharts() {
         <div
           style={{
             gridColumn: "1 / -1",
-            background: "rgba(255, 255, 255, 0.03)",
+            background: "rgba(255, 255, 255, 0.02)",
             border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "20px",
+            borderRadius: "0px",
             padding: "24px",
             position: "relative",
-            backdropFilter: "blur(12px)",
           }}
         >
           <div
@@ -556,7 +557,7 @@ export default function AnalyticsCharts() {
           >
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                <span style={{ fontSize: "16px" }}>📈</span>
+                <TrendingUp className="w-4 h-4 text-blue-400" />
                 <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#ffffff", margin: 0 }}>
                   ยอดขายยศร้านค้า 30 วันย้อนหลัง
                 </h3>
@@ -621,12 +622,11 @@ export default function AnalyticsCharts() {
         {/* ======================================================== */}
         <div
           style={{
-            background: "rgba(255, 255, 255, 0.03)",
+            background: "rgba(255, 255, 255, 0.02)",
             border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "20px",
-            padding: "24px",
+            borderRadius: "0px",
+            padding: "20px 24px",
             position: "relative",
-            backdropFilter: "blur(12px)",
           }}
         >
           <div
@@ -639,7 +639,7 @@ export default function AnalyticsCharts() {
           >
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                <span style={{ fontSize: "16px" }}>⏱️</span>
+                <Clock className="w-4 h-4 text-emerald-400" />
                 <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#ffffff", margin: 0 }}>
                   ชั่วโมงทำงานทีมงาน (7 วัน)
                 </h3>
@@ -676,10 +676,10 @@ export default function AnalyticsCharts() {
                   left: `${barTooltip.x}px`,
                   top: `${Math.max(10, barTooltip.y - 60)}px`,
                   transform: "translateX(-50%)",
-                  background: "rgba(10, 10, 14, 0.95)",
+                  background: "#070809",
                   border: "1px solid rgba(48, 209, 88, 0.4)",
                   boxShadow: "0 8px 24px rgba(0, 0, 0, 0.7)",
-                  borderRadius: "10px",
+                  borderRadius: "0px",
                   padding: "6px 12px",
                   pointerEvents: "none",
                   whiteSpace: "nowrap",
@@ -704,19 +704,18 @@ export default function AnalyticsCharts() {
         {/* ======================================================== */}
         <div
           style={{
-            background: "rgba(255, 255, 255, 0.03)",
+            background: "rgba(255, 255, 255, 0.02)",
             border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "20px",
-            padding: "24px",
+            borderRadius: "0px",
+            padding: "20px 24px",
             position: "relative",
-            backdropFilter: "blur(12px)",
             display: "flex",
             flexDirection: "column",
           }}
         >
           <div style={{ marginBottom: "16px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-              <span style={{ fontSize: "16px" }}>🎫</span>
+              <Ticket className="w-4 h-4 text-purple-400" />
               <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#ffffff", margin: 0 }}>
                 สัดส่วนสถานะทิกเก็ต
               </h3>

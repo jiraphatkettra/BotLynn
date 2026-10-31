@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { X, CheckCircle2, AlertTriangle } from "lucide-react";
 
 interface FinanceRecord {
   id: string;
@@ -283,14 +284,14 @@ export default function FinanceManager() {
       {toast && (
         <div className="apple-toast-container">
           <div className={`apple-toast ${toast.type}`}>
-            <span>{toast.type === "success" ? "✓" : "⚠"}</span>
+            <span>{toast.type === "success" ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <AlertTriangle className="w-4 h-4 text-amber-400" />}</span>
             <span>{toast.message}</span>
           </div>
         </div>
       )}
 
       {/* 1. Summary Bento Grid Cards */}
-      <div className="stats-grid" style={{ marginBottom: 24 }}>
+      <div className="stats-grid mb-24">
         {/* Income Card */}
         <div className="stat-card" style={{ borderTop: "2px solid #30d158" }}>
           <div className="stat-card-header">
@@ -299,7 +300,7 @@ export default function FinanceManager() {
               style={{
                 width: 32,
                 height: 32,
-                borderRadius: 8,
+                borderRadius: "0px",
                 background: "rgba(48, 209, 88, 0.12)",
                 display: "flex",
                 alignItems: "center",
@@ -329,7 +330,7 @@ export default function FinanceManager() {
               style={{
                 width: 32,
                 height: 32,
-                borderRadius: 8,
+                borderRadius: "0px",
                 background: "rgba(255, 69, 58, 0.12)",
                 display: "flex",
                 alignItems: "center",
@@ -359,7 +360,7 @@ export default function FinanceManager() {
               style={{
                 width: 32,
                 height: 32,
-                borderRadius: 8,
+                borderRadius: "0px",
                 background: stats.netBalance >= 0 ? "rgba(10, 132, 255, 0.12)" : "rgba(255, 159, 10, 0.12)",
                 display: "flex",
                 alignItems: "center",
@@ -368,7 +369,7 @@ export default function FinanceManager() {
               }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <rect width="20" height="14" x="2" y="5" rx="2" />
+                <rect width="20" height="14" x="2" y="5" rx="0" />
                 <line x1="2" x2="22" y1="10" y2="10" />
               </svg>
             </div>
@@ -392,7 +393,7 @@ export default function FinanceManager() {
               style={{
                 width: 32,
                 height: 32,
-                borderRadius: 8,
+                borderRadius: "0px",
                 background: "rgba(94, 92, 230, 0.12)",
                 display: "flex",
                 alignItems: "center",
@@ -773,10 +774,10 @@ export default function FinanceManager() {
                                 <button
                                   type="button"
                                   onClick={() => setDeleteConfirmId(null)}
-                                  className="btn btn-secondary btn-sm"
+                                  className="btn btn-secondary btn-sm flex items-center justify-center"
                                   style={{ padding: "2px 6px", fontSize: 11, height: 28 }}
                                 >
-                                  ✕
+                                  <X className="w-3.5 h-3.5" />
                                 </button>
                               </div>
                             ) : (
@@ -818,9 +819,9 @@ export default function FinanceManager() {
                 className="btn btn-secondary btn-sm"
                 onClick={() => setIsModalOpen(false)}
                 disabled={submitting}
-                style={{ width: 28, height: 28, padding: 0 }}
+                style={{ width: 28, height: 28, padding: 0, display: "inline-flex", alignItems: "center", justifyContent: "center" }}
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 

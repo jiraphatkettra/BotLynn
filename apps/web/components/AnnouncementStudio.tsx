@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import CustomSelect from "@/components/CustomSelect";
+import { Bell, Megaphone, Tag, X, Check, Plus } from "lucide-react";
 
 interface DiscordChannel {
   id: string;
@@ -22,7 +23,7 @@ export default function AnnouncementStudio() {
   const [roles, setRoles] = useState<DiscordRole[]>([]);
   const [loadingGuildData, setLoadingGuildData] = useState(false);
   const [selectedChannel, setSelectedChannel] = useState("");
-  const [title, setTitle] = useState("📢 ประกาศจากทีมงาน");
+  const [title, setTitle] = useState("ประกาศจากทีมงาน");
   const [description, setDescription] = useState(
     "ยินดีต้อนรับสมาชิกทุกท่านเข้าสู่เซิร์ฟเวอร์\nกรุณาอ่านกฎระเบียบและติดตามข่าวสารอัปเดตได้ที่ห้องนี้"
   );
@@ -170,17 +171,17 @@ export default function AnnouncementStudio() {
       if (res.ok) {
         setResultMsg({
           type: "success",
-          text: "✅ ส่งประกาศลงห้อง Discord เรียบร้อยแล้ว พร้อมระบบแจ้งเตือน (Mentions)!",
+          text: "ส่งประกาศลงห้อง Discord เรียบร้อยแล้ว พร้อมระบบแจ้งเตือน (Mentions)!",
         });
       } else {
         const err = await res.json();
         setResultMsg({
           type: "error",
-          text: `❌ เกิดข้อผิดพลาด: ${err.error || "ไม่สามารถส่งข้อความได้"}`,
+          text: `เกิดข้อผิดพลาด: ${err.error || "ไม่สามารถส่งข้อความได้"}`,
         });
       }
     } catch (err: any) {
-      setResultMsg({ type: "error", text: "❌ เกิดข้อผิดพลาดในการเชื่อมต่อ" });
+      setResultMsg({ type: "error", text: "เกิดข้อผิดพลาดในการเชื่อมต่อ" });
     } finally {
       setSending(false);
     }
@@ -458,7 +459,10 @@ export default function AnnouncementStudio() {
                   margin: 0,
                 }}
               >
-                <span>🔔 การแท็กแจ้งเตือน (Outer Mention Notification)</span>
+                <span className="flex items-center gap-1.5">
+                  <Bell className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                  <span>การแท็กแจ้งเตือน (Outer Mention Notification)</span>
+                </span>
               </label>
 
               {hasAnyMentions && (
@@ -542,7 +546,8 @@ export default function AnnouncementStudio() {
                   transition: "all 0.15s ease",
                 }}
               >
-                <span>📢</span> @everyone
+                <Megaphone className="w-3.5 h-3.5" />
+                <span>@everyone</span>
               </button>
 
               <button
@@ -570,7 +575,8 @@ export default function AnnouncementStudio() {
                   transition: "all 0.15s ease",
                 }}
               >
-                <span>🟢</span> @here
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span>@here</span>
               </button>
 
               <button
@@ -602,7 +608,8 @@ export default function AnnouncementStudio() {
                   transition: "all 0.15s ease",
                 }}
               >
-                <span>🏷️</span> ยศ Discord {selectedRoles.length > 0 && `(${selectedRoles.length})`}
+                <Tag className="w-3.5 h-3.5" />
+                <span>ยศ Discord {selectedRoles.length > 0 && `(${selectedRoles.length})`}</span>
               </button>
             </div>
 
@@ -656,11 +663,10 @@ export default function AnnouncementStudio() {
                           color: roleColor,
                           cursor: "pointer",
                           padding: 0,
-                          fontSize: "12px",
                           lineHeight: 1,
                         }}
                       >
-                        ✕
+                        <X className="w-3 h-3" />
                       </button>
                     </span>
                   );
@@ -766,7 +772,7 @@ export default function AnnouncementStudio() {
                             }}
                           />
                           @{role.name}
-                          {isSelected && <span style={{ color: roleColor, marginLeft: "2px" }}>✓</span>}
+                          {isSelected && <Check className="w-3.5 h-3.5 inline ml-1" style={{ color: roleColor }} />}
                         </button>
                       );
                     })
@@ -820,11 +826,10 @@ export default function AnnouncementStudio() {
                       background: "none",
                       border: "none",
                       color: "#86868b",
-                      fontSize: "12px",
                       cursor: "pointer",
                     }}
                   >
-                    ✕
+                    <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
               )}
@@ -963,7 +968,8 @@ export default function AnnouncementStudio() {
                 }}
                 title="แทรกยศ Discord ลงในเนื้อหา"
               >
-                <span>+ 🏷️ ยศ...</span>
+                <Tag className="w-3 h-3" />
+                <span>+ ยศ...</span>
                 <span>▾</span>
               </button>
 

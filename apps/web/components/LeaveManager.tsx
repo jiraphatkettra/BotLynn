@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { formatDate, getDiscordAvatarUrl } from "@/lib/utils";
+import { X } from "lucide-react";
 
 interface LeaveItem {
   id: string;
@@ -218,9 +219,9 @@ export default function LeaveManager() {
           alignItems: "center",
           flexWrap: "wrap",
           gap: "12px",
-          background: "#080808",
-          border: "1px solid rgba(255,255,255,0.07)",
-          borderRadius: "12px",
+          background: "#070809",
+          border: "1px solid rgba(255,255,255,0.08)",
+          borderRadius: "0px",
         }}
       >
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -235,7 +236,7 @@ export default function LeaveManager() {
               onClick={() => setStatusFilter(tab.id)}
               style={{
                 padding: "8px 14px",
-                borderRadius: "8px",
+                borderRadius: "0px",
                 fontSize: "13px",
                 fontWeight: 500,
                 border: "1px solid",
@@ -373,7 +374,7 @@ export default function LeaveManager() {
                         <span
                           style={{
                             padding: "4px 8px",
-                            borderRadius: "6px",
+                            borderRadius: "0px",
                             fontSize: "11px",
                             fontWeight: 600,
                             background: typeBadge.bg,
@@ -401,7 +402,7 @@ export default function LeaveManager() {
                           <span
                             style={{
                               padding: "4px 8px",
-                              borderRadius: "6px",
+                              borderRadius: "0px",
                               fontSize: "11px",
                               fontWeight: 600,
                               background: "rgba(255,149,0,0.12)",
@@ -416,7 +417,7 @@ export default function LeaveManager() {
                           <span
                             style={{
                               padding: "4px 8px",
-                              borderRadius: "6px",
+                              borderRadius: "0px",
                               fontSize: "11px",
                               fontWeight: 600,
                               background: "rgba(52,199,89,0.12)",
@@ -431,7 +432,7 @@ export default function LeaveManager() {
                           <span
                             style={{
                               padding: "4px 8px",
-                              borderRadius: "6px",
+                              borderRadius: "0px",
                               fontSize: "11px",
                               fontWeight: 500,
                               background: "rgba(255,59,48,0.12)",
@@ -457,7 +458,7 @@ export default function LeaveManager() {
                               style={{
                                 padding: "4px 10px",
                                 fontSize: "12px",
-                                borderRadius: "6px",
+                                borderRadius: "0px",
                                 background: "#34c759",
                                 color: "#000000",
                                 fontWeight: 600,
@@ -473,7 +474,7 @@ export default function LeaveManager() {
                               style={{
                                 padding: "4px 10px",
                                 fontSize: "12px",
-                                borderRadius: "6px",
+                                borderRadius: "0px",
                                 background: "rgba(255,59,48,0.1)",
                                 color: "#ff453a",
                                 border: "1px solid rgba(255,59,48,0.2)",
@@ -514,9 +515,9 @@ export default function LeaveManager() {
         >
           <div
             style={{
-              background: "#0c0c0c",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: "16px",
+              background: "#070809",
+              border: "1px solid rgba(255,255,255,0.12)",
+              borderRadius: "0px",
               width: "100%",
               maxWidth: "460px",
               padding: "24px",
@@ -532,9 +533,9 @@ export default function LeaveManager() {
               </h3>
               <button
                 onClick={() => setIsSubmitModalOpen(false)}
-                style={{ background: "transparent", border: "none", color: "#86868b", cursor: "pointer" }}
+                style={{ background: "transparent", border: "none", color: "#86868b", cursor: "pointer", display: "inline-flex", alignItems: "center" }}
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -549,17 +550,17 @@ export default function LeaveManager() {
                   style={{
                     width: "100%",
                     padding: "8px 12px",
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    borderRadius: "8px",
+                    background: "#000000",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    borderRadius: "0px",
                     color: "#ffffff",
                     fontSize: "13px",
                   }}
                 >
-                  <option value="SICK">🤒 ลาป่วย (Sick Leave)</option>
-                  <option value="PERSONAL">💼 ลากิจ (Personal Leave)</option>
-                  <option value="VACATION">🏖️ ลาพักร้อน (Vacation)</option>
-                  <option value="OTHER">📝 อื่นๆ (Other)</option>
+                  <option value="SICK">ลาป่วย (Sick Leave)</option>
+                  <option value="PERSONAL">ลากิจ (Personal Leave)</option>
+                  <option value="VACATION">ลาพักร้อน (Vacation)</option>
+                  <option value="OTHER">อื่นๆ (Other)</option>
                 </select>
               </div>
 
@@ -575,9 +576,9 @@ export default function LeaveManager() {
                     style={{
                       width: "100%",
                       padding: "8px 10px",
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      borderRadius: "8px",
+                      background: "#000000",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      borderRadius: "0px",
                       color: "#ffffff",
                       fontSize: "13px",
                     }}
@@ -597,9 +598,9 @@ export default function LeaveManager() {
                     style={{
                       width: "100%",
                       padding: "8px 10px",
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      borderRadius: "8px",
+                      background: "#000000",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      borderRadius: "0px",
                       color: "#ffffff",
                       fontSize: "13px",
                     }}
@@ -619,9 +620,9 @@ export default function LeaveManager() {
                   style={{
                     width: "100%",
                     padding: "8px 12px",
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    borderRadius: "8px",
+                    background: "#000000",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    borderRadius: "0px",
                     color: "#ffffff",
                     fontSize: "13px",
                     resize: "vertical",

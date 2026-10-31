@@ -4,6 +4,20 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { formatDate, formatCurrency, getDiscordAvatarUrl } from "@/lib/utils";
 import { triggerCelebration } from "@/lib/confetti";
+import {
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Zap,
+  Cloud,
+  Landmark,
+  Ticket,
+  Scan,
+  X,
+  AlertTriangle,
+  ArrowRight,
+  ArrowUpRight,
+} from "lucide-react";
 
 interface Slip {
   id: string;
@@ -276,10 +290,10 @@ export default function SlipManager() {
         }
         await fetchSlips();
       } else if (data.rejected) {
-        alert(`❌ สลิปถูกปฏิเสธ: ${data.message}`);
+        alert(`สลิปถูกปฏิเสธ: ${data.message}`);
         await fetchSlips();
       } else {
-        alert(`⚠️ ผลการตรวจสแกน: ${data.message || "ไม่สามารถอนุมัติอัตโนมัติได้ ต้องให้แอดมินตรวจด้วยตนเอง"}`);
+        alert(`ผลการตรวจสแกน: ${data.message || "ไม่สามารถอนุมัติอัตโนมัติได้ ต้องให้แอดมินตรวจด้วยตนเอง"}`);
         await fetchSlips();
       }
     } catch (err: any) {
@@ -395,21 +409,21 @@ export default function SlipManager() {
               onClick={() => handleTabChange("PENDING")}
               style={activeTab === "PENDING" ? { background: "#ff9f0a", color: "#000" } : undefined}
             >
-              ⏳ รอตรวจสอบ ({stats.pending})
+              <Clock className="w-3.5 h-3.5 inline mr-1 text-amber-400" /> รอตรวจสอบ ({stats.pending})
             </button>
             <button
               type="button"
               className={`apple-segmented-item ${activeTab === "APPROVED" ? "active" : ""}`}
               onClick={() => handleTabChange("APPROVED")}
             >
-              ✓ อนุมัติแล้ว ({stats.approved})
+              <CheckCircle2 className="w-3.5 h-3.5 inline mr-1 text-emerald-400" /> อนุมัติแล้ว ({stats.approved})
             </button>
             <button
               type="button"
               className={`apple-segmented-item ${activeTab === "REJECTED" ? "active" : ""}`}
               onClick={() => handleTabChange("REJECTED")}
             >
-              ✕ ปฏิเสธ ({stats.rejected})
+              <XCircle className="w-3.5 h-3.5 inline mr-1 text-rose-400" /> ปฏิเสธ ({stats.rejected})
             </button>
           </div>
 
@@ -511,7 +525,7 @@ export default function SlipManager() {
                           style={{
                             width: "72px",
                             height: "72px",
-                            borderRadius: "10px",
+                            borderRadius: "0px",
                             overflow: "hidden",
                             background: "rgba(0,0,0,0.4)",
                             border: "1px solid rgba(255,255,255,0.1)",
@@ -615,8 +629,9 @@ export default function SlipManager() {
                               </div>
                             )}
                             {slip.senderBank && (
-                              <div style={{ fontSize: "10px", color: "var(--accent)", marginTop: 1 }}>
-                                🏦 {slip.senderBank}
+                              <div style={{ fontSize: "10px", color: "var(--accent)", marginTop: 1 }} className="flex items-center gap-1">
+                                <Landmark className="w-3 h-3 text-sky-400 shrink-0" />
+                                <span>{slip.senderBank}</span>
                               </div>
                             )}
                           </div>
@@ -628,19 +643,22 @@ export default function SlipManager() {
                       {/* Origin / Ticket */}
                       <td>
                         {slip.ticketId ? (
-                          <span className="badge" style={{ background: "rgba(255,255,255,0.06)", color: "#fff" }}>
-                            🎫 #{slip.ticketId}
+                          <span className="badge flex items-center gap-1" style={{ background: "rgba(255,255,255,0.06)", color: "#fff" }}>
+                            <Ticket className="w-3 h-3 text-neutral-400 shrink-0" />
+                            <span>#{slip.ticketId}</span>
                           </span>
                         ) : (
                           <span style={{ color: "var(--text-muted)", fontSize: "12px" }}>ส่งตรง</span>
                         )}
                         {slip.r2Key ? (
-                          <div style={{ fontSize: "10px", color: "#30d158", marginTop: "3px" }}>
-                            ☁️ Cloudflare R2
+                          <div style={{ fontSize: "10px", color: "#30d158", marginTop: "3px" }} className="flex items-center gap-1">
+                            <Cloud className="w-3 h-3 text-emerald-400 shrink-0" />
+                            <span>Cloudflare R2</span>
                           </div>
                         ) : (
-                          <div style={{ fontSize: "10px", color: "#ff9f0a", marginTop: "3px" }} title="ภาพถูกบันทึกผ่านลิงก์ Discord ชั่วคราว">
-                            ⚡ Discord Link
+                          <div style={{ fontSize: "10px", color: "#ff9f0a", marginTop: "3px" }} className="flex items-center gap-1" title="ภาพถูกบันทึกผ่านลิงก์ Discord ชั่วคราว">
+                            <Zap className="w-3 h-3 text-amber-400 shrink-0" />
+                            <span>Discord Link</span>
                           </div>
                         )}
                       </td>
@@ -669,7 +687,7 @@ export default function SlipManager() {
                                 fontSize: "10px",
                                 fontWeight: 700,
                                 padding: "2px 6px",
-                                borderRadius: 4,
+                                borderRadius: "0px",
                                 background: "rgba(48, 209, 88, 0.15)",
                                 color: "#30d158",
                                 border: "1px solid rgba(48, 209, 88, 0.3)",
@@ -678,7 +696,7 @@ export default function SlipManager() {
                                 gap: 3,
                               }}
                             >
-                              ⚡ AUTO-VERIFIED
+                              <Zap className="w-3 h-3 text-emerald-400 shrink-0" /> AUTO-VERIFIED
                             </span>
                           )}
                         </div>
@@ -731,7 +749,7 @@ export default function SlipManager() {
                                 onClick={() => handleVerifyWithAPI(slip)}
                                 title="สแกนและตรวจสอบด้วย SlipOK / EasySlip API"
                               >
-                                {verifyingId === slip.id ? "⏳ กำลังสแกน..." : "⚡ สแกน AI"}
+                                {verifyingId === slip.id ? "กำลังสแกน..." : "สแกน AI"}
                               </button>
                               <button
                                 className="btn btn-primary btn-sm"
@@ -817,9 +835,9 @@ export default function SlipManager() {
         >
           <div
             style={{
-              background: "#16161c",
+              background: "#070809",
               border: "1px solid rgba(255,255,255,0.12)",
-              borderRadius: "20px",
+              borderRadius: "0px",
               width: "100%",
               maxWidth: "800px",
               maxHeight: "92vh",
@@ -838,50 +856,35 @@ export default function SlipManager() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
+                background: "#070809",
               }}
             >
               <div>
-                <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "600", color: "#fff" }}>
+                <h3 style={{ margin: 0, fontSize: "15px", fontWeight: "600", color: "#fff" }}>
                   ภาพสลิปโอนเงิน • #{previewSlip.id.slice(-6).toUpperCase()}
                 </h3>
-                <p style={{ margin: "4px 0 0", fontSize: "12px", color: "var(--text-muted)" }}>
-                  ผู้ส่ง: {previewSlip.discordName} ({previewSlip.discordId}) • {formatDate(previewSlip.createdAt)}
+                <p style={{ margin: "4px 0 0", fontSize: "11px", color: "var(--text-muted)", fontFamily: "var(--font-mono, monospace)" }}>
+                  USER: {previewSlip.discordName} ({previewSlip.discordId}) • {formatDate(previewSlip.createdAt)}
                 </p>
               </div>
 
               <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  style={{
-                    background: isLaserScanning ? "rgba(0, 240, 255, 0.15)" : "rgba(255, 255, 255, 0.05)",
-                    borderColor: isLaserScanning ? "rgba(0, 240, 255, 0.45)" : "rgba(255, 255, 255, 0.12)",
-                    color: isLaserScanning ? "#00f0ff" : "rgba(255, 255, 255, 0.7)",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    boxShadow: isLaserScanning ? "0 0 12px rgba(0, 240, 255, 0.25)" : "none",
-                  }}
-                  onClick={() => setIsLaserScanning(!isLaserScanning)}
-                >
-                  <span style={{ fontSize: "12px" }}>🛰️</span>
-                  <span>{isLaserScanning ? "ปิดเลเซอร์สแกน" : "เปิดเลเซอร์สแกน"}</span>
-                </button>
-
                 <a
                   href={previewSlip.imageUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="btn btn-secondary btn-sm"
-                  style={{ textDecoration: "none" }}
+                  className="btn btn-secondary btn-sm flex items-center gap-1.5"
+                  style={{ textDecoration: "none", borderRadius: "0px" }}
                 >
-                  เปิดภาพต้นฉบับ ↗
+                  <span>เปิดภาพต้นฉบับ</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
                 </a>
                 <button
-                  className="btn btn-secondary btn-sm"
+                  className="btn btn-secondary btn-sm flex items-center justify-center p-1.5"
+                  style={{ borderRadius: "0px" }}
                   onClick={() => setPreviewSlip(null)}
                 >
-                  ✕
+                  <X className="w-4 h-4 text-neutral-400" />
                 </button>
               </div>
             </div>
@@ -900,7 +903,7 @@ export default function SlipManager() {
             >
               {imageErrors[previewSlip.id] ? (
                 <div style={{ textAlign: "center", padding: "40px 20px", color: "var(--text-muted)", maxWidth: 500 }}>
-                  <div style={{ fontSize: "44px", marginBottom: "16px" }}>⚠️</div>
+                  <AlertTriangle className="w-10 h-10 mx-auto text-amber-400 mb-4" />
                   <h4 style={{ color: "#fff", fontSize: "17px", fontWeight: 600, marginBottom: "8px" }}>
                     ไฟล์ภาพสลิปหมดอายุหรือถูกลบจาก Discord
                   </h4>
@@ -911,7 +914,7 @@ export default function SlipManager() {
                     style={{
                       background: "rgba(255,255,255,0.04)",
                       border: "1px solid rgba(255,255,255,0.08)",
-                      borderRadius: "12px",
+                      borderRadius: "0px",
                       padding: "16px",
                       textAlign: "left",
                       fontSize: "12px",
@@ -957,39 +960,11 @@ export default function SlipManager() {
                       maxWidth: "100%",
                       maxHeight: "65vh",
                       objectFit: "contain",
-                      borderRadius: "12px",
+                      borderRadius: "0px",
                       boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
                       display: "block",
                     }}
                   />
-
-                  {/* Laser Scanning Beam */}
-                  {isLaserScanning && (
-                    <>
-                      <div className="slip-laser-scanner" />
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: "10px",
-                          right: "10px",
-                          background: "rgba(10, 15, 25, 0.85)",
-                          border: "1px solid rgba(0, 240, 255, 0.45)",
-                          borderRadius: "6px",
-                          padding: "4px 8px",
-                          fontSize: "10px",
-                          fontWeight: 600,
-                          color: "#00f0ff",
-                          fontFamily: "var(--font-mono, monospace)",
-                          letterSpacing: "0.06em",
-                          boxShadow: "0 0 10px rgba(0, 240, 255, 0.3)",
-                          pointerEvents: "none",
-                          zIndex: 11,
-                        }}
-                      >
-                        AI SCANNING // OCR ACTIVE
-                      </div>
-                    </>
-                  )}
                 </div>
               )}
             </div>
@@ -1002,7 +977,7 @@ export default function SlipManager() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                background: "#1c1c24",
+                background: "#070809",
               }}
             >
               <div>
@@ -1029,13 +1004,13 @@ export default function SlipManager() {
                         fontSize: "11px",
                         fontWeight: 700,
                         padding: "2px 8px",
-                        borderRadius: 4,
+                        borderRadius: "0px",
                         background: "rgba(48, 209, 88, 0.15)",
                         color: "#30d158",
                         border: "1px solid rgba(48, 209, 88, 0.3)",
                       }}
                     >
-                      ⚡ AUTO-VERIFIED
+                      <Zap className="w-3 h-3 inline mr-1 text-emerald-400" /> AUTO-VERIFIED
                     </span>
                   )}
 
@@ -1047,8 +1022,10 @@ export default function SlipManager() {
                 </div>
 
                 {previewSlip.senderName && (
-                  <div style={{ fontSize: "11px", color: "var(--text-secondary)", marginTop: "4px" }}>
-                    ผู้โอน: {previewSlip.senderName} ({previewSlip.senderBank || "-"}) ➔ ผู้รับ: {previewSlip.receiverName || "-"} ({previewSlip.receiverBank || "-"})
+                  <div style={{ fontSize: "11px", color: "var(--text-secondary)", marginTop: "4px", display: "flex", alignItems: "center", gap: 4 }}>
+                    <span>ผู้โอน: {previewSlip.senderName} ({previewSlip.senderBank || "-"})</span>
+                    <ArrowRight className="w-3 h-3 text-neutral-400 shrink-0" />
+                    <span>ผู้รับ: {previewSlip.receiverName || "-"} ({previewSlip.receiverBank || "-"})</span>
                   </div>
                 )}
 
@@ -1073,20 +1050,22 @@ export default function SlipManager() {
                     onClick={() => handleVerifyWithAPI(previewSlip)}
                     title="สแกนผ่าน SlipOK / EasySlip API"
                   >
-                    {verifyingId === previewSlip.id ? "⏳ กำลังสแกน..." : "⚡ สแกนด้วย AI/API"}
+                    {verifyingId === previewSlip.id ? "กำลังสแกน..." : "สแกนด้วย AI/API"}
                   </button>
                   <button
-                    className="btn btn-primary"
+                    className="btn btn-primary flex items-center gap-1.5"
                     style={{ background: "#30d158", borderColor: "#30d158", color: "#000" }}
                     onClick={() => handleOpenApprove(previewSlip)}
                   >
-                    ✅ อนุมัติ & เติมเงิน
+                    <CheckCircle2 className="w-4 h-4 text-black" />
+                    <span>อนุมัติ & เติมเงิน</span>
                   </button>
                   <button
-                    className="btn btn-danger"
+                    className="btn btn-danger flex items-center gap-1.5"
                     onClick={() => handleOpenReject(previewSlip)}
                   >
-                    ❌ ปฏิเสธสลิป
+                    <XCircle className="w-4 h-4" />
+                    <span>ปฏิเสธสลิป</span>
                   </button>
                 </div>
               )}
@@ -1098,12 +1077,15 @@ export default function SlipManager() {
       {/* ======================================================== */}
       {/* 5. Approve Dialog Modal                                  */}
       {/* ======================================================== */}
+      {/* ======================================================== */}
+      {/* 5. Approve Dialog Modal                                  */}
+      {/* ======================================================== */}
       {approvingSlip && (
         <div
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0,0,0,0.8)",
+            background: "rgba(0,0,0,0.85)",
             backdropFilter: "blur(8px)",
             zIndex: 10000,
             display: "flex",
@@ -1115,28 +1097,32 @@ export default function SlipManager() {
         >
           <div
             style={{
-              background: "#16161c",
-              border: "1px solid rgba(48, 209, 88, 0.3)",
-              borderRadius: "16px",
+              background: "#070809",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              borderRadius: "0px",
               width: "100%",
               maxWidth: "460px",
-              boxShadow: "0 24px 48px rgba(0,0,0,0.6)",
+              boxShadow: "0 24px 48px rgba(0,0,0,0.8)",
               overflow: "hidden",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ padding: "20px 24px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-              <h3 style={{ margin: 0, fontSize: "17px", fontWeight: "600", color: "#30d158" }}>
-                ✅ อนุมัติสลิปโอนเงิน & ปรับยอดเงินเข้ากระเป๋า
+            <div style={{ padding: "20px 24px", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "#0a0c0e" }}>
+              <div style={{ fontSize: "10px", fontFamily: "var(--font-mono, monospace)", color: "#30d158", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>
+                [TX_ACTION // APPROVE_CREDIT]
+              </div>
+              <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "600", color: "#ffffff" }} className="flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                <span>อนุมัติสลิปโอนเงิน & ปรับยอดเงิน</span>
               </h3>
-              <p style={{ margin: "4px 0 0", fontSize: "12px", color: "var(--text-muted)" }}>
-                สลิปของ: {approvingSlip.discordName} ({approvingSlip.discordId})
+              <p style={{ margin: "6px 0 0", fontSize: "12px", color: "var(--text-muted)" }}>
+                สลิปของ: <span style={{ color: "var(--text-primary)" }}>{approvingSlip.discordName}</span> ({approvingSlip.discordId})
               </p>
             </div>
 
             <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "16px" }}>
               <div>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: 500, marginBottom: "6px" }}>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: 500, color: "var(--text-secondary)", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.04em" }}>
                   จำนวนเงินที่ต้องการเติมเข้ากระเป๋า (THB) <span style={{ color: "#ff453a" }}>*</span>
                 </label>
                 <input
@@ -1145,12 +1131,12 @@ export default function SlipManager() {
                   placeholder="เช่น 100, 300, 500"
                   value={approveAmount}
                   onChange={(e) => setApproveAmount(e.target.value)}
-                  style={{ width: "100%", fontSize: "15px", fontWeight: 600 }}
+                  style={{ width: "100%", fontSize: "15px", fontWeight: 600, borderRadius: "0px", background: "#000000", border: "1px solid rgba(255,255,255,0.12)", color: "#ffffff", padding: "10px 14px" }}
                   min="1"
                   step="0.01"
                   autoFocus
                 />
-                {/* Apple Quick Amount Preset Pills */}
+                {/* Blueprint Quick Amount Presets */}
                 <div style={{ display: "flex", gap: "6px", marginTop: "8px", flexWrap: "wrap" }}>
                   {[50, 100, 200, 300, 500, 1000].map((amt) => (
                     <button
@@ -1158,13 +1144,14 @@ export default function SlipManager() {
                       type="button"
                       onClick={() => setApproveAmount(String(amt))}
                       style={{
-                        padding: "4px 10px",
-                        borderRadius: "var(--radius-pill)",
-                        background: approveAmount === String(amt) ? "rgba(48, 209, 88, 0.2)" : "rgba(255, 255, 255, 0.05)",
-                        border: `1px solid ${approveAmount === String(amt) ? "rgba(48, 209, 88, 0.5)" : "rgba(255, 255, 255, 0.08)"}`,
+                        padding: "5px 10px",
+                        borderRadius: "0px",
+                        background: approveAmount === String(amt) ? "rgba(48, 209, 88, 0.15)" : "rgba(255, 255, 255, 0.03)",
+                        border: `1px solid ${approveAmount === String(amt) ? "#30d158" : "rgba(255, 255, 255, 0.08)"}`,
                         color: approveAmount === String(amt) ? "#30d158" : "var(--text-secondary)",
                         fontSize: "12px",
                         fontWeight: 500,
+                        fontFamily: "var(--font-mono, monospace)",
                         cursor: "pointer",
                         transition: "all 0.15s ease",
                       }}
@@ -1176,7 +1163,7 @@ export default function SlipManager() {
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: 500, marginBottom: "6px" }}>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: 500, color: "var(--text-secondary)", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.04em" }}>
                   หมายเหตุเพิ่มเติม (ถ้ามี)
                 </label>
                 <input
@@ -1185,15 +1172,15 @@ export default function SlipManager() {
                   placeholder="เช่น ตรวจสอบยอดเงินเรียบร้อยผ่าน PromptPay"
                   value={approveNote}
                   onChange={(e) => setApproveNote(e.target.value)}
-                  style={{ width: "100%" }}
+                  style={{ width: "100%", borderRadius: "0px", background: "#000000", border: "1px solid rgba(255,255,255,0.12)", color: "#ffffff", padding: "10px 14px", fontSize: "13px" }}
                 />
               </div>
 
               <div
                 style={{
-                  background: "rgba(48, 209, 88, 0.08)",
-                  border: "1px solid rgba(48, 209, 88, 0.2)",
-                  borderRadius: "10px",
+                  background: "rgba(48, 209, 88, 0.05)",
+                  border: "1px solid rgba(48, 209, 88, 0.18)",
+                  borderRadius: "0px",
                   padding: "12px 14px",
                   fontSize: "12px",
                   color: "#30d158",
@@ -1211,12 +1198,13 @@ export default function SlipManager() {
                 display: "flex",
                 justifyContent: "flex-end",
                 gap: "10px",
-                background: "#1c1c24",
+                background: "#030405",
               }}
             >
               <button
                 type="button"
                 className="btn btn-secondary"
+                style={{ borderRadius: "0px" }}
                 disabled={submitting}
                 onClick={() => setApprovingSlip(null)}
               >
@@ -1225,7 +1213,7 @@ export default function SlipManager() {
               <button
                 type="button"
                 className="btn btn-primary"
-                style={{ background: "#30d158", borderColor: "#30d158", color: "#000", fontWeight: 600 }}
+                style={{ background: "#30d158", borderColor: "#30d158", color: "#000", fontWeight: 600, borderRadius: "0px" }}
                 disabled={submitting}
                 onClick={handleConfirmApprove}
               >
@@ -1244,7 +1232,7 @@ export default function SlipManager() {
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0,0,0,0.8)",
+            background: "rgba(0,0,0,0.85)",
             backdropFilter: "blur(8px)",
             zIndex: 10000,
             display: "flex",
@@ -1256,28 +1244,32 @@ export default function SlipManager() {
         >
           <div
             style={{
-              background: "#16161c",
+              background: "#070809",
               border: "1px solid rgba(255, 69, 58, 0.3)",
-              borderRadius: "16px",
+              borderRadius: "0px",
               width: "100%",
               maxWidth: "460px",
-              boxShadow: "0 24px 48px rgba(0,0,0,0.6)",
+              boxShadow: "0 24px 48px rgba(0,0,0,0.8)",
               overflow: "hidden",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ padding: "20px 24px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-              <h3 style={{ margin: 0, fontSize: "17px", fontWeight: "600", color: "#ff453a" }}>
-                ❌ ปฏิเสธสลิปโอนเงิน
+            <div style={{ padding: "20px 24px", borderBottom: "1px solid rgba(255,255,255,0.08)", background: "#0a0c0e" }}>
+              <div style={{ fontSize: "10px", fontFamily: "var(--font-mono, monospace)", color: "#ff453a", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>
+                [TX_ACTION // REJECT_SLIP]
+              </div>
+              <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "600", color: "#ffffff" }} className="flex items-center gap-2">
+                <XCircle className="w-5 h-5 text-rose-500 shrink-0" />
+                <span>ปฏิเสธสลิปโอนเงิน</span>
               </h3>
-              <p style={{ margin: "4px 0 0", fontSize: "12px", color: "var(--text-muted)" }}>
-                สลิปของ: {rejectingSlip.discordName} ({rejectingSlip.discordId})
+              <p style={{ margin: "6px 0 0", fontSize: "12px", color: "var(--text-muted)" }}>
+                สลิปของ: <span style={{ color: "var(--text-primary)" }}>{rejectingSlip.discordName}</span> ({rejectingSlip.discordId})
               </p>
             </div>
 
             <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "16px" }}>
               <div>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: 500, marginBottom: "6px" }}>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: 500, color: "var(--text-secondary)", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.04em" }}>
                   ระบุสาเหตุที่ปฏิเสธสลิป <span style={{ color: "#ff453a" }}>*</span>
                 </label>
                 <textarea
@@ -1285,10 +1277,10 @@ export default function SlipManager() {
                   placeholder="เช่น ไม่พบยอดโอนเงินจริงในบัญชี, สลิปซ้ำซ้อน, ยอดเงินไม่ถูกต้อง"
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
-                  style={{ width: "100%", minHeight: "80px", fontSize: "13px", resize: "vertical" }}
+                  style={{ width: "100%", minHeight: "80px", fontSize: "13px", resize: "vertical", borderRadius: "0px", background: "#000000", border: "1px solid rgba(255,255,255,0.12)", color: "#ffffff", padding: "10px 14px" }}
                   autoFocus
                 />
-                {/* Quick Reject Presets */}
+                {/* Blueprint Quick Reject Presets */}
                 <div style={{ display: "flex", gap: "6px", marginTop: "8px", flexWrap: "wrap" }}>
                   {[
                     "ไม่พบยอดโอนเงินจริงในบัญชี",
@@ -1303,15 +1295,15 @@ export default function SlipManager() {
                       type="button"
                       onClick={() => setRejectReason(preset)}
                       style={{
-                        padding: "4px 8px",
-                        borderRadius: "var(--radius-pill)",
+                        padding: "5px 8px",
+                        borderRadius: "0px",
                         background:
                           rejectReason === preset
-                            ? "rgba(255, 69, 58, 0.25)"
-                            : "rgba(255, 255, 255, 0.05)",
+                            ? "rgba(255, 69, 58, 0.2)"
+                            : "rgba(255, 255, 255, 0.03)",
                         border: `1px solid ${
                           rejectReason === preset
-                            ? "rgba(255, 69, 58, 0.6)"
+                            ? "#ff453a"
                             : "rgba(255, 255, 255, 0.08)"
                         }`,
                         color:
@@ -1331,9 +1323,9 @@ export default function SlipManager() {
 
               <div
                 style={{
-                  background: "rgba(255, 69, 58, 0.08)",
-                  border: "1px solid rgba(255, 69, 58, 0.2)",
-                  borderRadius: "10px",
+                  background: "rgba(255, 69, 58, 0.05)",
+                  border: "1px solid rgba(255, 69, 58, 0.18)",
+                  borderRadius: "0px",
                   padding: "12px 14px",
                   fontSize: "12px",
                   color: "#ff453a",
@@ -1351,12 +1343,13 @@ export default function SlipManager() {
                 display: "flex",
                 justifyContent: "flex-end",
                 gap: "10px",
-                background: "#1c1c24",
+                background: "#030405",
               }}
             >
               <button
                 type="button"
                 className="btn btn-secondary"
+                style={{ borderRadius: "0px" }}
                 disabled={submitting}
                 onClick={() => setRejectingSlip(null)}
               >
@@ -1365,6 +1358,7 @@ export default function SlipManager() {
               <button
                 type="button"
                 className="btn btn-danger"
+                style={{ borderRadius: "0px" }}
                 disabled={submitting}
                 onClick={handleConfirmReject}
               >
@@ -1375,59 +1369,54 @@ export default function SlipManager() {
         </div>
       )}
 
-      {/* Holographic Approval Celebration Popup */}
+      {/* Approval Notification Banner */}
       {showApprovalCelebration && (
         <div
           style={{
             position: "fixed",
-            bottom: "32px",
-            right: "32px",
-            background: "linear-gradient(135deg, rgba(14, 20, 32, 0.96), rgba(8, 12, 22, 0.96))",
-            border: "1px solid rgba(0, 240, 255, 0.45)",
-            borderRadius: "18px",
-            padding: "16px 22px",
-            boxShadow: "0 24px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(0, 240, 255, 0.3)",
-            backdropFilter: "blur(24px)",
+            bottom: "24px",
+            right: "24px",
+            background: "#070809",
+            border: "1px solid rgba(48, 209, 88, 0.4)",
+            borderRadius: "0px",
+            padding: "16px 20px",
+            boxShadow: "0 16px 36px rgba(0, 0, 0, 0.8)",
             zIndex: 99999,
             display: "flex",
             alignItems: "center",
-            gap: "16px",
-            animation: "delayedSkeletonFade 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+            gap: "14px",
           }}
         >
           <div
             style={{
-              width: "44px",
-              height: "44px",
-              borderRadius: "12px",
+              width: "36px",
+              height: "36px",
+              borderRadius: "0px",
               background: "rgba(48, 209, 88, 0.15)",
-              border: "1.5px solid rgba(48, 209, 88, 0.45)",
+              border: "1px solid rgba(48, 209, 88, 0.4)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#30d158",
-              fontSize: "22px",
-              boxShadow: "0 0 16px rgba(48, 209, 88, 0.3)",
             }}
           >
-            ✓
+            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
           </div>
           <div>
             <div
               style={{
-                fontSize: "11px",
+                fontSize: "10px",
                 fontWeight: 700,
-                color: "#00F0FF",
-                letterSpacing: "0.06em",
+                color: "#30d158",
+                letterSpacing: "0.08em",
                 fontFamily: "var(--font-mono, monospace)",
               }}
             >
-              TRANSACTION VERIFIED // SLIP APPROVED
+              [SYSTEM // APPROVED]
             </div>
-            <div style={{ fontSize: "14.5px", fontWeight: 600, color: "#ffffff", marginTop: "2px" }}>
+            <div style={{ fontSize: "13.5px", fontWeight: 600, color: "#ffffff", marginTop: "2px" }}>
               อนุมัติยอด ฿{formatCurrency(showApprovalCelebration.amount)} สำเร็จ
             </div>
-            <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.5)" }}>
+            <div style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.5)" }}>
               สมาชิก: {showApprovalCelebration.user}
             </div>
           </div>

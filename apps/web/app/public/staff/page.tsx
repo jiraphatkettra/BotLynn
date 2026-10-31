@@ -119,9 +119,13 @@ export default async function PublicStaffPage() {
                     style={{
                       fontSize: "11px",
                       color: isOnDuty ? "#30d158" : "var(--text-muted)",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "5px",
                     }}
                   >
-                    {isOnDuty ? "🟢 ปฏิบัติหน้าที่อยู่" : "⚪ ออฟไลน์"}
+                    <span className={`w-1.5 h-1.5 rounded-full ${isOnDuty ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" : "bg-neutral-600"}`} />
+                    {isOnDuty ? "ปฏิบัติหน้าที่อยู่" : "ออฟไลน์"}
                   </span>
                 </div>
               </div>

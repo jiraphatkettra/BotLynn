@@ -47,11 +47,19 @@ import {
 import { handleGiveawayJoin } from "../commands/giveaway.js";
 import { handlePollVote } from "../commands/poll.js";
 
+import { handleFandayRouter } from "../services/panels/index.js";
+
 export async function handleInteraction(
   interaction: Interaction,
   commands: Collection<string, BotCommand>
 ) {
   try {
+    // 0. Route Fanday Activities Interactions
+    if ("customId" in interaction && typeof (interaction as any).customId === "string" && (interaction as any).customId.startsWith("fd_")) {
+      await handleFandayRouter(interaction);
+      return;
+    }
+
     // 1. Handle Button Interactions
     if (interaction.isButton()) {
       const btn = interaction as ButtonInteraction;

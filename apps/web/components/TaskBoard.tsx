@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { User, Calendar, AlertTriangle, Zap, CheckCircle2, Trash2, ClipboardList, Plus, X } from "lucide-react";
 
 interface TaskItem {
   id: string;
@@ -220,22 +221,26 @@ export default function TaskBoard() {
         >
           <div>
             {task.assignee ? (
-              <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>
-                👤 {task.assignee.username}
+              <span style={{ color: "var(--text-primary)", fontWeight: 500 }} className="flex items-center gap-1 text-[12px]">
+                <User className="w-3 h-3 text-sky-400 shrink-0" />
+                <span>{task.assignee.username}</span>
               </span>
             ) : (
-              <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>
-                ⚪ ยังไม่มอบหมาย
+              <span style={{ color: "var(--text-muted)", fontStyle: "italic", fontSize: "11px" }}>
+                ยังไม่มอบหมาย
               </span>
             )}
           </div>
           {task.dueDate && (
-            <div style={{ color: isOverdue ? "var(--accent-danger)" : "var(--text-muted)" }}>
-              {isOverdue ? "⚠️ เลยกำหนด " : "📅 "}
-              {new Date(task.dueDate).toLocaleDateString("th-TH", {
-                day: "numeric",
-                month: "short",
-              })}
+            <div style={{ color: isOverdue ? "var(--accent-danger)" : "var(--text-muted)", fontSize: "11px" }} className="flex items-center gap-1">
+              {isOverdue ? <AlertTriangle className="w-3 h-3 text-rose-400 shrink-0" /> : <Calendar className="w-3 h-3 text-neutral-400 shrink-0" />}
+              <span>
+                {isOverdue ? "เลยกำหนด " : ""}
+                {new Date(task.dueDate).toLocaleDateString("th-TH", {
+                  day: "numeric",
+                  month: "short",
+                })}
+              </span>
             </div>
           )}
         </div>
@@ -282,7 +287,7 @@ export default function TaskBoard() {
                   cursor: "pointer",
                 }}
               >
-                ⚡ กำลังทำ
+                กำลังทำ
               </button>
             )}
             {task.status !== "DONE" && (
@@ -299,7 +304,7 @@ export default function TaskBoard() {
                   cursor: "pointer",
                 }}
               >
-                ✓ เสร็จสิ้น
+                เสร็จสิ้น
               </button>
             )}
           </div>
@@ -312,10 +317,9 @@ export default function TaskBoard() {
               color: "var(--text-muted)",
               cursor: "pointer",
               padding: "0.2rem",
-              fontSize: "0.8rem",
             }}
           >
-            🗑️
+            <Trash2 className="w-3.5 h-3.5 text-neutral-400 hover:text-rose-400 transition-colors" />
           </button>
         </div>
       </div>
@@ -335,8 +339,9 @@ export default function TaskBoard() {
         }}
       >
         <div>
-          <h2 style={{ margin: 0, fontSize: "1.5rem", fontWeight: 700, color: "var(--text-primary)" }}>
-            📋 กระดานติดตามงาน (Task Kanban)
+          <h2 style={{ margin: 0, fontSize: "1.5rem", fontWeight: 700, color: "var(--text-primary)" }} className="flex items-center gap-2">
+            <ClipboardList className="w-6 h-6 text-sky-400" />
+            <span>กระดานติดตามงาน (Task Kanban)</span>
           </h2>
           <p style={{ margin: "0.25rem 0 0", fontSize: "0.875rem", color: "var(--text-secondary)" }}>
             มอบหมายและจัดการสถานะงานของทีมงาน LynnBot
@@ -358,10 +363,10 @@ export default function TaskBoard() {
             }}
           >
             <option value="ALL">ทุกระดับความสำคัญ</option>
-            <option value="LOW">🟢 ต่ำ</option>
-            <option value="MEDIUM">🔵 ปานกลาง</option>
-            <option value="HIGH">🟠 สูง</option>
-            <option value="URGENT">🔴 เร่งด่วน</option>
+            <option value="LOW">ต่ำ (Low)</option>
+            <option value="MEDIUM">ปานกลาง (Medium)</option>
+            <option value="HIGH">สูง (High)</option>
+            <option value="URGENT">เร่งด่วน (Urgent)</option>
           </select>
 
           {/* Filter Assignee */}
@@ -402,7 +407,8 @@ export default function TaskBoard() {
               gap: "0.4rem",
             }}
           >
-            <span>➕</span> เพิ่มงานใหม่
+            <Plus className="w-4 h-4" />
+            <span>เพิ่มงานใหม่</span>
           </button>
         </div>
       </div>
@@ -444,7 +450,7 @@ export default function TaskBoard() {
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <span style={{ fontSize: "1rem" }}>⚪</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-neutral-400" />
                 <span style={{ fontWeight: 600, fontSize: "0.95rem", color: "var(--text-primary)" }}>
                   รอดำเนินการ (To-Do)
                 </span>
@@ -465,7 +471,7 @@ export default function TaskBoard() {
               {todoTasks.map(renderTaskCard)}
               {todoTasks.length === 0 && (
                 <div className="empty-state" style={{ padding: "2rem 1rem" }}>
-                  <div className="empty-state-icon" style={{ fontSize: "24px" }}>📋</div>
+                  <ClipboardList className="w-7 h-7 mx-auto text-neutral-500 mb-2" />
                   <p className="empty-state-title" style={{ fontSize: "13px" }}>ไม่มีงานรอดำเนินการ</p>
                   <p className="empty-state-text" style={{ fontSize: "11px" }}>กดปุ่มสร้างงานใหม่เพื่อเพิ่มงาน</p>
                 </div>
@@ -496,7 +502,7 @@ export default function TaskBoard() {
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <span style={{ fontSize: "1rem" }}>🟡</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-sky-400 animate-pulse" />
                 <span style={{ fontWeight: 600, fontSize: "0.95rem", color: "var(--accent-blue)" }}>
                   กำลังดำเนินการ (In Progress)
                 </span>
@@ -517,7 +523,7 @@ export default function TaskBoard() {
               {inProgressTasks.map(renderTaskCard)}
               {inProgressTasks.length === 0 && (
                 <div className="empty-state" style={{ padding: "2rem 1rem" }}>
-                  <div className="empty-state-icon" style={{ fontSize: "24px" }}>⚡</div>
+                  <Zap className="w-7 h-7 mx-auto text-sky-400 mb-2" />
                   <p className="empty-state-title" style={{ fontSize: "13px" }}>ไม่มีงานกำลังทำ</p>
                   <p className="empty-state-text" style={{ fontSize: "11px" }}>ย้ายงานจากรอดำเนินการมาที่นี่</p>
                 </div>
@@ -548,7 +554,7 @@ export default function TaskBoard() {
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <span style={{ fontSize: "1rem" }}>✅</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
                 <span style={{ fontWeight: 600, fontSize: "0.95rem", color: "var(--accent-success)" }}>
                   เสร็จสิ้น (Done)
                 </span>
@@ -569,7 +575,7 @@ export default function TaskBoard() {
               {doneTasks.map(renderTaskCard)}
               {doneTasks.length === 0 && (
                 <div className="empty-state" style={{ padding: "2rem 1rem" }}>
-                  <div className="empty-state-icon" style={{ fontSize: "24px" }}>✅</div>
+                  <CheckCircle2 className="w-7 h-7 mx-auto text-emerald-400 mb-2" />
                   <p className="empty-state-title" style={{ fontSize: "13px" }}>ยังไม่มีงานที่เสร็จสิ้น</p>
                   <p className="empty-state-text" style={{ fontSize: "11px" }}>งานที่เสร็จแล้วจะมาแสดงที่นี่</p>
                 </div>
@@ -611,14 +617,16 @@ export default function TaskBoard() {
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: "var(--text-primary)" }}>
-                ➕ เพิ่มงานใหม่
+              <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)" }} className="flex items-center gap-2">
+                <Plus className="w-4 h-4 text-sky-400" />
+                <span>เพิ่มงานใหม่</span>
               </h3>
               <button
                 onClick={() => setShowAddModal(false)}
-                style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "1.2rem" }}
+                style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
+                className="p-1 hover:text-white transition-colors"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -711,10 +719,10 @@ export default function TaskBoard() {
                       fontSize: "0.85rem",
                     }}
                   >
-                    <option value="LOW">🟢 ต่ำ</option>
-                    <option value="MEDIUM">🔵 ปานกลาง</option>
-                    <option value="HIGH">🟠 สูง</option>
-                    <option value="URGENT">🔴 เร่งด่วน</option>
+                    <option value="LOW">ต่ำ (Low)</option>
+                    <option value="MEDIUM">ปานกลาง (Medium)</option>
+                    <option value="HIGH">สูง (High)</option>
+                    <option value="URGENT">เร่งด่วน (Urgent)</option>
                   </select>
                 </div>
               </div>

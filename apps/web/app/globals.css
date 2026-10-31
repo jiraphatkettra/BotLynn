@@ -1,27 +1,68 @@
-@import url("https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* ============================================================================
-   Apple Pro Minimalist Dark Design System
-   Inspired by Apple.com dark mode, VisionOS, and modern bento grid aesthetics
-   Clean, spacious, breathable, uncluttered
-   ============================================================================ */
+/* Circuit Trace Animations */
+@keyframes circuitFromLeft {
+  0% { transform: scaleX(0); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: scaleX(1); opacity: 1; }
+}
+
+@keyframes circuitFromRight {
+  0% { transform: scaleX(0); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: scaleX(1); opacity: 1; }
+}
+
+@keyframes circuitFromTop {
+  0% { transform: scaleY(0); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: scaleY(1); opacity: 1; }
+}
+
+@keyframes circuitFromBottom {
+  0% { transform: scaleY(0); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: scaleY(1); opacity: 1; }
+}
+
+.circuit-left {
+  transform-origin: left;
+  animation: circuitFromLeft 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.circuit-right {
+  transform-origin: right;
+  animation: circuitFromRight 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.circuit-top {
+  transform-origin: top;
+  animation: circuitFromTop 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.circuit-bottom {
+  transform-origin: bottom;
+  animation: circuitFromBottom 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 
 :root {
   color-scheme: dark;
 
-  /* Colors - Apple Pro Dark Aesthetic */
+  /* Colors - Blueprint Dark Minimalist Aesthetic */
   --bg-primary: #000000;
-  --bg-secondary: #08080a;
-  --bg-tertiary: #101014;
-  --bg-elevated: #16161c;
-  --bg-card: rgba(255, 255, 255, 0.03);
-  --bg-card-hover: rgba(255, 255, 255, 0.055);
+  --bg-secondary: #070809;
+  --bg-tertiary: #0c0d0f;
+  --bg-elevated: #0e1012;
+  --bg-card: #070809;
+  --bg-card-hover: #0c0e11;
 
   /* Fallback aliases */
-  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-bg: #070809;
   --glass-border: rgba(255, 255, 255, 0.08);
 
-  /* Borders - Balanced Specular Hairlines */
+  /* Borders - Hairline Precision */
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-default: rgba(255, 255, 255, 0.12);
   --border-hover: rgba(255, 255, 255, 0.22);
@@ -32,7 +73,7 @@
   --text-muted: #86868b;
   --text-disabled: #545458;
 
-  /* Accents - Apple Colorway */
+  /* Accents */
   --accent: #2997ff;
   --accent-hover: #0077ed;
   --accent-subtle: rgba(41, 151, 255, 0.12);
@@ -51,14 +92,14 @@
   --primary-400: #8b5cf6;
   --primary-500: #7c3aed;
 
-  /* Layout Constants */
+  /* Layout Constants - Blueprint Bento Sharp (0px Radius) */
   --sidebar-width: 250px;
   --header-height: 64px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-pill: 9999px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-pill: 0px;
   --font-sans: "Prompt", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
@@ -182,8 +223,8 @@ button, input, select, textarea, optgroup, option {
 
 .page-content {
   flex: 1;
-  padding: 36px 32px 96px;
-  max-width: 1400px;
+  padding: 32px 24px 80px;
+  max-width: 80rem;
   width: 100%;
   margin: 0 auto;
   min-width: 0;
@@ -483,10 +524,10 @@ button, input, select, textarea, optgroup, option {
    PAGE HEADER (Spacious, Minimalist Sub-Header)
    ============================================================================ */
 .page-header-container {
-  max-width: 1400px;
+  max-width: 80rem;
   width: 100%;
   margin: 0 auto;
-  padding: 32px 32px 0;
+  padding: 24px 24px 0;
 }
 
 .page-header {
@@ -573,9 +614,9 @@ button, input, select, textarea, optgroup, option {
 }
 
 .apple-navbar-container {
-  max-width: 1400px;
+  max-width: 80rem;
   margin: 0 auto;
-  padding: 0 32px;
+  padding: 0 24px;
   height: 100%;
   display: flex;
   align-items: center;
@@ -614,7 +655,7 @@ button, input, select, textarea, optgroup, option {
   font-size: 10px;
   font-weight: 600;
   padding: 1px 6px;
-  border-radius: 4px;
+  border-radius: 0px;
   background: rgba(10, 132, 255, 0.15);
   border: 1px solid rgba(10, 132, 255, 0.3);
   color: #2997ff;
@@ -668,7 +709,7 @@ button, input, select, textarea, optgroup, option {
   font-size: 10px;
   font-weight: 700;
   padding: 1px 6px;
-  border-radius: 10px;
+  border-radius: 0px;
   line-height: 1.2;
 }
 
@@ -681,11 +722,11 @@ button, input, select, textarea, optgroup, option {
   top: calc(100% + 8px);
   left: 0;
   min-width: 260px;
-  background: rgba(14, 14, 18, 0.96);
+  background: #070809;
   backdrop-filter: blur(32px) saturate(190%);
   -webkit-backdrop-filter: blur(32px) saturate(190%);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 18px;
+  border-radius: 0px;
   padding: 8px;
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05);
   display: flex;
@@ -737,7 +778,7 @@ button, input, select, textarea, optgroup, option {
   align-items: center;
   gap: 12px;
   padding: 9px 12px;
-  border-radius: 12px;
+  border-radius: 0px;
   text-decoration: none;
   color: rgba(255, 255, 255, 0.8);
   transition: all 0.15s ease;
@@ -765,7 +806,7 @@ button, input, select, textarea, optgroup, option {
 .apple-dropdown-item-icon {
   width: 32px;
   height: 32px;
-  border-radius: 9px;
+  border-radius: 0px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
@@ -854,7 +895,7 @@ button, input, select, textarea, optgroup, option {
   font-size: 10px;
   font-weight: 600;
   padding: 1px 5px;
-  border-radius: 4px;
+  border-radius: 0px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.7);
@@ -962,7 +1003,7 @@ button, input, select, textarea, optgroup, option {
   font-size: 10px;
   font-weight: 600;
   padding: 1px 6px;
-  border-radius: 4px;
+  border-radius: 0px;
   background: rgba(255, 255, 255, 0.08);
   color: rgba(255, 255, 255, 0.7);
   letter-spacing: 0.02em;
@@ -982,11 +1023,11 @@ button, input, select, textarea, optgroup, option {
   top: calc(100% + 8px);
   right: 0;
   min-width: 260px;
-  background: rgba(16, 16, 20, 0.95);
+  background: #070809;
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 18px;
+  border-radius: 0px;
   padding: 12px;
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.06);
   z-index: 1010;
@@ -1044,7 +1085,7 @@ button, input, select, textarea, optgroup, option {
   align-items: center;
   gap: 10px;
   padding: 9px 12px;
-  border-radius: 10px;
+  border-radius: 0px;
   font-size: 13px;
   color: rgba(255, 255, 255, 0.75);
   text-decoration: none;
@@ -1076,7 +1117,7 @@ button, input, select, textarea, optgroup, option {
   color: #ffffff;
   padding: 6px;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 0px;
 }
 
 .apple-mobile-menu-btn:hover {
@@ -1182,7 +1223,7 @@ button, input, select, textarea, optgroup, option {
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border-radius: 12px;
+  border-radius: 0px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.07);
   color: rgba(255, 255, 255, 0.8);
@@ -1224,12 +1265,10 @@ button, input, select, textarea, optgroup, option {
    ============================================================================ */
 .card {
   background: var(--bg-card);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  border-radius: 0px;
+  box-shadow: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
   position: relative;
 }
 
@@ -1286,13 +1325,13 @@ button, input, select, textarea, optgroup, option {
 .stat-card {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
+  border-radius: 0px;
   padding: 20px 24px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  transition: all 0.2s ease;
+  box-shadow: none;
+  transition: all 0.15s ease;
 }
 
 .stat-card:hover {
@@ -2476,7 +2515,7 @@ button, a, input, select, textarea {
     width: 100% !important;
     max-width: 100% !important;
     max-height: 90vh !important;
-    border-radius: 24px 24px 0 0 !important;
+    border-radius: 0 !important;
     padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
     animation: appleSheetSlideUp 0.26s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
@@ -2562,7 +2601,7 @@ button, a, input, select, textarea {
   min-width: 20px;
   height: 20px;
   padding: 0 6px;
-  border-radius: 10px;
+  border-radius: 0px;
   font-size: 11px;
   font-weight: 700;
   font-family: var(--font-mono, monospace);
@@ -2696,11 +2735,11 @@ button, a, input, select, textarea {
   z-index: 900;
   width: calc(100% - 48px);
   max-width: 760px;
-  background: rgba(20, 20, 26, 0.9);
+  background: #070809;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 16px;
+  border-radius: 0px;
   padding: 14px 20px;
   display: flex;
   align-items: center;
@@ -2846,7 +2885,7 @@ button, a, input, select, textarea {
   justify-content: center;
   width: 34px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: 0px;
   background: transparent;
   border: none;
   color: #86868b;
@@ -2957,9 +2996,9 @@ button, a, input, select, textarea {
 
 /* Apple Glass Lightbox / Dialog */
 .apple-glass-dialog {
-  background: rgba(18, 18, 22, 0.92);
+  background: #070809;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 24px;
+  border-radius: 0px;
   box-shadow: 0 32px 72px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
@@ -2999,13 +3038,13 @@ button, a, input, select, textarea {
   );
   background-size: 200% 100%;
   animation: appleShimmer 1.6s ease-in-out infinite;
-  border-radius: 8px;
+  border-radius: 0px;
 }
 
 .skeleton-card {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 20px;
+  border-radius: 0px;
   padding: 24px;
   position: relative;
   overflow: hidden;
@@ -3013,7 +3052,7 @@ button, a, input, select, textarea {
 
 .skeleton-bar {
   height: 14px;
-  border-radius: 6px;
+  border-radius: 0px;
   background: linear-gradient(
     90deg,
     rgba(255, 255, 255, 0.04) 0%,
@@ -3274,7 +3313,7 @@ button, a, input, select, textarea {
     backdrop-filter: blur(28px) saturate(180%);
     -webkit-backdrop-filter: blur(28px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 26px;
+    border-radius: 0px;
     padding: 6px 8px;
     box-shadow: 0 12px 36px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.05);
     max-width: 480px;
@@ -3296,7 +3335,7 @@ button, a, input, select, textarea {
     color: rgba(255, 255, 255, 0.5);
     text-decoration: none;
     cursor: pointer;
-    border-radius: 16px;
+    border-radius: 0px;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     -webkit-tap-highlight-color: transparent;
   }
@@ -3642,7 +3681,7 @@ button, a, input, select, textarea {
 .dashboard-hero-metric-inner {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
+  border-radius: 0px;
   padding: 22px 16px;
   display: flex;
   flex-direction: column;
@@ -3711,7 +3750,7 @@ button, a, input, select, textarea {
   .dashboard-hero-metric-card,
   .dashboard-hero-metric-inner {
     padding: 10px 4px !important;
-    border-radius: 14px !important;
+    border-radius: 0px !important;
     min-width: 0 !important;
   }
   .dashboard-hero-metric-val {
@@ -3734,7 +3773,7 @@ button, a, input, select, textarea {
 .dashboard-audience-card {
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 24px;
+  border-radius: 0px;
   padding: 44px 48px;
   box-shadow: 0 20px 48px -12px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(24px);
@@ -3743,7 +3782,7 @@ button, a, input, select, textarea {
 @media (max-width: 640px) {
   .dashboard-audience-card {
     padding: 20px 16px !important;
-    border-radius: 18px !important;
+    border-radius: 0px !important;
   }
 }
 
@@ -3756,7 +3795,7 @@ button, a, input, select, textarea {
 .dashboard-capability-card {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 20px;
+  border-radius: 0px;
   padding: 28px;
   display: flex;
   flex-direction: column;
@@ -3772,7 +3811,7 @@ button, a, input, select, textarea {
   }
   .dashboard-capability-card {
     padding: 18px 16px !important;
-    border-radius: 16px !important;
+    border-radius: 0px !important;
   }
 }
 
@@ -3788,7 +3827,7 @@ button, a, input, select, textarea {
 .dashboard-activity-card {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 20px;
+  border-radius: 0px;
   padding: 24px;
 }
 
@@ -3800,7 +3839,7 @@ button, a, input, select, textarea {
   }
   .dashboard-activity-card {
     padding: 16px 14px !important;
-    border-radius: 16px !important;
+    border-radius: 0px !important;
   }
 }
 
@@ -3858,7 +3897,7 @@ button, a, input, select, textarea {
 .public-brand-logo {
   width: 38px;
   height: 38px;
-  border-radius: 12px;
+  border-radius: 0px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
   display: flex;
@@ -3936,7 +3975,7 @@ button, a, input, select, textarea {
   align-items: center;
   gap: 6px;
   padding: 7px 12px;
-  border-radius: 10px;
+  border-radius: 0px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: rgba(255, 255, 255, 0.8);
@@ -3966,7 +4005,7 @@ button, a, input, select, textarea {
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  border-radius: 10px;
+  border-radius: 0px;
   background: rgba(10, 132, 255, 0.12);
   border: 1px solid rgba(10, 132, 255, 0.35);
   color: #2997ff;
@@ -4028,7 +4067,7 @@ button, a, input, select, textarea {
   font-size: 10px;
   font-weight: 700;
   padding: 2px 6px;
-  border-radius: 6px;
+  border-radius: 0px;
   background: rgba(255, 255, 255, 0.08);
   color: rgba(255, 255, 255, 0.7);
 }
@@ -4038,7 +4077,7 @@ button, a, input, select, textarea {
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  border-radius: 10px;
+  border-radius: 0px;
   background: linear-gradient(135deg, #0a84ff 0%, #0066cc 100%);
   color: #ffffff;
   font-size: 13px;
@@ -4069,8 +4108,8 @@ button, a, input, select, textarea {
 .public-rules-hero {
   margin-bottom: 28px;
   padding: 32px;
-  border-radius: 24px;
-  background: linear-gradient(145deg, rgba(20, 20, 28, 0.7) 0%, rgba(10, 10, 15, 0.85) 100%);
+  border-radius: 0px;
+  background: #070809;
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(20px);
@@ -4102,7 +4141,7 @@ button, a, input, select, textarea {
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  border-radius: 8px;
+  border-radius: 0px;
   background: rgba(10, 132, 255, 0.12);
   border: 1px solid rgba(10, 132, 255, 0.25);
   color: #2997ff;
@@ -4156,7 +4195,7 @@ button, a, input, select, textarea {
 .public-notice-banner {
   margin-top: 24px;
   padding: 16px 20px;
-  border-radius: 16px;
+  border-radius: 0px;
   background: rgba(10, 132, 255, 0.06);
   border: 1px solid rgba(10, 132, 255, 0.2);
   display: flex;
@@ -4167,7 +4206,7 @@ button, a, input, select, textarea {
 .public-notice-icon {
   width: 32px;
   height: 32px;
-  border-radius: 10px;
+  border-radius: 0px;
   background: rgba(10, 132, 255, 0.15);
   display: flex;
   align-items: center;
@@ -4271,7 +4310,7 @@ button, a, input, select, textarea {
   }
   .public-rules-hero {
     padding: 20px 16px;
-    border-radius: 18px;
+    border-radius: 0px;
     margin-bottom: 20px;
   }
   .public-hero-title {
@@ -4423,7 +4462,7 @@ button, a, input, select, textarea {
   }
 
   .page-content {
-    padding: 1rem 0.75rem calc(96px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 1.5rem 1rem calc(48px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   .modal-overlay {
@@ -4432,7 +4471,7 @@ button, a, input, select, textarea {
   }
 
   .modal-card {
-    border-radius: 24px 24px 0 0 !important;
+    border-radius: 0 !important;
     max-height: 85vh !important;
     animation: appleSheetSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }

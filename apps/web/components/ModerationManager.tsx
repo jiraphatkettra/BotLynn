@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { formatRelativeTime } from "@/lib/utils";
 import EmbedEditorModal from "@/components/EmbedEditorModal";
+import { CheckCircle2, AlertTriangle, Megaphone, Palette, X } from "lucide-react";
 
 interface WarningItem {
   id: string;
@@ -306,7 +307,7 @@ export default function ModerationManager() {
       {toast && (
         <div className="apple-toast-container">
           <div className={`apple-toast ${toast.type}`}>
-            <span>{toast.type === "success" ? "✓" : "⚠"}</span>
+            <span>{toast.type === "success" ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <AlertTriangle className="w-4 h-4 text-amber-400" />}</span>
             <span>{toast.message}</span>
           </div>
         </div>
@@ -413,7 +414,7 @@ export default function ModerationManager() {
             }}
             title="กำหนดห้องสำหรับให้บอทประกาศเตือนสมาชิกในเซิร์ฟเวอร์"
           >
-            <span>📢</span>
+            <Megaphone className="w-4 h-4 text-amber-400" />
             <span>
               {notifyChannelId
                 ? `ห้องประกาศ: #${channels.find((c) => c.id === notifyChannelId)?.name || notifyChannelId}`
@@ -441,7 +442,7 @@ export default function ModerationManager() {
             }}
             title="ตั้งค่าข้อความ Embed การตักเตือน, ใบเตือนสมาชิก และบันทึก Log ลงโทษใน Discord"
           >
-            <span>🎨</span>
+            <Palette className="w-4 h-4 text-blue-400" />
             <span>ตั้งค่า Embed ใบเตือน</span>
           </button>
 
@@ -520,8 +521,9 @@ export default function ModerationManager() {
                       <div style={{ fontSize: "10px", color: "var(--text-muted)" }}>{formatRelativeTime(w.createdAt)}</div>
                     </td>
                     <td style={{ padding: "12px 16px", textAlign: "center" }}>
-                      <span style={{ fontSize: "11px", fontWeight: 600, color: w.isActive ? "#30d158" : "var(--text-muted)" }}>
-                        {w.isActive ? "🔴 กำลังมีผล" : "⚪ ยกเลิกแล้ว"}
+                      <span style={{ fontSize: "11px", fontWeight: 600, color: w.isActive ? "#ff453a" : "var(--text-muted)", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${w.isActive ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]" : "bg-neutral-500"}`} />
+                        {w.isActive ? "กำลังมีผล" : "ยกเลิกแล้ว"}
                       </span>
                     </td>
                     <td style={{ padding: "12px 16px", textAlign: "right" }}>
@@ -627,7 +629,7 @@ export default function ModerationManager() {
                   justifyContent: "center",
                 }}
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -1053,8 +1055,9 @@ export default function ModerationManager() {
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
               <div>
-                <h3 style={{ margin: "0 0 4px", fontSize: "16px", fontWeight: 700, color: "#ffffff" }}>
-                  📢 ห้องประกาศเตือนสมาชิกใน Discord
+                <h3 style={{ margin: "0 0 4px", fontSize: "16px", fontWeight: 700, color: "#ffffff", display: "flex", alignItems: "center", gap: 8 }}>
+                  <Megaphone className="w-4 h-4 text-amber-400" />
+                  ห้องประกาศเตือนสมาชิกใน Discord
                 </h3>
                 <p style={{ margin: 0, fontSize: "12px", color: "var(--text-secondary)" }}>
                   เลือกห้องที่ต้องการให้บอทส่งการ์ดประกาศเมื่อมีการเตือนหรือลงโทษ
@@ -1077,7 +1080,7 @@ export default function ModerationManager() {
                   justifyContent: "center",
                 }}
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 

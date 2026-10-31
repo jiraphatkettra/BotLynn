@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { formatCurrency } from "@/lib/utils";
 import EmbedEditorModal from "@/components/EmbedEditorModal";
+import { Check, X, Palette, Settings, Copy, CheckCircle2, XCircle } from "lucide-react";
 
 interface ShopRoleItem {
   id: string;
@@ -246,7 +247,7 @@ export default function ShopManager({
     if (!isSuperAdmin || roles.length === 0) return;
     if (
       !confirm(
-        `⚠️ คำเตือน: คุณต้องการลบยศทั้งหมด (${roles.length} ยศ) ออกจากร้านค้าใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้`
+        `คำเตือน: คุณต้องการลบยศทั้งหมด (${roles.length} ยศ) ออกจากร้านค้าใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้`
       )
     )
       return;
@@ -607,7 +608,7 @@ export default function ShopManager({
                           padding: 2,
                         }}
                       >
-                        ✕
+                        <X className="w-3.5 h-3.5" />
                       </button>
                     )}
 
@@ -684,7 +685,7 @@ export default function ShopManager({
                         }}
                       >
                         <span>— ปิดการแจ้งเตือน (ไม่ส่งข้อความ) —</span>
-                        {!notifyChannel && <span style={{ color: "var(--accent)" }}>✓</span>}
+                        {!notifyChannel && <Check className="w-4 h-4 text-emerald-400" />}
                       </div>
 
                       {filteredChannels.length === 0 ? (
@@ -749,7 +750,7 @@ export default function ShopManager({
                                 >
                                   ID: {ch.id.slice(0, 8)}...
                                 </span>
-                                {isSelected && <span style={{ color: "var(--accent)" }}>✓</span>}
+                                {isSelected && <Check className="w-4 h-4 text-emerald-400" />}
                               </div>
                             </div>
                           );
@@ -805,7 +806,7 @@ export default function ShopManager({
                   }`,
                 }}
               >
-                <span>{testNotifyResult.ok ? "✓" : "✕"}</span>
+                <span>{testNotifyResult.ok ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <XCircle className="w-4 h-4 text-rose-500" />}</span>
                 <span>{testNotifyResult.msg}</span>
               </div>
             )}
@@ -904,7 +905,7 @@ export default function ShopManager({
                 }}
                 title="ตั้งค่าข้อความ Embed ร้านค้าใน Discord (แผงร้านค้า, ใบเสร็จ, แจ้งเตือนเงินไม่พอ ฯลฯ)"
               >
-                <span>🎨</span>
+                <Palette className="w-3.5 h-3.5 text-blue-400" />
                 <span>ตั้งค่า Embed ร้านค้า</span>
               </button>
             )}
@@ -1045,7 +1046,7 @@ export default function ShopManager({
                           }}
                           title="คลิกเพื่อคัดลอก ID"
                         >
-                          ID: {role.discordRoleId.slice(0, 10)}... {copiedId === role.discordRoleId ? "✓" : "📋"}
+                          ID: {role.discordRoleId.slice(0, 10)}... {copiedId === role.discordRoleId ? <Check className="w-3 h-3 text-emerald-400 inline" /> : <Copy className="w-3 h-3 inline" />}
                         </span>
                         <span>•</span>
                         <span>ขายแล้ว {role._count?.transactions || 0} ครั้ง</span>
@@ -1068,7 +1069,8 @@ export default function ShopManager({
                           style={{ flex: 1, fontSize: 12 }}
                           onClick={() => handleOpenEditModal(role)}
                         >
-                          ⚙️ แก้ไขราคา
+                          <Settings className="w-3.5 h-3.5 mr-1 inline" />
+                          แก้ไขราคา
                         </button>
                         <button
                           type="button"
@@ -1158,11 +1160,11 @@ export default function ShopManager({
                   : "เลือกยศจาก Discord Server มาเปิดขาย"}
               </h3>
               <button
-                className="btn-ghost"
+                className="btn-ghost flex items-center justify-center"
                 onClick={() => setIsSelectRoleModalOpen(false)}
                 style={{ cursor: "pointer" }}
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -1207,9 +1209,11 @@ export default function ShopManager({
                         border: "none",
                         color: "rgba(255,255,255,0.4)",
                         cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
                       }}
                     >
-                      ✕
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
@@ -1277,8 +1281,8 @@ export default function ShopManager({
                               อยู่ในร้านแล้ว
                             </span>
                           ) : (
-                            <span style={{ fontSize: 12, color: "var(--accent)" }}>
-                              เลือกยศนี้ →
+                            <span style={{ fontSize: 12, color: "var(--accent)", fontWeight: 500 }}>
+                              เลือกยศนี้
                             </span>
                           )}
                         </div>
@@ -1298,7 +1302,7 @@ export default function ShopManager({
                         fontSize: 12,
                         background: "var(--danger-subtle)",
                         padding: "8px 12px",
-                        borderRadius: 8,
+                        borderRadius: "0px",
                       }}
                     >
                       {formError}
@@ -1529,11 +1533,11 @@ export default function ShopManager({
             <div className="modal-header">
               <h3 className="modal-title">แก้ไขยศ: {editingRole.name}</h3>
               <button
-                className="btn-ghost"
+                className="btn-ghost flex items-center justify-center"
                 onClick={() => setIsEditModalOpen(false)}
                 style={{ cursor: "pointer" }}
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 

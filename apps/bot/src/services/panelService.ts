@@ -223,3 +223,5 @@ export function buildModerationPanel() {
   return { embeds: [embed], components: [row] };
 }
 
+
+export { buildFandayPanel } from './panels/fandayPanelHandler.js';

@@ -8,49 +8,36 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// ==========================================
-// USER & AUTH
-// ==========================================
-
 model User {
-  id          String   @id @default(cuid())
-  discordId   String   @unique
-  username    String
-  displayName String?
-  avatar      String?
-  email       String?
-  role        UserRole @default(MEMBER)
-  isActive    Boolean  @default(true)
-  balance     Float    @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  attendances   Attendance[]
-  transactions  Transaction[]
-  auditLogs     AuditLog[]
-  permissions   Permission[]
-  voiceSessions VoiceSession[]
-  claimedTickets Ticket[] @relation("ClaimedTickets")
+  id                 String              @id @default(cuid())
+  discordId          String              @unique
+  username           String
+  displayName        String?
+  avatar             String?
+  email              String?
+  role               UserRole            @default(MEMBER)
+  isActive           Boolean             @default(true)
+  balance            Float               @default(0)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  attendances        Attendance[]
+  auditLogs          AuditLog[]
+  reviewedLeaves     LeaveRequest[]      @relation("ReviewedLeaves")
+  leaveRequests      LeaveRequest[]      @relation("UserLeaves")
+  permissions        Permission[]
+  shiftSchedules     ShiftSchedule[]
+  reviewedSlips      Slip[]              @relation("ReviewedSlips")
+  slips              Slip[]
+  staffNotes         StaffNote[]
+  createdTasks       Task[]              @relation("CreatedTasks")
+  assignedTasks      Task[]              @relation("AssignedTasks")
+  claimedTickets     Ticket[]            @relation("ClaimedTickets")
+  transactions       Transaction[]
+  userBadges         UserBadge[]
+  voiceSessions      VoiceSession[]
   walletTransactions WalletTransaction[]
-  leaveRequests  LeaveRequest[] @relation("UserLeaves")
-  reviewedLeaves LeaveRequest[] @relation("ReviewedLeaves")
-  slips          Slip[]
-  reviewedSlips  Slip[]         @relation("ReviewedSlips")
-  shiftSchedules ShiftSchedule[]
-  userBadges     UserBadge[]
-  staffNotes     StaffNote[]
-  assignedTasks  Task[]         @relation("AssignedTasks")
-  createdTasks   Task[]         @relation("CreatedTasks")
 
   @@map("users")
-}
-
-enum UserRole {
-  OWNER
-  MANAGER
-  ADMIN
-  MODERATOR
-  MEMBER
 }
 
 model Account {
@@ -59,12 +46,12 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
 
   @@unique([provider, providerAccountId])
@@ -80,26 +67,856 @@ model Session {
   @@map("sessions")
 }
 
-// ==========================================
-// ATTENDANCE SYSTEM
-// ==========================================
-
 model Attendance {
-  id       String           @id @default(cuid())
-  userId   String
-  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  clockIn  DateTime
-  clockOut DateTime?
-  duration Int?             // duration in minutes
-  status   AttendanceStatus @default(ON_TIME)
-  note     String?
-  channel  String?          // Discord channel where clocked in
-
-  createdAt DateTime @default(now())
+  id        String           @id @default(cuid())
+  userId    String
+  clockIn   DateTime
+  clockOut  DateTime?
+  duration  Int?
+  status    AttendanceStatus @default(ON_TIME)
+  note      String?
+  channel   String?
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([clockIn])
   @@map("attendances")
+}
+
+model ShopRole {
+  id            String        @id @default(cuid())
+  name          String
+  discordRoleId String        @unique
+  price         Float
+  description   String?
+  color         String?
+  icon          String?
+  category      String        @default("general")
+  isActive      Boolean       @default(true)
+  stock         Int?
+  maxPerUser    Int           @default(1)
+  sortOrder     Int           @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  transactions  Transaction[]
+
+  @@map("shop_roles")
+}
+
+model Transaction {
+  id        String            @id @default(cuid())
+  userId    String
+  roleId    String
+  price     Float
+  status    TransactionStatus @default(COMPLETED)
+  note      String?
+  createdAt DateTime          @default(now())
+  role      ShopRole          @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([roleId])
+  @@index([createdAt])
+  @@map("transactions")
+}
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  userId    String?
+  action    String
+  category  LogCategory
+  details   String?
+  metadata  Json?
+  ip        String?
+  createdAt DateTime    @default(now())
+  user      User?       @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([category])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model BotSession {
+  id        String    @id @default(cuid())
+  startedAt DateTime
+  stoppedAt DateTime?
+  duration  Int?
+  reason    String?
+  status    BotStatus @default(ONLINE)
+  guilds    Int       @default(0)
+  users     Int       @default(0)
+  ping      Int?
+  createdAt DateTime  @default(now())
+
+  @@index([startedAt])
+  @@map("bot_sessions")
+}
+
+model Permission {
+  id         String   @id @default(cuid())
+  userId     String
+  permission String
+  granted    Boolean  @default(true)
+  grantedBy  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, permission])
+  @@index([userId])
+  @@map("permissions")
+}
+
+model Setting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  category    String   @default("general")
+  description String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("settings")
+}
+
+model VoiceSession {
+  id          String    @id @default(cuid())
+  userId      String
+  channelId   String
+  channelName String?
+  guildId     String
+  joinedAt    DateTime  @default(now())
+  leftAt      DateTime?
+  duration    Int?
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([channelId])
+  @@index([joinedAt])
+  @@map("voice_sessions")
+}
+
+model Ticket {
+  id          String       @id @default(cuid())
+  ticketId    String       @unique
+  channelId   String       @unique
+  guildId     String
+  creatorId   String
+  creatorName String
+  claimedById String?
+  subject     String?      @default("สอบถามทั่วไป")
+  status      TicketStatus @default(OPEN)
+  closedAt    DateTime?
+  closedBy    String?
+  transcript  String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  claimedBy   User?        @relation("ClaimedTickets", fields: [claimedById], references: [id])
+
+  @@index([creatorId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("tickets")
+}
+
+model RoleBackup {
+  id           String   @id @default(cuid())
+  name         String
+  guildId      String
+  totalRoles   Int
+  totalMembers Int
+  rolesData    Json
+  membersData  Json
+  createdBy    String?
+  createdAt    DateTime @default(now())
+
+  @@index([guildId])
+  @@index([createdAt])
+  @@map("role_backups")
+}
+
+model WalletTransaction {
+  id        String   @id @default(cuid())
+  userId    String
+  amount    Float
+  type      String
+  note      String?
+  createdBy String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("wallet_transactions")
+}
+
+model LeaveRequest {
+  id           String      @id @default(cuid())
+  userId       String
+  startDate    DateTime
+  endDate      DateTime
+  days         Int         @default(1)
+  reason       String
+  leaveType    LeaveType   @default(SICK)
+  status       LeaveStatus @default(PENDING)
+  reviewedById String?
+  reviewNote   String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  reviewedBy   User?       @relation("ReviewedLeaves", fields: [reviewedById], references: [id])
+  user         User        @relation("UserLeaves", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([startDate])
+  @@map("leave_requests")
+}
+
+model Slip {
+  id             String     @id @default(cuid())
+  userId         String?
+  discordId      String
+  discordName    String
+  channelId      String?
+  ticketId       String?
+  imageUrl       String
+  r2Key          String?
+  originalName   String?
+  amount         Float?
+  status         SlipStatus @default(PENDING)
+  note           String?
+  reviewedById   String?
+  reviewedByName String?
+  reviewedAt     DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  isAutoVerified Boolean    @default(false)
+  rawSlipData    Json?
+  receiverBank   String?
+  receiverName   String?
+  senderBank     String?
+  senderName     String?
+  transDate      DateTime?
+  transRef       String?    @unique
+  reviewedBy     User?      @relation("ReviewedSlips", fields: [reviewedById], references: [id])
+  user           User?      @relation(fields: [userId], references: [id])
+
+  @@index([discordId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("slips")
+}
+
+model FinanceRecord {
+  id            String      @id @default(cuid())
+  type          FinanceType
+  title         String
+  description   String?
+  amount        Float
+  category      String      @default("OTHER")
+  date          DateTime    @default(now())
+  recordedById  String?
+  recordedBy    String
+  paymentMethod String?
+  reference     String?
+  attachmentUrl String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([type])
+  @@index([category])
+  @@index([date])
+  @@index([createdAt])
+  @@map("finance_records")
+}
+
+model DynamicVoiceConfig {
+  id             String   @id @default(cuid())
+  guildId        String
+  categoryId     String
+  categoryName   String?
+  zoneName       String
+  userLimit      Int      @default(5)
+  minChannels    Int      @default(5)
+  spareChannels  Int      @default(1)
+  emojis         String   @default("🎮")
+  blockGroupSize Int      @default(5)
+  isEnabled      Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([categoryId, zoneName])
+  @@index([guildId])
+  @@index([categoryId])
+  @@map("dynamic_voice_configs")
+}
+
+model ShiftSchedule {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime
+  shiftType String
+  startTime String
+  endTime   String
+  note      String?
+  createdBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([date])
+  @@map("shift_schedules")
+}
+
+model Badge {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  description String?
+  icon        String
+  criteria    String
+  tier        String      @default("BRONZE")
+  createdAt   DateTime    @default(now())
+  userBadges  UserBadge[]
+
+  @@map("badges")
+}
+
+model UserBadge {
+  id       String   @id @default(cuid())
+  userId   String
+  badgeId  String
+  earnedAt DateTime @default(now())
+  badge    Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@map("user_badges")
+}
+
+model StaffNote {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  category  String   @default("GENERAL")
+  isPinned  Boolean  @default(false)
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([category])
+  @@index([isPinned])
+  @@map("staff_notes")
+}
+
+model Giveaway {
+  id          String          @id @default(cuid())
+  title       String
+  description String?
+  prize       String
+  channelId   String
+  messageId   String?         @unique
+  hostId      String
+  hostName    String
+  maxWinners  Int             @default(1)
+  endsAt      DateTime
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  entries     GiveawayEntry[]
+
+  @@index([isActive])
+  @@index([endsAt])
+  @@map("giveaways")
+}
+
+model GiveawayEntry {
+  id          String   @id @default(cuid())
+  giveawayId  String
+  discordId   String
+  discordName String
+  createdAt   DateTime @default(now())
+  giveaway    Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
+
+  @@unique([giveawayId, discordId])
+  @@map("giveaway_entries")
+}
+
+model Poll {
+  id          String       @id @default(cuid())
+  question    String
+  channelId   String
+  messageId   String?      @unique
+  creatorId   String
+  creatorName String
+  isAnonymous Boolean      @default(false)
+  isMultiple  Boolean      @default(false)
+  endsAt      DateTime?
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  options     PollOption[]
+
+  @@map("polls")
+}
+
+model PollOption {
+  id     String     @id @default(cuid())
+  pollId String
+  label  String
+  emoji  String?
+  poll   Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes  PollVote[]
+
+  @@map("poll_options")
+}
+
+model PollVote {
+  id        String     @id @default(cuid())
+  optionId  String
+  discordId String
+  createdAt DateTime   @default(now())
+  option    PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@unique([optionId, discordId])
+  @@map("poll_votes")
+}
+
+model Warning {
+  id          String   @id @default(cuid())
+  discordId   String
+  discordName String
+  issuedById  String
+  issuedBy    String
+  reason      String
+  severity    String   @default("LOW")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([discordId])
+  @@index([severity])
+  @@map("warnings")
+}
+
+model ReactionRole {
+  id        String   @id @default(cuid())
+  guildId   String
+  channelId String
+  messageId String
+  emoji     String
+  roleId    String
+  roleName  String
+  createdAt DateTime @default(now())
+
+  @@unique([messageId, emoji])
+  @@index([guildId])
+  @@map("reaction_roles")
+}
+
+model ScheduledMessage {
+  id          String    @id @default(cuid())
+  guildId     String
+  channelId   String
+  content     String?
+  embedData   Json?
+  cronExpr    String?
+  scheduledAt DateTime?
+  isRecurring Boolean   @default(false)
+  isActive    Boolean   @default(true)
+  lastSentAt  DateTime?
+  createdBy   String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([isActive])
+  @@map("scheduled_messages")
+}
+
+model Task {
+  id           String    @id @default(cuid())
+  title        String
+  description  String?
+  assigneeId   String?
+  assignedById String
+  priority     String    @default("MEDIUM")
+  status       String    @default("TODO")
+  dueDate      DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  assignedBy   User      @relation("CreatedTasks", fields: [assignedById], references: [id])
+  assignee     User?     @relation("AssignedTasks", fields: [assigneeId], references: [id])
+
+  @@index([assigneeId])
+  @@index([status])
+  @@index([priority])
+  @@map("tasks")
+}
+
+model Event {
+  id               String             @id
+  title            String
+  description      String
+  bannerUrl        String?
+  category         String             @default("General")
+  startDate        DateTime
+  endDate          DateTime
+  maxParticipants  Int?
+  status           EventStatus        @default(UPCOMING)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @default(now())
+  EventParticipant EventParticipant[]
+}
+
+model EventParticipant {
+  id              String   @id
+  eventId         String
+  userId          String
+  discordUsername String
+  discordRoles    String[] @default([])
+  submissionProof String?
+  status          String   @default("JOINED")
+  joinedAt        DateTime @default(now())
+  Event           Event    @relation(fields: [eventId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([eventId, userId])
+}
+
+model audit_log {
+  id         BigInt    @id @default(autoincrement())
+  guild_id   BigInt
+  actor      String
+  action     String
+  detail     Json?
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@index([guild_id, created_at(sort: Desc)], map: "idx_audit_log_guild")
+}
+
+model candy_audit_logs {
+  id        String   @id
+  actor     String
+  action    String
+  target    String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([actor])
+  @@index([createdAt])
+}
+
+model candy_channels {
+  id           String       @id
+  eventId      String
+  channelId    String
+  name         String?
+  enabled      Boolean      @default(true)
+  weight       Int          @default(1)
+  createdAt    DateTime     @default(now())
+  candy_events candy_events @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, channelId])
+}
+
+model candy_claims {
+  id             String       @id
+  dropId         String
+  eventId        String
+  discordId      String
+  amount         Int
+  voiceChannelId String
+  voiceSeconds   Int
+  latencyMs      Int?
+  createdAt      DateTime     @default(now())
+  candy_drops    candy_drops  @relation(fields: [dropId], references: [id], onDelete: Cascade)
+  candy_events   candy_events @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([dropId, discordId])
+  @@index([createdAt])
+  @@index([eventId, discordId])
+}
+
+model candy_commands {
+  id        String             @id
+  type      String
+  payload   Json
+  status    CandyCommandStatus @default(PENDING)
+  result    Json?
+  error     String?
+  createdBy String?
+  createdAt DateTime           @default(now())
+  doneAt    DateTime?
+
+  @@index([status, createdAt])
+}
+
+model candy_drops {
+  id           String          @id
+  eventId      String
+  channelId    String
+  messageId    String?
+  amount       Int
+  maxClaimers  Int             @default(1)
+  claimedCount Int             @default(0)
+  status       CandyDropStatus @default(ACTIVE)
+  source       CandyDropSource @default(SCHEDULER)
+  createdBy    String?
+  expiresAt    DateTime
+  closedAt     DateTime?
+  createdAt    DateTime        @default(now())
+  candy_claims candy_claims[]
+  candy_events candy_events    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, status])
+  @@index([status, expiresAt])
+}
+
+model candy_embed_revisions {
+  id                    String                @id
+  key                   String
+  version               Int
+  payload               Json
+  note                  String?
+  createdBy             String?
+  createdAt             DateTime              @default(now())
+  candy_embed_templates candy_embed_templates @relation(fields: [key], references: [key], onDelete: Cascade)
+
+  @@unique([key, version])
+}
+
+model candy_embed_templates {
+  key                   String                  @id
+  name                  String
+  category              String
+  enabled               Boolean                 @default(true)
+  payload               Json
+  draft                 Json?
+  version               Int                     @default(1)
+  isDefault             Boolean                 @default(true)
+  updatedBy             String?
+  updatedAt             DateTime
+  createdAt             DateTime                @default(now())
+  candy_embed_revisions candy_embed_revisions[]
+
+  @@index([category])
+}
+
+model candy_events {
+  id             String           @id
+  name           String
+  status         CandyEventStatus @default(DRAFT)
+  startsAt       DateTime
+  endsAt         DateTime
+  budgetTotal    Int              @default(0)
+  budgetReserved Int              @default(0)
+  budgetClaimed  Int              @default(0)
+  config         Json
+  configVersion  Int              @default(1)
+  createdBy      String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime
+  candy_channels candy_channels[]
+  candy_claims   candy_claims[]
+  candy_drops    candy_drops[]
+
+  @@index([status])
+}
+
+model candy_ledger {
+  id           String          @id
+  discordId    String
+  delta        Int
+  balanceAfter Int
+  type         CandyLedgerType
+  refType      String?
+  refId        String?
+  reason       String?
+  actor        String?
+  createdAt    DateTime        @default(now())
+
+  @@index([discordId, createdAt])
+  @@index([refType, refId])
+}
+
+model candy_posted_messages {
+  id          String   @id
+  templateKey String
+  channelId   String
+  messageId   String
+  createdBy   String?
+  createdAt   DateTime @default(now())
+
+  @@unique([channelId, messageId])
+  @@index([templateKey])
+}
+
+model candy_redemptions {
+  id           String            @id
+  discordId    String
+  amount       Int
+  bahtAmount   Int
+  payoutMethod String            @default("PROMPTPAY")
+  payoutTarget String
+  accountName  String?
+  status       CandyRedeemStatus @default(PENDING)
+  rejectReason String?
+  slipUrl      String?
+  note         String?
+  reviewedBy   String?
+  reviewedAt   DateTime?
+  paidAt       DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime
+
+  @@index([discordId])
+  @@index([status, createdAt])
+}
+
+model candy_settings {
+  key       String   @id
+  value     Json
+  updatedAt DateTime
+}
+
+model candy_wallets {
+  id            String    @id
+  discordId     String    @unique
+  username      String?
+  displayName   String?
+  avatar        String?
+  balance       Int       @default(0)
+  totalEarned   Int       @default(0)
+  totalRedeemed Int       @default(0)
+  claimCount    Int       @default(0)
+  blocked       Boolean   @default(false)
+  blockReason   String?
+  lastClaimAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime
+
+  @@index([totalEarned])
+}
+
+model games {
+  id                BigInt      @id @default(autoincrement())
+  guild_id          BigInt
+  phase             String      @default("LOBBY")
+  phase_ends_at     DateTime?   @db.Timestamptz(6)
+  created_at        DateTime?   @default(now()) @db.Timestamptz(6)
+  ended_at          DateTime?   @db.Timestamptz(6)
+  paused            Boolean?    @default(false)
+  settings_snapshot Json?
+  guesses           guesses[]
+  players           players[]
+  results           results?
+  sentences         sentences[]
+  votes             votes[]
+}
+
+model guesses {
+  game_id      BigInt
+  detective_id BigInt
+  target_id    BigInt
+  guessed_role String
+  submitted_at DateTime? @default(now()) @db.Timestamptz(6)
+  games        games     @relation(fields: [game_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([game_id, detective_id, target_id])
+}
+
+model guild_config {
+  guild_id                BigInt    @id
+  category_id             BigInt?
+  role_player_id          BigInt?
+  channel_join_id         BigInt?
+  channel_announcement_id BigInt?
+  channel_chat_id         BigInt?
+  channel_voice_id        BigInt?
+  channel_admin_id        BigInt?
+  channel_log_id          BigInt?
+  created_at              DateTime? @default(now()) @db.Timestamptz(6)
+}
+
+model panels {
+  guild_id   BigInt
+  panel_key  String
+  channel_id BigInt
+  message_id BigInt
+  updated_at DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@id([guild_id, panel_key])
+}
+
+model players {
+  game_id      BigInt
+  user_id      BigInt
+  display_name String
+  role         String?
+  acknowledged Boolean? @default(false)
+  eliminated   Boolean? @default(false)
+  anon_number  Int?
+  games        games    @relation(fields: [game_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([game_id, user_id])
+}
+
+model results {
+  game_id    BigInt    @id
+  summary    Json
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  games      games     @relation(fields: [game_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model sentences {
+  game_id      BigInt
+  user_id      BigInt
+  s1           String
+  s2           String
+  lie_index    Int?      @default(0)
+  submitted_at DateTime? @default(now()) @db.Timestamptz(6)
+  games        games     @relation(fields: [game_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([game_id, user_id])
+}
+
+model text_history {
+  id         BigInt    @id @default(autoincrement())
+  guild_id   BigInt
+  key        String
+  value      Json
+  changed_at DateTime? @default(now()) @db.Timestamptz(6)
+  changed_by BigInt?
+
+  @@index([guild_id, key, changed_at(sort: Desc)], map: "idx_text_history_guild_key")
+}
+
+model texts {
+  guild_id   BigInt
+  key        String
+  value      Json
+  updated_at DateTime? @default(now()) @db.Timestamptz(6)
+  updated_by BigInt?
+
+  @@id([guild_id, key])
+}
+
+model votes {
+  game_id    BigInt
+  voter_id   BigInt
+  target_id  BigInt
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  games      games     @relation(fields: [game_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([game_id, voter_id])
+}
+
+enum UserRole {
+  OWNER
+  MANAGER
+  ADMIN
+  MODERATOR
+  MEMBER
 }
 
 enum AttendanceStatus {
@@ -109,77 +926,11 @@ enum AttendanceStatus {
   ABSENT
 }
 
-// ==========================================
-// ROLE SHOP SYSTEM
-// ==========================================
-
-model ShopRole {
-  id            String  @id @default(cuid())
-  name          String
-  discordRoleId String  @unique
-  price         Float
-  description   String?
-  color         String? // hex color
-  icon          String? // emoji or icon
-  category      String  @default("general")
-  isActive      Boolean @default(true)
-  stock         Int?    // null = unlimited
-  maxPerUser    Int     @default(1)
-  sortOrder     Int     @default(0)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  transactions Transaction[]
-
-  @@map("shop_roles")
-}
-
-model Transaction {
-  id     String            @id @default(cuid())
-  userId String
-  user   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  roleId String
-  role   ShopRole          @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  price  Float
-  status TransactionStatus @default(COMPLETED)
-  note   String?
-
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-  @@index([roleId])
-  @@index([createdAt])
-  @@map("transactions")
-}
-
 enum TransactionStatus {
   PENDING
   COMPLETED
   REFUNDED
   CANCELLED
-}
-
-// ==========================================
-// AUDIT LOGS
-// ==========================================
-
-model AuditLog {
-  id       String      @id @default(cuid())
-  userId   String?
-  user     User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-  action   String
-  category LogCategory
-  details  String?
-  metadata Json?
-  ip       String?
-
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-  @@index([category])
-  @@index([createdAt])
-  @@map("audit_logs")
 }
 
 enum LogCategory {
@@ -205,27 +956,7 @@ enum LogCategory {
   POLL
   MODERATION
   TASK
-}
-
-// ==========================================
-// BOT SESSION TRACKING
-// ==========================================
-
-model BotSession {
-  id        String    @id @default(cuid())
-  startedAt DateTime
-  stoppedAt DateTime?
-  duration  Int?      // in seconds
-  reason    String?
-  status    BotStatus @default(ONLINE)
-  guilds    Int       @default(0)
-  users     Int       @default(0)
-  ping      Int?      // ms
-
-  createdAt DateTime @default(now())
-
-  @@index([startedAt])
-  @@map("bot_sessions")
+  FANDAY
 }
 
 enum BotStatus {
@@ -235,252 +966,30 @@ enum BotStatus {
   ERROR
 }
 
-// ==========================================
-// PERMISSIONS
-// ==========================================
-
-model Permission {
-  id         String  @id @default(cuid())
-  userId     String
-  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  permission String  // e.g. "attendance.manage", "shop.manage", "admin.manage"
-  granted    Boolean @default(true)
-  grantedBy  String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([userId, permission])
-  @@index([userId])
-  @@map("permissions")
-}
-
-// ==========================================
-// SETTINGS
-// ==========================================
-
-model Setting {
-  id          String @id @default(cuid())
-  key         String @unique
-  value       String
-  category    String @default("general")
-  description String?
-
-  updatedAt DateTime @updatedAt
-
-  @@map("settings")
-}
-
-// ==========================================
-// VOICE SESSION TRACKING
-// ==========================================
-
-model VoiceSession {
-  id          String    @id @default(cuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  channelId   String
-  channelName String?
-  guildId     String
-  joinedAt    DateTime  @default(now())
-  leftAt      DateTime?
-  duration    Int?      // duration in seconds
-
-  createdAt   DateTime  @default(now())
-
-  @@index([userId])
-  @@index([channelId])
-  @@index([joinedAt])
-  @@map("voice_sessions")
-}
-
-// ==========================================
-// TICKET SUPPORT SYSTEM
-// ==========================================
-
-model Ticket {
-  id          String       @id @default(cuid())
-  ticketId    String       @unique // e.g. "ticket-001" or channelId
-  channelId   String       @unique
-  guildId     String
-  creatorId   String       // Discord ID of opener
-  creatorName String
-  claimedById String?
-  claimedBy   User?        @relation("ClaimedTickets", fields: [claimedById], references: [id], onDelete: SetNull)
-  subject     String?      @default("สอบถามทั่วไป")
-  status      TicketStatus @default(OPEN)
-  closedAt    DateTime?
-  closedBy    String?      // Discord ID or name of closer
-  transcript  String?      @db.Text // Full message history JSON or text
-
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-
-  @@index([creatorId])
-  @@index([status])
-  @@index([createdAt])
-  @@map("tickets")
-}
-
 enum TicketStatus {
   OPEN
   CLAIMED
   CLOSED
 }
 
-// ==========================================
-// ROLE BACKUP & RESTORE SYSTEM
-// ==========================================
-
-model RoleBackup {
-  id           String   @id @default(cuid())
-  name         String   // e.g. "Auto Backup - 2026-09-27"
-  guildId      String
-  totalRoles   Int
-  totalMembers Int
-  rolesData    Json     // List of roles (name, color, permissions, position, hoist, etc.)
-  membersData  Json     // Map of memberId -> list of roleIds
-  createdBy    String?  // username or "SYSTEM"
-
-  createdAt    DateTime @default(now())
-
-  @@index([guildId])
-  @@index([createdAt])
-  @@map("role_backups")
-}
-
-// ==========================================
-// WALLET TRANSACTIONS
-// ==========================================
-
-model WalletTransaction {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  amount    Float
-  type      String   // "TOPUP", "PURCHASE", "ADMIN_ADJUST", "REFUND"
-  note      String?
-  createdBy String?  // e.g. "ADMIN:pplqqz_" or "SYSTEM"
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-  @@index([createdAt])
-  @@map("wallet_transactions")
-}
-
-// ==========================================
-// LEAVE REQUEST SYSTEM
-// ==========================================
-
-model LeaveRequest {
-  id           String      @id @default(cuid())
-  userId       String
-  user         User        @relation("UserLeaves", fields: [userId], references: [id], onDelete: Cascade)
-  startDate    DateTime
-  endDate      DateTime
-  days         Int         @default(1)
-  reason       String
-  leaveType    LeaveType   @default(SICK)
-  status       LeaveStatus @default(PENDING)
-  reviewedById String?
-  reviewedBy   User?       @relation("ReviewedLeaves", fields: [reviewedById], references: [id], onDelete: SetNull)
-  reviewNote   String?
-
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-
-  @@index([userId])
-  @@index([status])
-  @@index([startDate])
-  @@map("leave_requests")
-}
-
 enum LeaveType {
-  SICK       // ลาป่วย
-  PERSONAL   // ลากิจ
-  VACATION   // ลาพักร้อน
-  OTHER      // อื่นๆ
+  SICK
+  PERSONAL
+  VACATION
+  OTHER
 }
 
 enum LeaveStatus {
-  PENDING    // รออนุมัติ
-  APPROVED   // อนุมัติแล้ว
-  REJECTED   // ไม่อนุมัติ
-  CANCELLED  // ยกเลิก
-}
-
-// ==========================================
-// PAYMENT SLIP ARCHIVE & VERIFICATION
-// ==========================================
-
-model Slip {
-  id             String      @id @default(cuid())
-  userId         String?
-  user           User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-  discordId      String      // Submitter's discord id
-  discordName    String      // Submitter's username/display name
-  channelId      String?     // Channel where slip was submitted
-  ticketId       String?     // Linked ticketId (e.g. ticket-0001)
-  imageUrl       String      @db.Text // Discord CDN or R2 URL
-  r2Key          String?     // Cloudflare R2 object key (if uploaded)
-  originalName   String?
-  amount         Float?      // Claimed or approved amount (THB)
-  status         SlipStatus  @default(PENDING)
-  note           String?     // Admin note or rejection reason
-  transRef       String?     @unique // Bank transaction reference code
-  isAutoVerified Boolean     @default(false) // Auto-verified by SlipOK/EasySlip API
-  senderName     String?     // Sender name from slip
-  senderBank     String?     // Sender bank code/name
-  receiverName   String?     // Receiver name from slip
-  receiverBank   String?     // Receiver bank code/name
-  transDate      DateTime?   // Timestamp of transaction from bank slip
-  rawSlipData    Json?       // Full payload response from slip verification API
-  reviewedById   String?
-  reviewedBy     User?       @relation("ReviewedSlips", fields: [reviewedById], references: [id], onDelete: SetNull)
-  reviewedByName String?
-  reviewedAt     DateTime?
-
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-
-  @@index([discordId])
-  @@index([status])
-  @@index([createdAt])
-  @@map("slips")
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
 }
 
 enum SlipStatus {
-  PENDING   // รอตรวจสอบ
-  APPROVED  // อนุมัติแล้ว
-  REJECTED  // ปฏิเสธ
-}
-
-// ==========================================
-// MANUAL FINANCE & CASHFLOW (INCOME / EXPENSE)
-// ==========================================
-
-model FinanceRecord {
-  id            String        @id @default(cuid())
-  type          FinanceType   // INCOME (รายรับ) หรือ EXPENSE (รายจ่าย)
-  title         String        // ชื่อรายการ เช่น "ค่าต่ออายุเซิร์ฟเวอร์", "รายได้สปอนเซอร์กิจกรรม"
-  description   String?       @db.Text // รายละเอียดเพิ่มเติม
-  amount        Float         // จำนวนเงิน (THB)
-  category      String        @default("OTHER") // SERVER, SALARY, ACTIVITY, DONATION, ROLE_SALE, OTHER
-  date          DateTime      @default(now()) // วันที่ทำรายการ
-  recordedById  String?       // Discord ID or User ID ของแอดมิน
-  recordedBy    String        // ชื่อผู้บันทึกรายการ
-  paymentMethod String?       // ช่องทางชำระ เช่น "โอนเงินผ่านธนาคาร", "TrueMoney Wallet", "PromptPay", "เงินสด"
-  reference     String?       // เลขที่อ้างอิง หรือเลขบิล
-  attachmentUrl String?       @db.Text // ลิงก์รูปภาพสลิป/ใบเสร็จ
-
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-
-  @@index([type])
-  @@index([category])
-  @@index([date])
-  @@index([createdAt])
-  @@map("finance_records")
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum FinanceType {
@@ -488,276 +997,272 @@ enum FinanceType {
   EXPENSE
 }
 
+enum CandyCommandStatus {
+  PENDING
+  PROCESSING
+  DONE
+  FAILED
+}
+
+enum CandyDropSource {
+  SCHEDULER
+  ADMIN
+}
+
+enum CandyDropStatus {
+  ACTIVE
+  CLAIMED
+  EXPIRED
+  CANCELLED
+}
+
+enum CandyEventStatus {
+  DRAFT
+  SCHEDULED
+  RUNNING
+  PAUSED
+  ENDED
+}
+
+enum CandyLedgerType {
+  DROP_CLAIM
+  ADMIN_GIVE
+  ADMIN_TAKE
+  REDEEM_HOLD
+  REDEEM_REFUND
+}
+
+enum CandyRedeemStatus {
+  PENDING
+  APPROVED
+  PAID
+  REJECTED
+  CANCELLED
+}
+
+enum EventStatus {
+  DRAFT
+  UPCOMING
+  OPEN
+  CLOSED
+  COMPLETED
+}
+
 // ==========================================
-// DYNAMIC VOICE CHANNEL AUTOMATION
+// FANDAY COMMUNITY DATING SYSTEM
 // ==========================================
 
-model DynamicVoiceConfig {
-  id             String   @id @default(cuid())
-  guildId        String
-  categoryId     String   // Category Discord channel ID
-  categoryName   String?  // e.g. "Gaming Zone" / "Living Zone" / "Dreamland"
-  zoneName       String   // e.g. "เล่นเกม" หรือ "พูดคุย" หรือ "นอนรวม"
-  userLimit      Int      @default(5) // e.g. 5 for Gaming, 10 for Living, 1-5 for Sleep
-  minChannels    Int      @default(5) // default 5 rooms minimum (or 3 for sleeping sub-zones)
-  spareChannels  Int      @default(1) // maintain at least 1 empty room
-  emojis         String   @default("🎮") // comma separated emojis e.g. "🛌" or "🥪,🥐,🥓"
-  blockGroupSize Int      @default(5) // blocks of 3 or 5 for ╭ ┆ ╰
-  isEnabled      Boolean  @default(true)
+enum FandayStatus {
+  DRAFT
+  REGISTRATION
+  MATCHING
+  ACTIVE
+  LETTERS
+  ENDED
+  CANCELLED
+  PAUSED
+}
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+model FandayEvent {
+  id                String       @id @default(cuid())
+  guildId           String
+  title             String       @default("กิจกรรมแฟนเดย์ • 753BC")
+  status            FandayStatus @default(DRAFT)
+  pairingMode       String       @default("MALE_FEMALE") // MALE_FEMALE, MALE_MALE, FEMALE_FEMALE, MIXED_ANY, CUSTOM_RULES
+  minPlayers        Int          @default(7)
+  maxPlayers        Int?
+  registrationStart DateTime?
+  registrationEnd   DateTime?
+  eventStart        DateTime?
+  eventEnd          DateTime?
+  letterDeadline    DateTime?
+  panelChannelId    String?
+  panelMessageId    String?
+  formId            String?
+  allowSelfLock     Boolean      @default(true)
+  allowReroll       Boolean      @default(true)
+  rerollLimit       Int          @default(1)
+  aiMatchingEnabled Boolean      @default(true)
+  config            Json?
 
-  @@unique([categoryId, zoneName])
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  forms             FandayForm[]
+  players           FandayPlayer[]
+  pairs             FandayPair[]
+  letters           FandayLetter[]
+
   @@index([guildId])
-  @@index([categoryId])
-  @@map("dynamic_voice_configs")
+  @@index([status])
+  @@map("fanday_events")
 }
 
-// ==========================================
-// 1. STAFF SCHEDULING CALENDAR
-// ==========================================
+model FandayForm {
+  id        String       @id @default(cuid())
+  eventId   String?
+  event     FandayEvent? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  title     String       @default("แบบประเมินและนิสัยสำหรับจับคู่แฟนเดย์")
+  questions Json         // Array of question schema objects
+  version   Int          @default(1)
+  isActive  Boolean      @default(true)
 
-model ShiftSchedule {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  date        DateTime
-  shiftType   String   // "MORNING", "AFTERNOON", "EVENING", "NIGHT"
-  startTime   String   // "09:00"
-  endTime     String   // "17:00"
-  note        String?
-  createdBy   String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
-  @@unique([userId, date])
-  @@index([date])
-  @@map("shift_schedules")
+  @@index([eventId])
+  @@map("fanday_forms")
 }
 
-// ==========================================
-// 2. BADGE & GAMIFICATION SYSTEM
-// ==========================================
+model FandayPlayer {
+  id           String      @id @default(cuid())
+  eventId      String
+  event        FandayEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  discordId    String
+  displayName  String
+  gender       String      @default("PREFER_NOT") // MALE, FEMALE, NONBINARY, PREFER_NOT
+  seeking      String      @default("ANY")        // MALE, FEMALE, ANY
+  status       String      @default("REGISTERED") // REGISTERED, WAITLIST, MATCHED, LOCKED, WITHDRAWN, BANNED, NO_SHOW
+  hasPartner   Boolean     @default(false)
+  lockedWithId String?
+  typeCode     String?
+  typeSummary  String?
+  answers      Json?
+  rerollsUsed  Int         @default(0)
 
-model Badge {
-  id          String      @id @default(cuid())
-  name        String      @unique
-  description String?
-  icon        String      // emoji or image URL
-  criteria    String      // e.g. "attendance_streak_7", "tickets_closed_50"
-  tier        String      @default("BRONZE") // BRONZE, SILVER, GOLD, DIAMOND
-  createdAt   DateTime    @default(now())
+  joinedAt     DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
-  userBadges  UserBadge[]
-
-  @@map("badges")
+  @@unique([eventId, discordId])
+  @@index([eventId])
+  @@index([discordId])
+  @@index([status])
+  @@map("fanday_players")
 }
 
-model UserBadge {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  badgeId   String
-  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
-  earnedAt  DateTime @default(now())
+model FandayPair {
+  id            String              @id @default(cuid())
+  eventId       String
+  event         FandayEvent         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  playerAId     String
+  playerBId     String
+  source        String              @default("AI") // RANDOM, AI, SELF_LOCK, ADMIN_MANUAL
+  compatibility Float?
+  reason        String?
+  status        String              @default("ACTIVE") // PENDING_CONFIRM, ACTIVE, DISSOLVED, COMPLETED
+  channelId     String?
+  lockedAt      DateTime?
 
-  @@unique([userId, badgeId])
-  @@map("user_badges")
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  gameSessions  FandayGameSession[]
+  letters       FandayLetter[]
+
+  @@index([eventId])
+  @@index([playerAId])
+  @@index([playerBId])
+  @@index([status])
+  @@map("fanday_pairs")
 }
 
-// ==========================================
-// 3. STAFF INTERNAL NOTES & WIKI
-// ==========================================
-
-model StaffNote {
-  id          String   @id @default(cuid())
-  title       String
-  content     String   @db.Text
-  category    String   @default("GENERAL") // SOP, FAQ, GUIDE, MEMO
-  isPinned    Boolean  @default(false)
-  authorId    String
-  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([category])
-  @@index([isPinned])
-  @@map("staff_notes")
-}
-
-// ==========================================
-// 4. GIVEAWAY SYSTEM
-// ==========================================
-
-model Giveaway {
-  id            String          @id @default(cuid())
-  title         String
-  description   String?
-  prize         String
-  channelId     String
-  messageId     String?         @unique
-  hostId        String          // Discord ID of host
-  hostName      String
-  maxWinners    Int             @default(1)
-  endsAt        DateTime
-  isActive      Boolean         @default(true)
-  entries       GiveawayEntry[]
-
-  createdAt     DateTime        @default(now())
-
-  @@index([isActive])
-  @@index([endsAt])
-  @@map("giveaways")
-}
-
-model GiveawayEntry {
-  id          String   @id @default(cuid())
-  giveawayId  String
-  giveaway    Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
-  discordId   String
-  discordName String
-
-  createdAt   DateTime @default(now())
-
-  @@unique([giveawayId, discordId])
-  @@map("giveaway_entries")
-}
-
-// ==========================================
-// 5. POLL & VOTING SYSTEM
-// ==========================================
-
-model Poll {
-  id          String       @id @default(cuid())
-  question    String
-  channelId   String
-  messageId   String?      @unique
-  creatorId   String
-  creatorName String
-  isAnonymous Boolean      @default(false)
-  isMultiple  Boolean      @default(false)
-  endsAt      DateTime?
-  isActive    Boolean      @default(true)
-  options     PollOption[]
-
-  createdAt   DateTime     @default(now())
-
-  @@map("polls")
-}
-
-model PollOption {
-  id       String     @id @default(cuid())
-  pollId   String
-  poll     Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
-  label    String
-  emoji    String?
-  votes    PollVote[]
-
-  @@map("poll_options")
-}
-
-model PollVote {
+model FandayGameSession {
   id        String     @id @default(cuid())
-  optionId  String
-  option    PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
-  discordId String
+  pairId    String
+  pair      FandayPair @relation(fields: [pairId], references: [id], onDelete: Cascade)
+  gameKey   String
+  state     Json
+  status    String     @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, TIMEOUT
+  score     Int?
+  startedAt DateTime?
+  endedAt   DateTime?
 
   createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
-  @@unique([optionId, discordId])
-  @@map("poll_votes")
-}
-
-// ==========================================
-// 6. WARNING & MODERATION LOG
-// ==========================================
-
-model Warning {
-  id          String   @id @default(cuid())
-  discordId   String   // Target member
-  discordName String
-  issuedById  String   // Admin discord ID
-  issuedBy    String   // Admin name
-  reason      String
-  severity    String   @default("LOW") // LOW, MEDIUM, HIGH, CRITICAL
-  isActive    Boolean  @default(true)
-
-  createdAt   DateTime @default(now())
-
-  @@index([discordId])
-  @@index([severity])
-  @@map("warnings")
-}
-
-// ==========================================
-// 7. REACTION ROLES SYSTEM
-// ==========================================
-
-model ReactionRole {
-  id          String   @id @default(cuid())
-  guildId     String
-  channelId   String
-  messageId   String
-  emoji       String   // Unicode emoji or custom emoji ID
-  roleId      String   // Discord role ID
-  roleName    String
-
-  createdAt   DateTime @default(now())
-
-  @@unique([messageId, emoji])
-  @@index([guildId])
-  @@map("reaction_roles")
-}
-
-// ==========================================
-// 8. SCHEDULED ANNOUNCEMENTS
-// ==========================================
-
-model ScheduledMessage {
-  id          String    @id @default(cuid())
-  guildId     String
-  channelId   String
-  content     String?   @db.Text
-  embedData   Json?     // Serialized embed object
-  cronExpr    String?   // Cron expression for recurring
-  scheduledAt DateTime? // For one-time messages
-  isRecurring Boolean   @default(false)
-  isActive    Boolean   @default(true)
-  lastSentAt  DateTime?
-  createdBy   String
-
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@index([isActive])
-  @@map("scheduled_messages")
-}
-
-// ==========================================
-// 9. TASK ASSIGNMENT & TO-DO SYSTEM
-// ==========================================
-
-model Task {
-  id           String     @id @default(cuid())
-  title        String
-  description  String?    @db.Text
-  assigneeId   String?
-  assignee     User?      @relation("AssignedTasks", fields: [assigneeId], references: [id])
-  assignedById String
-  assignedBy   User       @relation("CreatedTasks", fields: [assignedById], references: [id])
-  priority     String     @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
-  status       String     @default("TODO")   // TODO, IN_PROGRESS, DONE, CANCELLED
-  dueDate      DateTime?
-  completedAt  DateTime?
-
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-
-  @@index([assigneeId])
+  @@index([pairId])
   @@index([status])
-  @@index([priority])
-  @@map("tasks")
+  @@map("fanday_game_sessions")
 }
 
+model FandayLetter {
+  id          String      @id @default(cuid())
+  eventId     String
+  event       FandayEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  pairId      String
+  pair        FandayPair  @relation(fields: [pairId], references: [id], onDelete: Cascade)
+  fromId      String
+  toId        String
+  content     String      @db.Text
+  isAnonymous Boolean     @default(false)
+  status      String      @default("DRAFT") // DRAFT, PENDING_REVIEW, SENT, DELIVERED, BLOCKED
+  deliveredAt DateTime?
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([eventId])
+  @@index([pairId])
+  @@index([fromId])
+  @@index([toId])
+  @@index([status])
+  @@map("fanday_letters")
+}
+
+model FandayMatchLog {
+  id        String   @id @default(cuid())
+  eventId   String
+  runAt     DateTime @default(now())
+  mode      String
+  seed      String
+  snapshot  Json
+
+  @@index([eventId])
+  @@map("fanday_match_logs")
+}
+
+model FandayBlock {
+  id        String   @id @default(cuid())
+  eventId   String?
+  blockerId String
+  blockedId String
+
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+  @@map("fanday_blocks")
+}
+
+model FandayJob {
+  id        String   @id @default(cuid())
+  type      String
+  payload   Json
+  runAt     DateTime
+  status    String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  attempts  Int      @default(0)
+  lastError String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, runAt])
+  @@map("fanday_jobs")
+}
+
+model FandayOutbox {
+  id              String   @id @default(cuid())
+  targetDiscordId String
+  channelId       String?
+  content         String?
+  embedData       Json?
+  status          String   @default("PENDING") // PENDING, SENT, FAILED
+  attempts        Int      @default(0)
+  lastError       String?
+
+  createdAt       DateTime @default(now())
+
+  @@index([status])
+  @@map("fanday_outbox")
+}
 

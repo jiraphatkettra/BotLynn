@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { getRoleInfo, getDiscordAvatarUrl, isRootOwner } from "@/lib/utils";
+import { CheckCircle2, AlertTriangle, Lock, Crown, ShieldCheck, Check } from "lucide-react";
 
 export interface PermissionUser {
   id: string;
@@ -148,7 +149,7 @@ export default function PermissionsEditor({
             animation: "scaleIn 0.2s ease-out",
           }}
         >
-          <span>{toast.type === "success" ? "✅" : "⚠️"}</span>
+          <span>{toast.type === "success" ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <AlertTriangle className="w-4 h-4 text-amber-400" />}</span>
           <span>{toast.message}</span>
         </div>
       )}
@@ -167,7 +168,7 @@ export default function PermissionsEditor({
             gap: "12px",
           }}
         >
-          <span style={{ fontSize: "20px" }}>🔒</span>
+          <Lock className="w-5 h-5 text-amber-400 shrink-0" />
           <div>
             <div style={{ fontSize: "14px", fontWeight: 600, color: "#ff9f0a" }}>
               โหมดอ่านอย่างเดียว (Read-Only Mode)
@@ -182,8 +183,8 @@ export default function PermissionsEditor({
       {/* Role Hierarchy Info */}
       <div className="card mb-24" id="role-hierarchy-card">
         <div className="card-header">
-          <h3 className="card-title">
-            <span className="card-title-icon">👑</span>
+          <h3 className="card-title flex items-center gap-2">
+            <Crown className="w-4 h-4 text-amber-400" />
             ลำดับชั้นสิทธิ์
           </h3>
         </div>
@@ -214,7 +215,7 @@ export default function PermissionsEditor({
             })}
           </div>
           <p className="text-sm text-muted mt-16">
-            💡 Owner มีสิทธิ์ทุกอย่างโดยอัตโนมัติ • คลิกที่ปุ่ม Toggle เพื่อเปิด/ปิดสิทธิ์ของแอดมินคนอื่นๆ ได้ทันที
+            Owner มีสิทธิ์ทุกอย่างโดยอัตโนมัติ • คลิกที่ปุ่ม Toggle เพื่อเปิด/ปิดสิทธิ์ของแอดมินคนอื่นๆ ได้ทันที
           </p>
         </div>
       </div>
@@ -222,12 +223,12 @@ export default function PermissionsEditor({
       {/* Permission Matrix */}
       <div className="card" id="permission-matrix-card">
         <div className="card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h3 className="card-title">
-            <span className="card-title-icon">🔐</span>
+          <h3 className="card-title flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-blue-400" />
             ตารางจัดการสิทธิ์การเข้าถึง
           </h3>
           <span style={{ fontSize: "12px", color: "#86868b" }}>
-            {isOwner ? "✨ คลิกที่สวิตช์เพื่อเปลี่ยนสิทธิ์ทันที" : "🔒 ดูสิทธิ์ได้อย่างเดียว"}
+            {isOwner ? "คลิกที่สวิตช์เพื่อเปลี่ยนสิทธิ์ทันที" : "ดูสิทธิ์ได้อย่างเดียว"}
           </span>
         </div>
         <div className="card-body" style={{ padding: 0 }}>
@@ -308,7 +309,7 @@ export default function PermissionsEditor({
                                   gap: 3,
                                 }}
                               >
-                                👑 สูงสุด
+                                <Crown className="w-3.5 h-3.5 text-amber-400" /> สูงสุด
                               </span>
                             )}
                           </div>
@@ -346,7 +347,7 @@ export default function PermissionsEditor({
                                     fontWeight: 700,
                                   }}
                                 >
-                                  ✓
+                                  <Check className="w-3.5 h-3.5 text-emerald-400" />
                                 </span>
                               ) : (
                                 <button
@@ -395,7 +396,9 @@ export default function PermissionsEditor({
             </div>
           ) : (
             <div className="empty-state">
-              <div className="empty-state-icon">🔐</div>
+              <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto mb-3">
+                <ShieldCheck className="w-6 h-6 text-blue-400" />
+              </div>
               <p className="empty-state-title">ยังไม่มีข้อมูลแอดมิน</p>
               <p className="empty-state-text">เพิ่มแอดมินเพื่อจัดการสิทธิ์</p>
             </div>

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { formatRelativeTime, getDiscordAvatarUrl } from "@/lib/utils";
+import { FileText, Pin, Trash2, X } from "lucide-react";
 
 interface StaffNoteItem {
   id: string;
@@ -137,9 +138,9 @@ export default function StaffNotesManager() {
             style={{
               width: "100%",
               padding: "10px 14px 10px 36px",
-              borderRadius: "12px",
-              background: "rgba(255, 255, 255, 0.05)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
+              borderRadius: "0px",
+              background: "#000000",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
               color: "#ffffff",
               fontSize: "13px",
             }}
@@ -167,14 +168,13 @@ export default function StaffNotesManager() {
             alignItems: "center",
             gap: "8px",
             padding: "9px 20px",
-            borderRadius: "9999px",
+            borderRadius: "0px",
             background: "#2997ff",
             color: "#ffffff",
             border: "none",
             fontSize: "13px",
             fontWeight: 600,
             cursor: "pointer",
-            boxShadow: "0 0 20px rgba(41, 151, 255, 0.4)",
           }}
         >
           <span>+ สร้างบันทึกใหม่</span>
@@ -196,7 +196,7 @@ export default function StaffNotesManager() {
           onClick={() => setActiveCategory("ALL")}
           style={{
             padding: "6px 14px",
-            borderRadius: "9999px",
+            borderRadius: "0px",
             border: "none",
             fontSize: "12px",
             fontWeight: 600,
@@ -217,7 +217,7 @@ export default function StaffNotesManager() {
               onClick={() => setActiveCategory(key)}
               style={{
                 padding: "6px 14px",
-                borderRadius: "var(--radius-pill)",
+                borderRadius: "0px",
                 border: "none",
                 fontSize: "12px",
                 fontWeight: 600,
@@ -242,7 +242,9 @@ export default function StaffNotesManager() {
       >
         {filteredNotes.length === 0 ? (
           <div className="empty-state" style={{ gridColumn: "1 / -1" }}>
-            <div className="empty-state-icon">📝</div>
+            <div className="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mx-auto mb-3">
+              <FileText className="w-6 h-6 text-purple-400" />
+            </div>
             <p className="empty-state-title">ไม่พบบันทึกหรือคู่มือ</p>
             <p className="empty-state-text">ยังไม่มีบันทึกในหมวดหมู่นี้ หรือลองปรับคำค้นหาใหม่</p>
           </div>
@@ -254,8 +256,8 @@ export default function StaffNotesManager() {
               key={note.id}
               style={{
                 padding: "20px",
-                borderRadius: "18px",
-                background: "rgba(255, 255, 255, 0.03)",
+                borderRadius: "0px",
+                background: "#070809",
                 border: `1px solid ${note.isPinned ? "rgba(255, 159, 10, 0.4)" : "rgba(255, 255, 255, 0.08)"}`,
                 boxShadow: note.isPinned ? "0 8px 30px rgba(255, 159, 10, 0.15)" : "none",
                 display: "flex",
@@ -271,7 +273,7 @@ export default function StaffNotesManager() {
                     fontSize: "11px",
                     fontWeight: 700,
                     padding: "2px 8px",
-                    borderRadius: "6px",
+                    borderRadius: "0px",
                     background: cat.bg,
                     color: cat.color,
                   }}
@@ -289,12 +291,13 @@ export default function StaffNotesManager() {
                       background: "none",
                       border: "none",
                       cursor: "pointer",
-                      fontSize: "14px",
+                      display: "flex",
+                      alignItems: "center",
                       opacity: note.isPinned ? 1 : 0.4,
                       transition: "opacity 0.15s ease",
                     }}
                   >
-                    📌
+                    <Pin className={`w-4 h-4 ${note.isPinned ? "text-amber-400 fill-amber-400" : "text-neutral-400"}`} />
                   </button>
 
                   {/* Delete button */}
@@ -306,11 +309,12 @@ export default function StaffNotesManager() {
                       background: "none",
                       border: "none",
                       cursor: "pointer",
-                      fontSize: "12px",
+                      display: "flex",
+                      alignItems: "center",
                       color: "var(--text-muted)",
                     }}
                   >
-                    ✕
+                    <Trash2 className="w-4 h-4 hover:text-rose-400 transition-colors" />
                   </button>
                 </div>
               </div>
@@ -376,9 +380,9 @@ export default function StaffNotesManager() {
             style={{
               width: "100%",
               maxWidth: "520px",
-              background: "rgba(18, 18, 22, 0.98)",
-              border: "1px solid rgba(255, 255, 255, 0.15)",
-              borderRadius: "20px",
+              background: "#070809",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              borderRadius: "0px",
               padding: "24px",
               boxShadow: "0 24px 60px rgba(0, 0, 0, 0.8)",
             }}
@@ -390,9 +394,9 @@ export default function StaffNotesManager() {
               <button
                 type="button"
                 onClick={() => setModalOpen(false)}
-                style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "18px" }}
+                style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center" }}
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -410,8 +414,8 @@ export default function StaffNotesManager() {
                   style={{
                     width: "100%",
                     padding: "10px 12px",
-                    borderRadius: "10px",
-                    background: "rgba(255, 255, 255, 0.05)",
+                    borderRadius: "0px",
+                    background: "#000000",
                     border: "1px solid rgba(255, 255, 255, 0.12)",
                     color: "#ffffff",
                     fontSize: "13px",
@@ -429,15 +433,15 @@ export default function StaffNotesManager() {
                   style={{
                     width: "100%",
                     padding: "10px 12px",
-                    borderRadius: "10px",
-                    background: "rgba(255, 255, 255, 0.05)",
+                    borderRadius: "0px",
+                    background: "#000000",
                     border: "1px solid rgba(255, 255, 255, 0.12)",
                     color: "#ffffff",
                     fontSize: "13px",
                   }}
                 >
                   {Object.entries(CATEGORIES).map(([key, cat]) => (
-                    <option key={key} value={key} style={{ background: "#1a1a20", color: "#fff" }}>
+                    <option key={key} value={key} style={{ background: "#070809", color: "#fff" }}>
                       {cat.label}
                     </option>
                   ))}
@@ -457,8 +461,8 @@ export default function StaffNotesManager() {
                   style={{
                     width: "100%",
                     padding: "10px 12px",
-                    borderRadius: "10px",
-                    background: "rgba(255, 255, 255, 0.05)",
+                    borderRadius: "0px",
+                    background: "#000000",
                     border: "1px solid rgba(255, 255, 255, 0.12)",
                     color: "#ffffff",
                     fontSize: "13px",
@@ -474,8 +478,9 @@ export default function StaffNotesManager() {
                   checked={formData.isPinned}
                   onChange={(e) => setFormData({ ...formData, isPinned: e.target.checked })}
                 />
-                <label htmlFor="pin-note" style={{ fontSize: "13px", color: "#ffffff", cursor: "pointer" }}>
-                  📌 ปักหมุดไว้บนสุด (สำคัญ)
+                <label htmlFor="pin-note" style={{ fontSize: "13px", color: "#ffffff", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <Pin className="w-3.5 h-3.5 text-amber-400" />
+                  ปักหมุดไว้บนสุด (สำคัญ)
                 </label>
               </div>
 
@@ -484,7 +489,7 @@ export default function StaffNotesManager() {
                 style={{
                   marginTop: "8px",
                   padding: "10px 16px",
-                  borderRadius: "10px",
+                  borderRadius: "0px",
                   background: "#2997ff",
                   border: "none",
                   color: "#ffffff",

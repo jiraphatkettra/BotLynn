@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import CustomSelect from "@/components/CustomSelect";
+import { CheckCircle2, AlertTriangle, Trash2, User, Users, Calendar, BookOpen, Megaphone } from "lucide-react";
 
 interface DiscordChannel {
   id: string;
@@ -192,7 +193,7 @@ export default function WelcomeManager({
             animation: "fadeIn 0.2s ease",
           }}
         >
-          <span>{toast.type === "success" ? "✓" : "⚠️"}</span>
+          <span>{toast.type === "success" ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <AlertTriangle className="w-4 h-4 text-amber-400" />}</span>
           <span>{toast.message}</span>
         </div>
       )}
@@ -284,7 +285,7 @@ export default function WelcomeManager({
                 <div>
                   <div className="settings-row-label">แสดงแถบชื่อผู้เข้าร่วมด้านบน (Author Header)</div>
                   <div className="settings-row-desc">
-                    แสดงรูปโปรไฟล์และข้อความ 'ชื่อ เข้าร่วมเซิร์ฟเวอร์ ✨' ที่ขอบบนสุดของการ์ด (มีหรือไม่มีก็ได้)
+                    แสดงรูปโปรไฟล์และข้อความ 'ชื่อ เข้าร่วมเซิร์ฟเวอร์' ที่ขอบบนสุดของการ์ด (มีหรือไม่มีก็ได้)
                   </div>
                 </div>
                 <label className="toggle">
@@ -306,7 +307,7 @@ export default function WelcomeManager({
                   <div>
                     <div className="settings-row-label" style={{ fontSize: 13 }}>ข้อความแถบผู้เข้าร่วม (Author Text)</div>
                     <div className="settings-row-desc">
-                      ค่าเริ่มต้น: &#123;name&#125; เข้าร่วมเซิร์ฟเวอร์ ✨
+                      ค่าเริ่มต้น: &#123;name&#125; เข้าร่วมเซิร์ฟเวอร์
                     </div>
                   </div>
                   <div style={{ minWidth: 200, maxWidth: 300, width: "100%" }}>
@@ -316,7 +317,7 @@ export default function WelcomeManager({
                       disabled={!isSuperAdmin}
                       value={settings.welcome_author_text || ""}
                       onChange={(e) => handleChange("welcome_author_text", e.target.value)}
-                      placeholder="{name} เข้าร่วมเซิร์ฟเวอร์ ✨"
+                      placeholder="{name} เข้าร่วมเซิร์ฟเวอร์"
                       style={{ width: "100%", fontSize: 13 }}
                     />
                   </div>
@@ -446,7 +447,7 @@ export default function WelcomeManager({
                     <div>
                       <div className="settings-row-label" style={{ fontSize: 13 }}>หัวข้อกล่องกฎระเบียบ (Field Title)</div>
                       <div className="settings-row-desc">
-                        ค่าเริ่มต้น: 📜 เริ่มต้นใช้งาน (ปรับเปลี่ยนได้อิสระ)
+                        ค่าเริ่มต้น: เริ่มต้นใช้งาน (ปรับเปลี่ยนได้อิสระ)
                       </div>
                     </div>
                     <div style={{ minWidth: 220, maxWidth: 320, width: "100%" }}>
@@ -456,7 +457,7 @@ export default function WelcomeManager({
                         disabled={!isSuperAdmin}
                         value={settings.welcome_rules_field_title !== undefined ? settings.welcome_rules_field_title : ""}
                         onChange={(e) => handleChange("welcome_rules_field_title", e.target.value)}
-                        placeholder="📜 เริ่มต้นใช้งาน"
+                        placeholder="เริ่มต้นใช้งาน"
                         style={{ width: "100%", fontSize: 13 }}
                       />
                     </div>
@@ -535,13 +536,14 @@ export default function WelcomeManager({
                     {settings.welcome_title && (
                       <button
                         type="button"
-                        className="btn btn-xs btn-secondary"
+                        className="btn btn-xs btn-secondary flex items-center gap-1"
                         disabled={!isSuperAdmin}
                         onClick={() => handleChange("welcome_title", "")}
                         title="ลบหัวข้อ (ไม่ใส่หัวข้อ)"
                         style={{ padding: "4px 8px", fontSize: 11, flexShrink: 0 }}
                       >
-                        ✕ ลบ
+                        <Trash2 className="w-3 h-3" />
+                        <span>ลบ</span>
                       </button>
                     )}
                   </div>
@@ -633,7 +635,7 @@ export default function WelcomeManager({
                   value={
                     settings.welcome_message !== undefined
                       ? settings.welcome_message
-                      : "ยินดีต้อนรับสู่ {server}! ขอให้มีความสุขกับการพูดคุยและร่วมกิจกรรมกับพวกเรานะครับ ✨"
+                      : "ยินดีต้อนรับสู่ {server}! ขอให้มีความสุขกับการพูดคุยและร่วมกิจกรรมกับพวกเรานะครับ"
                   }
                   onChange={(e) => handleChange("welcome_message", e.target.value)}
                   placeholder="พิมพ์ข้อความต้อนรับที่นี่..."
@@ -760,7 +762,7 @@ export default function WelcomeManager({
                 <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)", letterSpacing: "0.05em", textTransform: "uppercase" }}>
                   Live Preview • ตัวอย่างการ์ดใน Discord
                 </span>
-                <span style={{ fontSize: 11, color: "var(--accent)", background: "rgba(41,151,255,0.1)", padding: "2px 8px", borderRadius: 9999 }}>
+                <span style={{ fontSize: 11, color: "var(--accent)", background: "rgba(41,151,255,0.1)", padding: "2px 8px", borderRadius: "0px" }}>
                   Real-time Sync
                 </span>
               </div>
@@ -821,7 +823,7 @@ export default function WelcomeManager({
                           <img src="/logo.png" alt="User" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e: any) => { e.target.style.display = "none"; }} />
                         </div>
                         <span style={{ fontSize: 12, fontWeight: 600, color: "#dbdee1" }}>
-                          {(settings.welcome_author_text || "{name} เข้าร่วมเซิร์ฟเวอร์ ✨")
+                          {(settings.welcome_author_text || "{name} เข้าร่วมเซิร์ฟเวอร์")
                             .replace(/\{name\}/g, "จิ๊กโก๋")
                             .replace(/\{user\}/g, "@จิ๊กโก๋")
                             .replace(/\{server\}/g, "753 BC")}
@@ -860,7 +862,7 @@ export default function WelcomeManager({
                             marginBottom: 12,
                           }}
                         >
-                          {(settings.welcome_message || "ยินดีต้อนรับสู่ {server}! ขอให้มีความสุขกับการพูดคุยและร่วมกิจกรรมกับพวกเรานะครับ ✨")
+                          {(settings.welcome_message || "ยินดีต้อนรับสู่ {server}! ขอให้มีความสุขกับการพูดคุยและร่วมกิจกรรมกับพวกเรานะครับ")
                             .replace(/\{user\}/g, "@จิ๊กโก๋")
                             .replace(/\{username\}/g, "dasd08930")
                             .replace(/\{name\}/g, "จิ๊กโก๋")
@@ -892,17 +894,26 @@ export default function WelcomeManager({
                     {settings.welcome_show_fields === "true" && (
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, margin: "10px 0" }}>
                         <div>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: "#949ba4" }}>👤 สมาชิก</div>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: "#949ba4" }} className="flex items-center gap-1">
+                            <User className="w-3 h-3 text-neutral-400" />
+                            <span>สมาชิก</span>
+                          </div>
                           <div style={{ fontSize: 12, color: "#5865f2", fontWeight: 600 }}>@จิ๊กโก๋</div>
                           <div style={{ fontSize: 10, color: "#80848e" }}>dasd08930</div>
                         </div>
                         <div>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: "#949ba4" }}>👥 ลำดับสมาชิก</div>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: "#949ba4" }} className="flex items-center gap-1">
+                            <Users className="w-3 h-3 text-neutral-400" />
+                            <span>ลำดับสมาชิก</span>
+                          </div>
                           <div style={{ fontSize: 12, color: "#dbdee1", fontWeight: 600 }}>คนที่ #60</div>
                           <div style={{ fontSize: 10, color: "#80848e" }}>ในเซิร์ฟเวอร์</div>
                         </div>
                         <div>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: "#949ba4" }}>📅 สร้างบัญชีเมื่อ</div>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: "#949ba4" }} className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3 text-neutral-400" />
+                            <span>สร้างบัญชีเมื่อ</span>
+                          </div>
                           <div style={{ fontSize: 12, color: "#dbdee1" }}>วันนี้</div>
                           <div style={{ fontSize: 10, color: "#80848e" }}>(จำลอง)</div>
                         </div>
@@ -915,7 +926,7 @@ export default function WelcomeManager({
                         <div style={{ fontSize: 11, fontWeight: 700, color: "#949ba4" }}>
                           {settings.welcome_rules_field_title && settings.welcome_rules_field_title.trim()
                             ? settings.welcome_rules_field_title
-                            : "📜 เริ่มต้นใช้งาน"}
+                            : "เริ่มต้นใช้งาน"}
                         </div>
                         <div style={{ fontSize: 12, color: "#5865f2" }}>
                           {(settings.welcome_rules_field_text && settings.welcome_rules_field_text.trim()
@@ -963,7 +974,7 @@ export default function WelcomeManager({
                         cursor: "default",
                       }}
                     >
-                      <span>📖</span>
+                      <BookOpen className="w-3.5 h-3.5" />
                       <span>กฎระเบียบเซิร์ฟเวอร์ ↗</span>
                     </div>
                     <div
@@ -980,7 +991,7 @@ export default function WelcomeManager({
                         cursor: "default",
                       }}
                     >
-                      <span>📢</span>
+                      <Megaphone className="w-3.5 h-3.5" />
                       <span>ห้องประกาศเซิร์ฟเวอร์ ↗</span>
                     </div>
                   </div>
@@ -1004,12 +1015,12 @@ export default function WelcomeManager({
             alignItems: "center",
             gap: 16,
             padding: "12px 24px",
-            background: "rgba(18, 18, 24, 0.9)",
-            border: "1px solid var(--border-subtle)",
-            borderRadius: "var(--radius-lg)",
+            background: "#070809",
+            border: "1px solid rgba(255, 255, 255, 0.12)",
+            borderRadius: "0px",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
-            boxShadow: "0 12px 40px rgba(0,0,0,0.6)",
+            boxShadow: "0 12px 40px rgba(0,0,0,0.8)",
             animation: "slideUp 0.25s ease",
           }}
         >

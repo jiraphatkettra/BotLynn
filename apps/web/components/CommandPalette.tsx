@@ -2,12 +2,33 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import {
+  BarChart3,
+  Clock,
+  ShoppingBag,
+  Receipt,
+  Wallet,
+  Ticket,
+  Users,
+  Scale,
+  ShieldCheck,
+  Megaphone,
+  Calendar,
+  Mic,
+  Database,
+  FileText,
+  Bot,
+  Settings,
+  Zap,
+  RefreshCw,
+  Search,
+} from "lucide-react";
 
 interface CommandItem {
   id: string;
   title: string;
   category: "หน้าการทำงาน" | "คำสั่งด่วน";
-  icon: string;
+  icon: React.ReactNode;
   href: string;
   keywords?: string[];
   description?: string;
@@ -19,7 +40,7 @@ const COMMAND_ITEMS: CommandItem[] = [
     id: "dashboard",
     title: "แดชบอร์ดภาพรวม",
     category: "หน้าการทำงาน",
-    icon: "📊",
+    icon: <BarChart3 className="w-4 h-4 text-sky-400" />,
     href: "/",
     keywords: ["home", "dashboard", "สถิติ", "หน้าแรก", "ภาพรวม"],
     description: "ดูสถิติรายได้, ผู้ใช้งาน, กิจกรรมล่าสุด",
@@ -28,7 +49,7 @@ const COMMAND_ITEMS: CommandItem[] = [
     id: "attendance",
     title: "ระบบตอกบัตรเข้า-ออกงาน",
     category: "หน้าการทำงาน",
-    icon: "⏱️",
+    icon: <Clock className="w-4 h-4 text-emerald-400" />,
     href: "/attendance",
     keywords: ["attendance", "clockin", "clockout", "ตอกบัตร", "เข้างาน", "ออกงาน"],
     description: "ตรวจสอบบันทึกเวลาทำงานของแอดมิน",
@@ -37,7 +58,7 @@ const COMMAND_ITEMS: CommandItem[] = [
     id: "shop",
     title: "ร้านค้ายศ Discord",
     category: "หน้าการทำงาน",
-    icon: "🛍️",
+    icon: <ShoppingBag className="w-4 h-4 text-amber-400" />,
     href: "/shop",
     keywords: ["shop", "role", "ร้านค้า", "ยศ", "ซื้อยศ", "ขายยศ"],
     description: "จัดการยศ, สต๊อก, ราคา และโปรโมชั่น",
@@ -46,7 +67,7 @@ const COMMAND_ITEMS: CommandItem[] = [
     id: "slips",
     title: "จัดการสลิปโอนเงิน",
     category: "หน้าการทำงาน",
-    icon: "🧾",
+    icon: <Receipt className="w-4 h-4 text-blue-400" />,
     href: "/slips",
     keywords: ["slip", "สลิป", "โอนเงิน", "อนุมัติ", "ตรวจสลิป"],
     description: "ตรวจสอบและอนุมัติสลิปโอนเงินจากสมาชิก",
@@ -55,7 +76,7 @@ const COMMAND_ITEMS: CommandItem[] = [
     id: "finance",
     title: "บัญชีรายรับ-รายจ่าย",
     category: "หน้าการทำงาน",
-    icon: "💰",
+    icon: <Wallet className="w-4 h-4 text-emerald-400" />,
     href: "/finance",
     keywords: ["finance", "income", "expense", "รายรับ", "รายจ่าย", "เงิน", "บัญชี", "งบประมาณ", "กำไร", "ขาดทุน", "cashflow"],
     description: "บันทึกรายรับ-รายจ่ายแมนนวล สรุปงบประมาณและกำไรขาดทุน",
@@ -64,7 +85,7 @@ const COMMAND_ITEMS: CommandItem[] = [
     id: "tickets",
     title: "ระบบทิกเก็ตและช่วยเหลือ",
     category: "หน้าการทำงาน",
-    icon: "🎫",
+    icon: <Ticket className="w-4 h-4 text-violet-400" />,
     href: "/tickets",
     keywords: ["ticket", "ทิกเก็ต", "เคส", "ช่วยเหลือ", "แจ้งปัญหา"],
     description: "ดูแลห้องแชททิกเก็ตและตอบคำถามสมาชิก",
@@ -73,7 +94,7 @@ const COMMAND_ITEMS: CommandItem[] = [
     id: "admins",
     title: "ทีมแอดมินและผู้ดูแล",
     category: "หน้าการทำงาน",
-    icon: "👥",
+    icon: <Users className="w-4 h-4 text-indigo-400" />,
     href: "/admins",
     keywords: ["admin", "staff", "ทีมงาน", "แอดมิน", "ผู้ดูแล", "รายชื่อ"],
     description: "จัดการสมาชิกทีมงาน, สิทธิ์ และซิงค์ยศ",
@@ -82,7 +103,7 @@ const COMMAND_ITEMS: CommandItem[] = [
     id: "rules",
     title: "กฎทีมงานและระเบียบปฏิบัติ",
     category: "หน้าการทำงาน",
-    icon: "⚖️",
+    icon: <Scale className="w-4 h-4 text-amber-400" />,
     href: "/rules",
     keywords: ["rules", "กฎ", "ระเบียบ", "กฎแอดมิน", "จรรยาบรรณ", "บทลงโทษ", "753bc"],
     description: "คู่มือระเบียบ จริยธรรม และตารางระดับโทษทีมงาน",
@@ -91,7 +112,7 @@ const COMMAND_ITEMS: CommandItem[] = [
     id: "permissions",
     title: "ตารางสิทธิ์การใช้งาน",
     category: "หน้าการทำงาน",
-    icon: "🔐",
+    icon: <ShieldCheck className="w-4 h-4 text-rose-400" />,
     href: "/permissions",
     keywords: ["permission", "สิทธิ์", "สิทธิ์รายบุคคล", "บทบาท"],
     description: "ดูและกำหนดสิทธิ์รายฟังก์ชันของแอดมิน",
@@ -100,7 +121,7 @@ const COMMAND_ITEMS: CommandItem[] = [
     id: "announcements",
     title: "สตูดิโอประกาศ Discord",
     category: "หน้าการทำงาน",
-    icon: "📢",
+    icon: <Megaphone className="w-4 h-4 text-pink-400" />,
     href: "/announcements",
     keywords: ["announce", "ประกาศ", "embed", "ส่งข้อความ"],
     description: "สร้างและส่งประกาศเข้าห้อง Discord",
@@ -109,7 +130,7 @@ const COMMAND_ITEMS: CommandItem[] = [
     id: "leaves",
     title: "ระบบลาหยุด / ลากิจ",
     category: "หน้าการทำงาน",
-    icon: "📅",
+    icon: <Calendar className="w-4 h-4 text-teal-400" />,
     href: "/leaves",
     keywords: ["leave", "ลาหยุด", "ลาป่วย", "ลากิจ", "พักร้อน", "วันลา"],
     description: "ส่งคำขอลาและอนุมัติคำขอลาของทีมงาน",
@@ -118,7 +139,7 @@ const COMMAND_ITEMS: CommandItem[] = [
     id: "voice",
     title: "สถิติห้องเสียง (Voice)",
     category: "หน้าการทำงาน",
-    icon: "🎙️",
+    icon: <Mic className="w-4 h-4 text-purple-400" />,
     href: "/voice",
     keywords: ["voice", "เสียง", "ห้องเสียง", "voice chat", "vc", "พูดคุย"],
     description: "ดูสถิติการเข้าห้อง Voice และ Leaderboard",
@@ -127,7 +148,7 @@ const COMMAND_ITEMS: CommandItem[] = [
     id: "backups",
     title: "สำรองและกู้ยศสมาชิก",
     category: "หน้าการทำงาน",
-    icon: "💾",
+    icon: <Database className="w-4 h-4 text-cyan-400" />,
     href: "/backups",
     keywords: ["backup", "restore", "สำรอง", "กู้คืน", "ยศหาย"],
     description: "บันทึกและกู้คืนยศสมาชิก Discord",
@@ -136,7 +157,7 @@ const COMMAND_ITEMS: CommandItem[] = [
     id: "logs",
     title: "ประวัติกิจกรรม (Audit Logs)",
     category: "หน้าการทำงาน",
-    icon: "📜",
+    icon: <FileText className="w-4 h-4 text-neutral-400" />,
     href: "/logs",
     keywords: ["logs", "audit", "ประวัติ", "ตรวจสอบ"],
     description: "บันทึกการทำงานและกิจกรรมย้อนหลังในระบบ",
@@ -145,7 +166,7 @@ const COMMAND_ITEMS: CommandItem[] = [
     id: "bot-status",
     title: "สถานะการทำงานของบอท",
     category: "หน้าการทำงาน",
-    icon: "🤖",
+    icon: <Bot className="w-4 h-4 text-emerald-400" />,
     href: "/bot-status",
     keywords: ["bot", "status", "สถานะ", "uptime", "ปิง"],
     description: "ตรวจสอบการเชื่อมต่อ, latency และ memory",
@@ -154,7 +175,7 @@ const COMMAND_ITEMS: CommandItem[] = [
     id: "settings",
     title: "ตั้งค่าระบบและห้อง Discord",
     category: "หน้าการทำงาน",
-    icon: "⚙️",
+    icon: <Settings className="w-4 h-4 text-neutral-300" />,
     href: "/settings",
     keywords: ["setting", "ตั้งค่า", "ห้อง", "promptpay", "พร้อมเพย์", "ช่อง"],
     description: "กำหนดห้องแจ้งเตือน, บัญชีรับเงิน และระบบหลัก",
@@ -165,7 +186,7 @@ const COMMAND_ITEMS: CommandItem[] = [
     id: "action-check-slips",
     title: "ตรวจสลิปที่รอดำเนินการ",
     category: "คำสั่งด่วน",
-    icon: "⚡",
+    icon: <Zap className="w-4 h-4 text-amber-400" />,
     href: "/slips?status=PENDING",
     keywords: ["ตรวจสลิปด่วน", "สลิปรอตรวจ", "pending slip"],
     description: "เปิดดูเฉพาะสลิปที่ยังรอการอนุมัติทันที",
@@ -174,7 +195,7 @@ const COMMAND_ITEMS: CommandItem[] = [
     id: "action-open-tickets",
     title: "ดูทิกเก็ตที่ยังเปิดอยู่",
     category: "คำสั่งด่วน",
-    icon: "⚡",
+    icon: <Zap className="w-4 h-4 text-violet-400" />,
     href: "/tickets?status=OPEN",
     keywords: ["ทิกเก็ตค้าง", "เคสเปิดอยู่", "open ticket"],
     description: "เปิดดูทิกเก็ตที่ยังไม่มีผู้รับเคสหรือกำลังดำเนินเรื่อง",
@@ -183,7 +204,7 @@ const COMMAND_ITEMS: CommandItem[] = [
     id: "action-sync-admins",
     title: "ไปหน้าซิงค์ยศแอดมิน Discord",
     category: "คำสั่งด่วน",
-    icon: "🔄",
+    icon: <RefreshCw className="w-4 h-4 text-sky-400" />,
     href: "/admins",
     keywords: ["sync admin", "ดึงแอดมิน", "ซิงค์ยศ"],
     description: "ตรวจสอบและอัปเดตสมาชิกตามยศของ Discord",
@@ -192,7 +213,7 @@ const COMMAND_ITEMS: CommandItem[] = [
     id: "action-settings-channels",
     title: "ตั้งค่าห้องแจ้งเตือน Discord",
     category: "คำสั่งด่วน",
-    icon: "📢",
+    icon: <Megaphone className="w-4 h-4 text-pink-400" />,
     href: "/settings",
     keywords: ["ตั้งค่าห้อง", "channel setting", "แจ้งเตือน discord"],
     description: "เลือกห้องสำหรับรับใบเสร็จ, ตอกบัตร และสลิป",
@@ -398,9 +419,9 @@ export default function CommandPalette() {
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
-                    <span style={{ fontSize: "18px", width: "24px", textAlign: "center" }}>
+                    <div className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0">
                       {item.icon}
-                    </span>
+                    </div>
                     <div style={{ minWidth: 0 }}>
                       <div
                         style={{
@@ -448,7 +469,9 @@ export default function CommandPalette() {
             })
           ) : (
             <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--text-muted)" }}>
-              <div style={{ fontSize: "28px", marginBottom: "8px" }}>🔍</div>
+              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-neutral-500">
+                <Search className="w-5 h-5" />
+              </div>
               <div style={{ fontSize: "14px", fontWeight: "500", color: "var(--text-primary)" }}>
                 ไม่พบผลลัพธ์ที่ตรงกับ "{query}"
               </div>

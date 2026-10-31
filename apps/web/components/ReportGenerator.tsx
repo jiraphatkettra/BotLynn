@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { formatCurrency } from "@/lib/utils";
+import { Download, Printer } from "lucide-react";
 
 interface StaffSummaryItem {
   id: string;
@@ -133,7 +134,8 @@ export default function ReportGenerator() {
               cursor: "pointer",
             }}
           >
-            📥 ส่งออก CSV (Excel)
+            <Download className="w-3.5 h-3.5" />
+            ส่งออก CSV (Excel)
           </button>
 
           <button
@@ -153,7 +155,8 @@ export default function ReportGenerator() {
               cursor: "pointer",
             }}
           >
-            🖨️ พิมพ์รายงาน
+            <Printer className="w-3.5 h-3.5 text-neutral-400" />
+            พิมพ์รายงาน
           </button>
         </div>
       </div>

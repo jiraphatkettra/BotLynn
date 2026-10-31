@@ -78,7 +78,8 @@ export async function PUT(
       );
     }
 
-    const body: Partial<EmbedConfigData> = await req.json();
+    const rawBody = await req.json();
+    const body: Partial<EmbedConfigData> = (rawBody?.config || rawBody) as Partial<EmbedConfigData>;
 
     // Clean & normalize payload
     const normalizedData = {

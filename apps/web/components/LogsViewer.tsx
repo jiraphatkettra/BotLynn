@@ -3,6 +3,24 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { formatDateTime, formatRelativeTime, getDiscordAvatarUrl } from "@/lib/utils";
+import {
+  ListFilter,
+  Lock,
+  Clock,
+  Tag,
+  User,
+  Settings,
+  Bot,
+  Key,
+  Mic,
+  Ticket,
+  Database,
+  Wallet,
+  Megaphone,
+  Calendar,
+  Receipt,
+  FileText,
+} from "lucide-react";
 
 interface LogItem {
   id: string;
@@ -20,22 +38,22 @@ interface LogItem {
   } | null;
 }
 
-const CATEGORY_MAP: Record<string, { label: string; icon: string; badgeClass: string }> = {
-  ALL: { label: "ทุกหมวดหมู่", icon: "📋", badgeClass: "badge-neutral" },
-  AUTH: { label: "การเข้าสู่ระบบ", icon: "🔐", badgeClass: "badge-info" },
-  ATTENDANCE: { label: "ตอกบัตร", icon: "⏰", badgeClass: "badge-success" },
-  SHOP: { label: "ร้านค้า", icon: "🏷️", badgeClass: "badge-purple" },
-  ADMIN: { label: "แอดมิน", icon: "👤", badgeClass: "badge-neutral" },
-  SYSTEM: { label: "ระบบ", icon: "⚙️", badgeClass: "badge-neutral" },
-  BOT: { label: "บอท", icon: "🤖", badgeClass: "badge-warning" },
-  PERMISSION: { label: "สิทธิ์", icon: "🔑", badgeClass: "badge-purple" },
-  VOICE: { label: "ห้องเสียง", icon: "🎙️", badgeClass: "badge-info" },
-  TICKET: { label: "ทิกเก็ต", icon: "🎫", badgeClass: "badge-info" },
-  BACKUP: { label: "สำรองข้อมูล", icon: "💾", badgeClass: "badge-warning" },
-  WALLET: { label: "กระเป๋าเงิน", icon: "💰", badgeClass: "badge-success" },
-  ANNOUNCEMENT: { label: "ประกาศ", icon: "📢", badgeClass: "badge-purple" },
-  LEAVE: { label: "ลาหยุด", icon: "🏖️", badgeClass: "badge-warning" },
-  SLIP: { label: "สลิป", icon: "🧾", badgeClass: "badge-success" },
+const CATEGORY_MAP: Record<string, { label: string; icon: React.ReactNode; badgeClass: string }> = {
+  ALL: { label: "ทุกหมวดหมู่", icon: <ListFilter className="w-3.5 h-3.5 shrink-0" />, badgeClass: "badge-neutral" },
+  AUTH: { label: "การเข้าสู่ระบบ", icon: <Lock className="w-3.5 h-3.5 shrink-0" />, badgeClass: "badge-info" },
+  ATTENDANCE: { label: "ตอกบัตร", icon: <Clock className="w-3.5 h-3.5 shrink-0" />, badgeClass: "badge-success" },
+  SHOP: { label: "ร้านค้า", icon: <Tag className="w-3.5 h-3.5 shrink-0" />, badgeClass: "badge-purple" },
+  ADMIN: { label: "แอดมิน", icon: <User className="w-3.5 h-3.5 shrink-0" />, badgeClass: "badge-neutral" },
+  SYSTEM: { label: "ระบบ", icon: <Settings className="w-3.5 h-3.5 shrink-0" />, badgeClass: "badge-neutral" },
+  BOT: { label: "บอท", icon: <Bot className="w-3.5 h-3.5 shrink-0" />, badgeClass: "badge-warning" },
+  PERMISSION: { label: "สิทธิ์", icon: <Key className="w-3.5 h-3.5 shrink-0" />, badgeClass: "badge-purple" },
+  VOICE: { label: "ห้องเสียง", icon: <Mic className="w-3.5 h-3.5 shrink-0" />, badgeClass: "badge-info" },
+  TICKET: { label: "ทิกเก็ต", icon: <Ticket className="w-3.5 h-3.5 shrink-0" />, badgeClass: "badge-info" },
+  BACKUP: { label: "สำรองข้อมูล", icon: <Database className="w-3.5 h-3.5 shrink-0" />, badgeClass: "badge-warning" },
+  WALLET: { label: "กระเป๋าเงิน", icon: <Wallet className="w-3.5 h-3.5 shrink-0" />, badgeClass: "badge-success" },
+  ANNOUNCEMENT: { label: "ประกาศ", icon: <Megaphone className="w-3.5 h-3.5 shrink-0" />, badgeClass: "badge-purple" },
+  LEAVE: { label: "ลาหยุด", icon: <Calendar className="w-3.5 h-3.5 shrink-0" />, badgeClass: "badge-warning" },
+  SLIP: { label: "สลิป", icon: <Receipt className="w-3.5 h-3.5 shrink-0" />, badgeClass: "badge-success" },
 };
 
 export default function LogsViewer() {
@@ -130,9 +148,9 @@ export default function LogsViewer() {
     <div className="card" id="logs-viewer-card">
       <div className="card-header" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", flexWrap: "wrap", gap: "8px" }}>
-          <h3 className="card-title">
-            <span className="card-title-icon">📝</span>
-            บันทึกกิจกรรม ({total.toLocaleString()} รายการ)
+          <h3 className="card-title flex items-center gap-2">
+            <FileText className="w-4 h-4 text-sky-400 shrink-0" />
+            <span>บันทึกกิจกรรม ({total.toLocaleString()} รายการ)</span>
           </h3>
 
           {isFiltered && (
@@ -294,7 +312,7 @@ export default function LogsViewer() {
           </div>
         ) : logs.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-state-icon">📝</div>
+            <FileText className="w-8 h-8 mx-auto text-neutral-500 mb-2" />
             <p className="empty-state-title">ไม่พบบันทึกกิจกรรม</p>
             <p className="empty-state-text">
               {isFiltered ? "ลองปรับหรือล้างตัวกรองเพื่อค้นหาข้อมูลใหม่อีกครั้ง" : "กิจกรรมจะถูกบันทึกอัตโนมัติเมื่อมีการใช้งาน"}
@@ -317,7 +335,7 @@ export default function LogsViewer() {
                 {logs.map((log, idx) => {
                   const catConfig = CATEGORY_MAP[log.category] || {
                     label: log.category,
-                    icon: "📋",
+                    icon: <FileText className="w-3.5 h-3.5 shrink-0" />,
                     badgeClass: "badge-neutral",
                   };
                   const rowNum = (page - 1) * 25 + idx + 1;
@@ -356,14 +374,16 @@ export default function LogsViewer() {
                             </div>
                           </div>
                         ) : (
-                          <span className="text-muted" style={{ fontSize: "12px" }}>
-                            ⚙️ ระบบ (System)
+                          <span className="text-muted flex items-center gap-1" style={{ fontSize: "12px" }}>
+                            <Settings className="w-3 h-3 text-neutral-400 shrink-0" />
+                            <span>ระบบ (System)</span>
                           </span>
                         )}
                       </td>
                       <td>
-                        <span className={`badge ${catConfig.badgeClass}`}>
-                          {catConfig.icon} {catConfig.label}
+                        <span className={`badge ${catConfig.badgeClass} flex items-center gap-1`}>
+                          {catConfig.icon}
+                          <span>{catConfig.label}</span>
                         </span>
                       </td>
                       <td style={{ fontWeight: 600, color: "#ffffff", fontSize: "13px" }}>

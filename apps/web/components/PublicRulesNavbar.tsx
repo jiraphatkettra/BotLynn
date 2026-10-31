@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { getDiscordAvatarUrl, isRootOwner } from "@/lib/utils";
+import { Crown } from "lucide-react";
 
 export default function PublicRulesNavbar() {
   const { data: session } = useSession();
@@ -114,8 +115,8 @@ export default function PublicRulesNavbar() {
                   <span className="public-staff-displayname">
                     {user?.displayName || user?.name || "Staff"}
                   </span>
-                  <span className="public-staff-role-badge">
-                    {isRoot ? "👑 Root Owner" : user?.role || "Staff"}
+                  <span className="public-staff-role-badge flex items-center gap-1">
+                    {isRoot ? <><Crown className="w-3 h-3 text-amber-400" /> Root Owner</> : user?.role || "Staff"}
                   </span>
                 </div>
               </div>

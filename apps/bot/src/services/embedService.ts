@@ -66,6 +66,8 @@ function replacePlaceholders(text: string, variables: Record<string, string | nu
       result = result.replaceAll(token, String(val));
     }
   }
+  // Auto-resolve known guild emojis if ID is missing e.g. <:70661email:>
+  result = result.replaceAll(/<:70661email:\s*>/g, "<:70661email:1561687861894447155>");
   return result;
 }
 

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { formatRelativeTime } from "@/lib/utils";
+import { Gift, Trash2 } from "lucide-react";
 
 interface GiveawayItem {
   id: string;
@@ -67,8 +68,9 @@ export default function GiveawayManager() {
         }}
       >
         <div>
-          <div style={{ fontSize: "14px", fontWeight: 700, color: "#ffffff" }}>
-            🎉 สร้างกิจกรรม Giveaway ได้โดยตรงใน Discord
+          <div style={{ fontSize: "14px", fontWeight: 700, color: "#ffffff", display: "flex", alignItems: "center", gap: 8 }}>
+            <Gift className="w-4 h-4 text-pink-400" />
+            สร้างกิจกรรม Giveaway ได้โดยตรงใน Discord
           </div>
           <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "2px" }}>
             ใช้คำสั่ง <code>/giveaway create</code> เพื่อเปิดกิจกรรมพร้อมปุ่มสุ่มรางวัลอัตโนมัติ
@@ -102,7 +104,9 @@ export default function GiveawayManager() {
       >
         {giveaways.length === 0 ? (
           <div className="empty-state" style={{ gridColumn: "1 / -1" }}>
-            <div className="empty-state-icon">🎉</div>
+            <div className="w-12 h-12 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center mx-auto mb-3">
+              <Gift className="w-6 h-6 text-pink-400" />
+            </div>
             <p className="empty-state-title">ยังไม่มีกิจกรรม Giveaway</p>
             <p className="empty-state-text">ใช้คำสั่ง /giveaway create ใน Discord เพื่อเริ่มกิจกรรมแจกรางวัล</p>
           </div>
@@ -134,22 +138,28 @@ export default function GiveawayManager() {
                         borderRadius: "6px",
                         background: !isEnded ? "rgba(48, 209, 88, 0.15)" : "rgba(255, 255, 255, 0.08)",
                         color: !isEnded ? "#30d158" : "var(--text-muted)",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
                       }}
                     >
-                      {!isEnded ? "🟢 กำลังจัดกิจกรรม" : "⚪ สิ้นสุดแล้ว"}
+                      <span className={`w-1.5 h-1.5 rounded-full ${!isEnded ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" : "bg-neutral-500"}`} />
+                      {!isEnded ? "กำลังจัดกิจกรรม" : "สิ้นสุดแล้ว"}
                     </span>
 
                     <button
                       type="button"
                       onClick={() => handleDelete(g.id)}
-                      style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "14px" }}
+                      style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "inline-flex", alignItems: "center" }}
+                      title="ลบกิจกรรม"
                     >
-                      ✕
+                      <Trash2 className="w-4 h-4 hover:text-rose-400 transition-colors" />
                     </button>
                   </div>
 
-                  <h3 style={{ fontSize: "18px", fontWeight: 700, color: "#ffffff", margin: "0 0 6px" }}>
-                    🎁 {g.prize}
+                  <h3 style={{ fontSize: "18px", fontWeight: 700, color: "#ffffff", margin: "0 0 6px", display: "flex", alignItems: "center", gap: 8 }}>
+                    <Gift className="w-4 h-4 text-pink-400 shrink-0" />
+                    <span>{g.prize}</span>
                   </h3>
 
                   <div style={{ fontSize: "12.5px", color: "var(--text-secondary)", display: "flex", flexDirection: "column", gap: "4px" }}>

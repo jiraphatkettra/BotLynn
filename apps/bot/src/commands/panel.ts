@@ -13,6 +13,7 @@ import {
   buildTicketPanel,
   buildAdminHubPanel,
   buildModerationPanel,
+  buildFandayPanel,
 } from "../services/panelService.js";
 
 export const panelCommand: BotCommand = {
@@ -31,7 +32,8 @@ export const panelCommand: BotCommand = {
           { name: "🛒 แผงร้านค้ายศ & กระเป๋าเงิน (Shop & Wallet)", value: "shop" },
           { name: "📩 แผงศูนย์ช่วยเหลือ (Ticket Support)", value: "ticket" },
           { name: "🛡️ แผงควบคุมด่วนทีมงาน (Staff Control Hub)", value: "admin-hub" },
-          { name: "⚖️ แผงตักเตือน & บันทึกลงโทษ (Moderation & Warning)", value: "moderation" }
+          { name: "⚖️ แผงตักเตือน & บันทึกลงโทษ (Moderation & Warning)", value: "moderation" },
+          { name: "🎀 กิจกรรมแฟนเดย์ (Fanday)", value: "fanday" }
         )
     )
     .addChannelOption((option) =>
@@ -92,6 +94,10 @@ export const panelCommand: BotCommand = {
         panelData = buildModerationPanel();
         panelNameTh = "แผงควบคุมความประพฤติ & บันทึกการลงโทษ (Moderation & Warning)";
         break;
+      case "fanday":
+        panelData = await buildFandayPanel();
+        panelNameTh = "แผงกิจกรรมแฟนเดย์ (Fanday Station)";
+        break;
       default:
         await interaction.reply({
           content: "❌ ไม่พบประเภทแผงควบคุมที่ระบุ",
@@ -101,7 +107,23 @@ export const panelCommand: BotCommand = {
     }
 
     try {
-      await targetChannel.send(panelData);
+      const sentMessage = await targetChannel.send(panelData);
+
+      if (panelType === "fanday") {
+        const activeEvent = await prisma.fandayEvent.findFirst({
+          where: { status: { notIn: ["ENDED", "CANCELLED"] } },
+          orderBy: { createdAt: "desc" },
+        });
+        if (activeEvent) {
+          await prisma.fandayEvent.update({
+            where: { id: activeEvent.id },
+            data: {
+              panelChannelId: targetChannel.id,
+              panelMessageId: sentMessage.id,
+            },
+          });
+        }
+      }
 
       let logNote = "";
       if (logChannel) {

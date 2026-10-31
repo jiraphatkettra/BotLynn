@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import { prisma } from "@lynnbot/database";
 import { formatDateTime, formatDuration } from "@/lib/utils";
+import { Bot, Clock, RefreshCw, AlertTriangle, BarChart3 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -67,10 +68,9 @@ export default async function BotStatusPage() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: 40,
                 }}
               >
-                🤖
+                <Bot className={`w-10 h-10 ${isOnline ? "text-emerald-400" : "text-rose-500"}`} />
               </div>
               <div>
                 <h2
@@ -81,8 +81,10 @@ export default async function BotStatusPage() {
                       ? "var(--success-400)"
                       : "var(--error-400)",
                   }}
+                  className="flex items-center gap-2"
                 >
-                  {isOnline ? "🟢 ออนไลน์" : "🔴 ออฟไลน์"}
+                  <span className={`w-3.5 h-3.5 rounded-full ${isOnline ? "bg-emerald-400 animate-pulse" : "bg-rose-500"}`} />
+                  <span>{isOnline ? "ออนไลน์" : "ออฟไลน์"}</span>
                 </h2>
                 <p className="text-muted" style={{ marginTop: 4 }}>
                   {isOnline
@@ -120,7 +122,7 @@ export default async function BotStatusPage() {
         <div className="stats-grid stagger">
           <div className="stat-card green">
             <div className="stat-card-header">
-              <div className="stat-card-icon">⏱️</div>
+              <div className="stat-card-icon"><Clock className="w-5 h-5 text-emerald-400" /></div>
             </div>
             <div className="stat-card-value">
               {formatDuration(Math.floor(data.totalUptime / 60))}
@@ -130,7 +132,7 @@ export default async function BotStatusPage() {
 
           <div className="stat-card purple">
             <div className="stat-card-header">
-              <div className="stat-card-icon">🔄</div>
+              <div className="stat-card-icon"><RefreshCw className="w-5 h-5 text-violet-400" /></div>
             </div>
             <div className="stat-card-value">{data.sessions.length}</div>
             <div className="stat-card-label">จำนวน Sessions</div>
@@ -138,7 +140,7 @@ export default async function BotStatusPage() {
 
           <div className="stat-card orange">
             <div className="stat-card-header">
-              <div className="stat-card-icon">⚠️</div>
+              <div className="stat-card-icon"><AlertTriangle className="w-5 h-5 text-amber-400" /></div>
             </div>
             <div className="stat-card-value">
               {data.sessions.filter((s) => s.status === "ERROR").length}
@@ -150,9 +152,9 @@ export default async function BotStatusPage() {
         {/* Session History */}
         <div className="card" id="bot-sessions-card">
           <div className="card-header">
-            <h3 className="card-title">
-              <span className="card-title-icon">📊</span>
-              ประวัติ Sessions
+            <h3 className="card-title flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-sky-400 shrink-0" />
+              <span>ประวัติ Sessions</span>
             </h3>
           </div>
           <div className="card-body">
@@ -187,12 +189,12 @@ export default async function BotStatusPage() {
                             }`}
                           >
                             {session.status === "ONLINE"
-                              ? "🟢 Online"
+                              ? "Online"
                               : session.status === "ERROR"
-                                ? "🔴 Error"
+                                ? "Error"
                                 : session.status === "RESTARTING"
-                                  ? "🟡 Restart"
-                                  : "⚫ Offline"}
+                                  ? "Restart"
+                                  : "Offline"}
                           </span>
                         </td>
                         <td>{formatDateTime(session.startedAt)}</td>
@@ -219,7 +221,7 @@ export default async function BotStatusPage() {
               </div>
             ) : (
               <div className="empty-state">
-                <div className="empty-state-icon">🤖</div>
+                <Bot className="w-8 h-8 mx-auto text-neutral-500 mb-2" />
                 <p className="empty-state-title">ยังไม่มีข้อมูล</p>
                 <p className="empty-state-text">
                   ข้อมูลจะปรากฏเมื่อบอทเริ่มทำงาน

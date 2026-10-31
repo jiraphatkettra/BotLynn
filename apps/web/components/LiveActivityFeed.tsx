@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Activity } from "lucide-react";
 
 interface LiveEvent {
   id: string;
@@ -49,7 +50,7 @@ export default function LiveActivityFeed({ initialLogs }: { initialLogs: any[] }
     <div className="dashboard-activity-card">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
         <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#ffffff", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
-          <span>📜</span>
+          <Activity className="w-4 h-4 text-emerald-400" />
           <span>กิจกรรมแบบเรียลไทม์ (Live Activity)</span>
         </h3>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>

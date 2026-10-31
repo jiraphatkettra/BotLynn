@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { formatDate } from "@/lib/utils";
+import { X } from "lucide-react";
 
 interface Backup {
   id: string;
@@ -77,7 +78,7 @@ export default function BackupManager() {
       if (res.ok) {
         const data = await res.json();
         alert(
-          `✅ กู้คืนยศสำเร็จ!\n• สร้างยศใหม่: ${data.rolesRecreated} ยศ\n• อัปเดตสมาชิก: ${data.membersRestored} คน`
+          `กู้คืนยศสำเร็จ!\n• สร้างยศใหม่: ${data.rolesRecreated} ยศ\n• อัปเดตสมาชิก: ${data.membersRestored} คน`
         );
         setConfirmRestoreBackup(null);
       } else {
@@ -392,9 +393,11 @@ export default function BackupManager() {
                   border: "none",
                   color: "#86868b",
                   cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
                 }}
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 

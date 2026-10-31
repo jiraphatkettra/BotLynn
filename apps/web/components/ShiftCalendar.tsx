@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { getDiscordAvatarUrl } from "@/lib/utils";
+import { Calendar, X } from "lucide-react";
 
 interface StaffUser {
   id: string;
@@ -454,7 +455,9 @@ export default function ShiftCalendar() {
 
       {!loading && schedules.length === 0 && (
         <div className="empty-state" style={{ marginTop: "20px" }}>
-          <div className="empty-state-icon">📅</div>
+          <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto mb-3">
+            <Calendar className="w-6 h-6 text-blue-400" />
+          </div>
           <p className="empty-state-title">ยังไม่มีตารางเวรในเดือนนี้</p>
           <p className="empty-state-text">กดปุ่ม "+ จัดตารางเวร" หรือคลิกที่ช่องวันที่เพื่อกำหนดเวรให้ทีมงาน</p>
         </div>
@@ -495,9 +498,9 @@ export default function ShiftCalendar() {
               <button
                 type="button"
                 onClick={() => setModalOpen(false)}
-                style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "18px" }}
+                style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "inline-flex", alignItems: "center" }}
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 

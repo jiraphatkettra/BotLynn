@@ -4,6 +4,7 @@ import { useState } from "react";
 import VoiceStandbyWidget from "@/components/VoiceStandbyWidget";
 import LeaveManager from "@/components/LeaveManager";
 import { formatDate, formatTime, formatDuration, getDiscordAvatarUrl } from "@/lib/utils";
+import { Clock, Calendar, Briefcase, CheckCircle2, AlertTriangle } from "lucide-react";
 
 interface AttendanceRecord {
   id: string;
@@ -150,33 +151,32 @@ export default function AttendanceContainer({
             bottom: "24px",
             right: "24px",
             zIndex: 9999,
-            background: toast.type === "success" ? "#1e2b22" : "#321619",
+            background: toast.type === "success" ? "#070809" : "#070809",
             border: `1px solid ${toast.type === "success" ? "#34c759" : "#ff3b30"}`,
             color: "#ffffff",
             padding: "12px 20px",
-            borderRadius: "10px",
-            boxShadow: "0 8px 30px rgba(0,0,0,0.5)",
+            borderRadius: "0px",
+            boxShadow: "0 8px 30px rgba(0,0,0,0.8)",
             fontSize: "13px",
             fontWeight: 500,
             display: "flex",
             alignItems: "center",
             gap: "10px",
-            animation: "scaleIn 0.2s ease-out",
           }}
         >
-          <span>{toast.type === "success" ? "✅" : "⚠️"}</span>
+          <span>{toast.type === "success" ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <AlertTriangle className="w-4 h-4 text-amber-400" />}</span>
           <span>{toast.message}</span>
         </div>
       )}
 
-      {/* Apple Segmented Tab Switcher */}
+      {/* Segmented Tab Switcher */}
       <div className="apple-segmented" style={{ alignSelf: "flex-start" }}>
         <button
           type="button"
           className={`apple-segmented-item ${activeTab === "attendance" ? "active" : ""}`}
           onClick={() => setActiveTab("attendance")}
         >
-          ⏱️ บันทึกการเข้างาน & ห้องเสียง
+          <Clock className="w-3.5 h-3.5 inline mr-1.5" /> บันทึกการเข้างาน & ห้องเสียง
         </button>
 
         <button
@@ -184,7 +184,7 @@ export default function AttendanceContainer({
           className={`apple-segmented-item ${activeTab === "leave" ? "active" : ""}`}
           onClick={() => setActiveTab("leave")}
         >
-          🌴 ระบบแจ้งลางาน (Leave Requests)
+          <Calendar className="w-3.5 h-3.5 inline mr-1.5" /> ระบบแจ้งลางาน (Leave Requests)
         </button>
       </div>
 
@@ -201,11 +201,12 @@ export default function AttendanceContainer({
               flexWrap: "wrap",
               gap: "16px",
               background: myActive
-                ? "linear-gradient(90deg, rgba(52, 199, 89, 0.08) 0%, rgba(52, 199, 89, 0.02) 100%)"
-                : "rgba(255, 255, 255, 0.02)",
+                ? "rgba(52, 199, 89, 0.05)"
+                : "#070809",
               border: `1px solid ${
                 myActive ? "rgba(52, 199, 89, 0.3)" : "rgba(255, 255, 255, 0.08)"
               }`,
+              borderRadius: "0px",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
@@ -213,15 +214,15 @@ export default function AttendanceContainer({
                 style={{
                   width: "42px",
                   height: "42px",
-                  borderRadius: "12px",
+                  borderRadius: "0px",
                   background: myActive ? "rgba(52, 199, 89, 0.15)" : "rgba(255, 255, 255, 0.06)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: "20px",
                 }}
               >
-                {myActive ? "💼" : "⏱️"}
+                {myActive ? <Briefcase className="w-5 h-5 text-emerald-400" /> : <Clock className="w-5 h-5 text-neutral-400" />}
               </div>
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -232,9 +233,8 @@ export default function AttendanceContainer({
                     style={{
                       width: "8px",
                       height: "8px",
-                      borderRadius: "50%",
+                      borderRadius: "0px",
                       background: myActive ? "#34c759" : "#86868b",
-                      boxShadow: myActive ? "0 0 8px #34c759" : "none",
                     }}
                   />
                   <span
@@ -266,15 +266,16 @@ export default function AttendanceContainer({
                     padding: "8px 18px",
                     fontSize: "13px",
                     fontWeight: 600,
+                    borderRadius: "0px",
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "8px",
                   }}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <rect x="3" y="3" width="18" height="18" rx="0" ry="0" />
                   </svg>
-                  {actionLoading ? "กำลังบันทึก..." : "🔴 ตอกบัตรออกงาน"}
+                  {actionLoading ? "กำลังบันทึก..." : "ตอกบัตรออกงาน"}
                 </button>
               ) : (
                 <button
@@ -289,6 +290,7 @@ export default function AttendanceContainer({
                     padding: "8px 18px",
                     fontSize: "13px",
                     fontWeight: 600,
+                    borderRadius: "0px",
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "8px",
@@ -298,7 +300,7 @@ export default function AttendanceContainer({
                     <circle cx="12" cy="12" r="10" />
                     <polyline points="12 6 12 12 16 14" />
                   </svg>
-                  {actionLoading ? "กำลังบันทึก..." : "🟢 ตอกบัตรเข้างาน"}
+                  {actionLoading ? "กำลังบันทึก..." : "ตอกบัตรเข้างาน"}
                 </button>
               )}
             </div>
@@ -473,7 +475,7 @@ export default function AttendanceContainer({
                               <span
                                 style={{
                                   padding: "3px 8px",
-                                  borderRadius: "6px",
+                                  borderRadius: "0px",
                                   fontSize: "11px",
                                   background: "rgba(52,199,89,0.12)",
                                   color: "#34c759",
@@ -492,7 +494,7 @@ export default function AttendanceContainer({
                               <span
                                 style={{
                                   padding: "4px 8px",
-                                  borderRadius: "6px",
+                                  borderRadius: "0px",
                                   fontSize: "11px",
                                   fontWeight: 500,
                                   background: "rgba(255,255,255,0.05)",
@@ -506,7 +508,7 @@ export default function AttendanceContainer({
                               <span
                                 style={{
                                   padding: "4px 8px",
-                                  borderRadius: "6px",
+                                  borderRadius: "0px",
                                   fontSize: "11px",
                                   fontWeight: 600,
                                   background: "rgba(52,199,89,0.12)",
@@ -514,7 +516,8 @@ export default function AttendanceContainer({
                                   border: "1px solid rgba(52,199,89,0.2)",
                                 }}
                               >
-                                🟢 กำลังปฏิบัติงาน
+                                <span className="inline-block w-1.5 h-1.5 bg-emerald-400 mr-1.5 animate-pulse" />
+                                กำลังปฏิบัติงาน
                               </span>
                             )}
                           </td>

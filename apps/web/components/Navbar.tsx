@@ -7,395 +7,200 @@ import { useSession, signOut } from "next-auth/react";
 import { getDiscordAvatarUrl, isRootOwner } from "@/lib/utils";
 import LiveStatusPulse from "@/components/LiveStatusPulse";
 import NotificationCenter from "@/components/NotificationCenter";
+import {
+  Receipt,
+  Wallet,
+  ShoppingBag,
+  MessageSquare,
+  Volume2,
+  Gift,
+  Clock,
+  Calendar,
+  Users,
+  Shield,
+  BookOpen,
+  FileText,
+  CheckSquare,
+  AlertTriangle,
+  Settings,
+  Database,
+  Activity,
+  BarChart3,
+  Search,
+  Menu,
+  X,
+  ChevronDown,
+  LogOut,
+  LayoutDashboard,
+  Bell,
+  Megaphone,
+} from "lucide-react";
 
 interface SubNavItem {
   href: string;
   label: string;
   desc: string;
   badgeKey?: "pendingSlips" | "openTickets";
-  badgeColor?: string;
-  icon: React.ReactNode;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
 interface NavCategory {
   id: string;
   label: string;
-  icon: React.ReactNode;
-  alignRight?: boolean;
   items: SubNavItem[];
 }
 
-interface DirectNavItem {
-  href: string;
-  label: string;
-  badgeKey?: "pendingSlips" | "openTickets";
-  icon: React.ReactNode;
-}
-
-// 1. Overview direct links
-// 1. Overview direct links
-const DASHBOARD_NAV: DirectNavItem = {
-  href: "/",
-  label: "แดชบอร์ด",
-  icon: (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect width="7" height="9" x="3" y="3" rx="1.5" />
-      <rect width="7" height="5" x="14" y="3" rx="1.5" />
-      <rect width="7" height="9" x="14" y="12" rx="1.5" />
-      <rect width="7" height="5" x="3" y="16" rx="1.5" />
-    </svg>
-  ),
-};
-
-// 2. Nav Categories (Dropdowns)
-// 2.1 Finance Category (Slips, Cashflow/Accounting, Shop)
 const FINANCE_CATEGORY: NavCategory = {
   id: "finance",
   label: "การเงิน",
-  icon: (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect width="20" height="14" x="2" y="5" rx="2" />
-      <line x1="2" x2="22" y1="10" y2="10" />
-    </svg>
-  ),
   items: [
     {
       href: "/slips",
-      label: "ตรวจสลิป",
-      desc: "ตรวจสอบและอนุมัติสลิปโอนเงิน",
+      label: "ตรวจสลิปโอนเงิน",
+      desc: "อนุมัติสลิป & ตรวจ QR Slip อัตโนมัติ",
       badgeKey: "pendingSlips",
-      badgeColor: "#ff9f0a",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-          <circle cx="9" cy="9" r="2" />
-          <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-        </svg>
-      ),
+      icon: Receipt,
     },
     {
       href: "/finance",
       label: "รายรับ-รายจ่าย",
-      desc: "บันทึกบัญชีแมนนวล & งบเซิร์ฟเวอร์",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="12" y1="1" x2="12" y2="23" />
-          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-        </svg>
-      ),
+      desc: "บันทึกบัญชี & งบประมาณเซิร์ฟเวอร์",
+      icon: Wallet,
     },
     {
       href: "/shop",
-      label: "ร้านค้ายศ",
-      desc: "จัดการแพ็กเกจยศ & ประวัติสั่งซื้อ",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
-          <path d="M3 6h18" />
-          <path d="M16 10a4 4 0 0 1-8 0" />
-        </svg>
-      ),
+      label: "ร้านค้ายศ Discord",
+      desc: "จัดการแพ็กเกจยศ & ออเดอร์",
+      icon: ShoppingBag,
     },
   ],
 };
 
-// 2.2 Services & Community Category (Tickets, Announcements, Voice)
 const SERVICES_CATEGORY: NavCategory = {
   id: "services",
   label: "บริการ & ชุมชน",
-  icon: (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-      <line x1="9" y1="10" x2="15" y2="10" />
-      <line x1="12" y1="7" x2="12" y2="13" />
-    </svg>
-  ),
   items: [
     {
       href: "/tickets",
       label: "ทิกเก็ตช่วยเหลือ",
-      desc: "จัดการกล่องข้อความและเคสลูกค้า",
+      desc: "รับเรื่อง & สนทนาซัพพอร์ตสมาชิก",
       badgeKey: "openTickets",
-      badgeColor: "#2997ff",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-          <polyline points="22,6 12,13 2,6" />
-        </svg>
-      ),
+      icon: MessageSquare,
     },
     {
       href: "/announcements",
-      label: "ประกาศข่าวสาร",
-      desc: "สร้างและส่งประกาศเข้าห้อง Discord",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-          <line x1="9" y1="10" x2="15" y2="10" />
-          <line x1="12" y1="7" x2="12" y2="13" />
-        </svg>
-      ),
-    },
-    {
-      href: "/welcome",
-      label: "ต้อนรับ & แจกยศ",
-      desc: "ปรับแต่งการ์ดต้อนรับสมาชิกและแจกยศเริ่มต้น",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <line x1="19" y1="8" x2="19" y2="14" />
-          <line x1="22" y1="11" x2="16" y2="11" />
-        </svg>
-      ),
+      label: "สตูดิโอประกาศ",
+      desc: "ออกแบบ Embed & ประกาศผ่านบอท",
+      icon: Megaphone,
     },
     {
       href: "/voice",
-      label: "สถิติห้องเสียง",
-      desc: "ดูสถิติการเข้าห้อง Voice ของสมาชิก",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-          <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-          <line x1="12" x2="12" y1="19" y2="22" />
-        </svg>
-      ),
+      label: "จัดการห้องเสียง",
+      desc: "Dynamic Voice & สถิติสแตนด์บาย",
+      icon: Volume2,
     },
     {
       href: "/giveaways",
-      label: "กิจกรรมแจกรางวัล",
-      desc: "จัดการ Giveaway และประวัติผู้โชคดี",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="20 12 20 22 4 22 4 12" />
-          <rect width="20" height="5" x="2" y="7" />
-          <line x1="12" x2="12" y1="22" y2="7" />
-        </svg>
-      ),
-    },
-    {
-      href: "/moderation",
-      label: "บันทึกการเตือน (Warn)",
-      desc: "ประวัติการลงโทษและเตือนสมาชิก",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-          <line x1="12" x2="12" y1="9" y2="13" />
-          <line x1="12" x2="12.01" y1="17" y2="17" />
-        </svg>
-      ),
+      label: "กิจกรรมแจกของ",
+      desc: "สุ่มของรางวัล & แจกยศอัตโนมัติ",
+      icon: Gift,
     },
   ],
 };
 
-// 2.3 Team Category (Attendance, Leaves, Admins, Permissions, Rules)
 const TEAM_CATEGORY: NavCategory = {
   id: "team",
   label: "ทีมงาน",
-  icon: (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-  ),
   items: [
     {
       href: "/attendance",
-      label: "ตอกบัตรเข้างาน",
-      desc: "บันทึกเวลาเข้า-ออกงาน & สถิติกะ",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10" />
-          <polyline points="12 6 12 12 16 14" />
-        </svg>
-      ),
+      label: "ตอกบัตร & เวลาทำงาน",
+      desc: "บันทึกเวลาปฏิบัติงาน & กะงาน",
+      icon: Clock,
     },
     {
       href: "/leaves",
-      label: "ลาหยุด / ลากิจ",
-      desc: "ส่งคำขอลาและอนุมัติคำขอลาของทีมงาน",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-          <line x1="16" x2="16" y1="2" y2="6" />
-          <line x1="8" x2="8" y1="2" y2="6" />
-          <line x1="3" x2="21" y1="10" y2="10" />
-          <line x1="10" x2="14" y1="14" y2="18" />
-          <line x1="14" x2="10" y1="14" y2="18" />
-        </svg>
-      ),
-    },
-    {
-      href: "/tasks",
-      label: "งานที่มอบหมาย (Tasks)",
-      desc: "กระดาน Kanban จัดการงานทีมงาน",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 20h9" />
-          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-        </svg>
-      ),
+      label: "คำขอลางาน",
+      desc: "ตรวจสอบ & อนุมัติการลางาน",
+      icon: Calendar,
     },
     {
       href: "/admins",
-      label: "รายชื่อทีมงาน",
-      desc: "จัดการข้อมูลและตำแหน่งผู้ดูแลระบบ",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <polyline points="16 11 18 13 22 9" />
-        </svg>
-      ),
+      label: "รายชื่อแอดมิน",
+      desc: "จัดการทีมงาน & สิทธิ์รายบุคคล",
+      icon: Users,
     },
     {
       href: "/permissions",
-      label: "กำหนดสิทธิ์",
-      desc: "ตารางสิทธิ์การเข้าถึงรายบุคคล",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-        </svg>
-      ),
-    },
-    {
-      href: "/schedule",
-      label: "ตารางเวรทีมงาน",
-      desc: "จัดตารางเวรและกะทำงานแอดมิน",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-          <line x1="16" x2="16" y1="2" y2="6" />
-          <line x1="8" x2="8" y1="2" y2="6" />
-          <line x1="3" x2="21" y1="10" y2="10" />
-        </svg>
-      ),
-    },
-    {
-      href: "/leaderboard",
-      label: "กระดานผู้นำ",
-      desc: "จัดอันดับผลงาน & เหรียญรางวัล",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
-          <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
-          <path d="M4 22h16" />
-          <path d="M10 14.66V17c0 .55-.45 1-1 1H7v4h10v-4h-2c-.55 0-1-.45-1-1v-2.34" />
-          <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
-        </svg>
-      ),
-    },
-    {
-      href: "/notes",
-      label: "บันทึกภายใน / SOP",
-      desc: "คู่มือการทำงาน & บันทึกช่วยจำ",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <polyline points="14 2 14 8 20 8" />
-          <line x1="16" y1="13" x2="8" y2="13" />
-          <line x1="16" y1="17" x2="8" y2="17" />
-          <polyline points="10 9 9 9 8 9" />
-        </svg>
-      ),
-    },
-    {
-      href: "/reports",
-      label: "รายงาน & ส่งออก",
-      desc: "สรุปผลงานรายเดือน & ดาวน์โหลด CSV",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="7 10 12 15 17 10" />
-          <line x1="12" x2="12" y1="15" y2="3" />
-        </svg>
-      ),
+      label: "สิทธิ์การเข้าถึง",
+      desc: "ตั้งค่า Role Matrix ในแดชบอร์ด",
+      icon: Shield,
     },
     {
       href: "/rules",
-      label: "กฎทีมงาน",
-      desc: "ระเบียบปฏิบัติและจรรยาบรรณทีมงาน",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-          <path d="m9 12 2 2 4-4" />
-        </svg>
-      ),
+      label: "กฎระเบียบปฏิบัติ",
+      desc: "คู่มือจริยธรรม & มาตรฐานทีมงาน",
+      icon: BookOpen,
+    },
+    {
+      href: "/notes",
+      label: "โน้ตลับทีมงาน",
+      desc: "สมุดบันทึก & ส่งต่องานเวร",
+      icon: FileText,
+    },
+    {
+      href: "/tasks",
+      label: "กระดานงาน (Tasks)",
+      desc: "Kanban Board ติดตามงาน",
+      icon: CheckSquare,
+    },
+    {
+      href: "/moderation",
+      label: "ลงโทษสมาชิก",
+      desc: "บันทึกเตือน แบน มิวต์ & ประวัติ",
+      icon: AlertTriangle,
     },
   ],
 };
 
-// 2.4 System Category (Settings, Backups, Logs, Bot Status)
 const SYSTEM_CATEGORY: NavCategory = {
   id: "system",
-  label: "จัดการระบบ",
-  alignRight: true,
-  icon: (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-    </svg>
-  ),
+  label: "ระบบ",
   items: [
     {
       href: "/settings",
-      label: "ตั้งค่าระบบ",
-      desc: "กำหนดห้องแจ้งเตือน & การเงิน",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="4" x2="20" y1="21" y2="21" />
-          <line x1="4" x2="20" y1="14" y2="14" />
-          <line x1="4" x2="20" y1="7" y2="7" />
-          <circle cx="8" cy="7" r="2" />
-          <circle cx="16" cy="14" r="2" />
-          <circle cx="10" cy="21" r="2" />
-        </svg>
-      ),
+      label: "ตั้งค่าระบบบอท",
+      desc: "Config หลัก & เชื่อมต่อ Discord API",
+      icon: Settings,
     },
     {
       href: "/backups",
       label: "สำรองและกู้ยศ",
-      desc: "บันทึกและกู้คืนยศสมาชิก Discord",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-          <polyline points="17 21 17 13 7 13 7 21" />
-          <polyline points="7 3 7 8 15 8" />
-        </svg>
-      ),
+      desc: "Snapshot ยศสมาชิก & Backup ฐานข้อมูล",
+      icon: Database,
     },
     {
       href: "/logs",
-      label: "บันทึกกิจกรรม",
-      desc: "ตรวจสอบ Audit Log ย้อนหลัง",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <polyline points="14 2 14 8 20 8" />
-          <line x1="16" y1="13" x2="8" y2="13" />
-          <line x1="16" y1="17" x2="8" y2="17" />
-          <polyline points="10 9 9 9 8 9" />
-        </svg>
-      ),
+      label: "บันทึกกิจกรรม (Audit)",
+      desc: "ประวัติการทำงานย้อนหลังทุกมิติ",
+      icon: Activity,
     },
     {
       href: "/bot-status",
-      label: "สถานะบอท",
-      desc: "ข้อมูลการเชื่อมต่อ & ปิงเซิร์ฟเวอร์",
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect width="20" height="8" x="2" y="2" rx="2" ry="2" />
-          <rect width="20" height="8" x="2" y="14" rx="2" ry="2" />
-          <line x1="6" y1="6" x2="6.01" y2="6" strokeWidth="3" />
-          <line x1="6" y1="18" x2="6.01" y2="18" strokeWidth="3" />
-        </svg>
-      ),
+      label: "สถานะการเชื่อมต่อ",
+      desc: "Gateway, Ping & ประวัติ Uptime",
+      icon: Activity,
+    },
+    {
+      href: "/reports",
+      label: "สร้างรายงานสรุป",
+      desc: "Export PDF/Excel & วิเคราะห์ข้อมูล",
+      icon: BarChart3,
     },
   ],
 };
+
+const ALL_CATEGORIES = [FINANCE_CATEGORY, SERVICES_CATEGORY, TEAM_CATEGORY, SYSTEM_CATEGORY];
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -403,45 +208,51 @@ export default function Navbar() {
   const { data: session } = useSession();
   const user = session?.user as any;
 
-  // Active dropdown state: null | 'services' | 'team' | 'system'
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
-  // Badge counts
   const [badges, setBadges] = useState<{ pendingSlips: number; openTickets: number }>({
     pendingSlips: 0,
     openTickets: 0,
   });
 
-  const navLinksRef = useRef<HTMLDivElement>(null);
-  const profileDropdownRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
 
-  // Close menus on route change
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 15);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Close menus on path change
   useEffect(() => {
     setOpenDropdown(null);
     setProfileOpen(false);
     setMobileMenuOpen(false);
   }, [pathname]);
 
-  // Click outside and escape key listener
+  // Outside click & escape listener
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (navLinksRef.current && !navLinksRef.current.contains(event.target as Node)) {
+    function handleClickOutside(e: MouseEvent) {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
         setOpenDropdown(null);
       }
-      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
         setProfileOpen(false);
       }
     }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
         setOpenDropdown(null);
         setProfileOpen(false);
+        setMobileMenuOpen(false);
       }
     }
-
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleKeyDown);
     return () => {
@@ -467,7 +278,6 @@ export default function Navbar() {
         }
       } catch {}
     }
-
     fetchBadges();
     const interval = setInterval(fetchBadges, 30000);
     return () => {
@@ -476,30 +286,6 @@ export default function Navbar() {
     };
   }, []);
 
-  // Listen for mobile bottom nav drawer trigger
-  useEffect(() => {
-    const handleToggleDrawer = () => setMobileMenuOpen((prev) => !prev);
-    const handleOpenDrawer = () => setMobileMenuOpen(true);
-    const handleCloseDrawer = () => setMobileMenuOpen(false);
-
-    window.addEventListener("toggle-mobile-drawer", handleToggleDrawer);
-    window.addEventListener("open-mobile-drawer", handleOpenDrawer);
-    window.addEventListener("close-mobile-drawer", handleCloseDrawer);
-
-    return () => {
-      window.removeEventListener("toggle-mobile-drawer", handleToggleDrawer);
-      window.removeEventListener("open-mobile-drawer", handleOpenDrawer);
-      window.removeEventListener("close-mobile-drawer", handleCloseDrawer);
-    };
-  }, []);
-
-  function handleOpenSearch() {
-    window.dispatchEvent(new CustomEvent("open-command-palette"));
-  }
-
-  const isRoot = isRootOwner(user?.discordId);
-
-  // Helper to check active state
   const isItemActive = (href: string) => {
     if (href === "/") return pathname === "/";
     return pathname === href || pathname.startsWith(href + "/");
@@ -509,493 +295,328 @@ export default function Navbar() {
     return category.items.some((item) => isItemActive(item.href));
   };
 
-  const getCategoryBadgeCount = (category: NavCategory) => {
+  const getCategoryBadge = (category: NavCategory) => {
     return category.items.reduce((sum, item) => {
       if (!item.badgeKey) return sum;
       return sum + (badges[item.badgeKey] || 0);
     }, 0);
   };
 
-  // Render a Category Dropdown Tab
-  const renderCategoryDropdown = (category: NavCategory) => {
-    const isOpen = openDropdown === category.id;
-    const isActive = isCategoryActive(category);
-    const categoryBadge = getCategoryBadgeCount(category);
-
-    return (
-      <div key={category.id} className="apple-nav-dropdown-wrapper">
-        <button
-          type="button"
-          className={`apple-nav-link ${isActive ? "active" : ""} ${isOpen ? "open" : ""}`}
-          onClick={() => {
-            setOpenDropdown(isOpen ? null : category.id);
-            setProfileOpen(false);
-          }}
-          onMouseEnter={() => {
-            category.items.forEach((item) => {
-              try {
-                router.prefetch(item.href);
-              } catch {}
-            });
-          }}
-          aria-expanded={isOpen}
-        >
-          <span className="apple-nav-link-icon">{category.icon}</span>
-          <span>{category.label}</span>
-          {categoryBadge > 0 && (
-            <span
-              className="apple-nav-badge"
-              style={{
-                backgroundColor: "#ff9f0a",
-                color: "#000",
-              }}
-            >
-              {categoryBadge}
-            </span>
-          )}
-          <svg
-            width="11"
-            height="11"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            className={`apple-dropdown-chevron ${isOpen ? "open" : ""}`}
-          >
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </button>
-
-        {isOpen && (
-          <div className={`apple-nav-dropdown-menu ${category.alignRight ? "align-right" : ""}`}>
-            {category.items.map((item) => {
-              const subActive = isItemActive(item.href);
-              const badgeCount = item.badgeKey ? badges[item.badgeKey] : 0;
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  prefetch={true}
-                  onMouseEnter={() => {
-                    try {
-                      router.prefetch(item.href);
-                    } catch {}
-                  }}
-                  onClick={() => setOpenDropdown(null)}
-                  className={`apple-dropdown-item ${subActive ? "active" : ""}`}
-                >
-                  <div className="apple-dropdown-item-icon">{item.icon}</div>
-                  <div className="apple-dropdown-item-text">
-                    <div className="apple-dropdown-item-header">
-                      <span className="apple-dropdown-item-title">{item.label}</span>
-                      {badgeCount > 0 && (
-                        <span
-                          className="apple-dropdown-badge"
-                          style={{
-                            backgroundColor: item.badgeColor || "#2997ff",
-                            color: item.badgeColor === "#ff9f0a" ? "#000" : "#fff",
-                          }}
-                        >
-                          {badgeCount}
-                        </span>
-                      )}
-                    </div>
-                    <div className="apple-dropdown-item-desc">{item.desc}</div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    );
+  const handleOpenSearch = () => {
+    window.dispatchEvent(new CustomEvent("open-command-palette"));
   };
 
   return (
-    <nav className="apple-navbar" id="main-navbar">
-      <div className="apple-navbar-container">
-        {/* Left: Brand Logo */}
-        <Link href="/" className="apple-navbar-brand">
-          <div className="apple-navbar-logo">
-            <img src="/logo.png" alt="LynnBot Logo" className="brand-logo-img" />
-          </div>
-          <span className="apple-navbar-title">LynnBot</span>
-          <span className="apple-navbar-tag">Pro</span>
-        </Link>
-
-        {/* Center: Desktop Categorized Navigation */}
-        <div className="apple-navbar-links" ref={navLinksRef}>
-          {/* 1. Dashboard (Direct Link) */}
+    <>
+      <header
+        className={`sticky top-0 left-0 right-0 z-50 h-16 transition-colors duration-200 select-none ${
+          scrolled || mobileMenuOpen
+            ? "bg-[#070809]/95 backdrop-blur-md border-b border-white/[0.08]"
+            : "bg-[#070809]/80 backdrop-blur-sm border-b border-white/[0.06]"
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between gap-4">
+          {/* Left: Brand Identity (Sharp Technical Blueprint) */}
           <Link
-            href={DASHBOARD_NAV.href}
-            prefetch={true}
-            onMouseEnter={() => {
-              try {
-                router.prefetch(DASHBOARD_NAV.href);
-              } catch {}
-            }}
-            className={`apple-nav-link ${isItemActive(DASHBOARD_NAV.href) ? "active" : ""}`}
+            href="/"
+            className="flex items-center gap-2.5 text-white hover:opacity-90 transition-opacity shrink-0 group"
           >
-            <span className="apple-nav-link-icon">{DASHBOARD_NAV.icon}</span>
-            <span>{DASHBOARD_NAV.label}</span>
+            {/* Minimalist Discord SVG Brand Icon */}
+            <div className="w-6 h-6 flex items-center justify-center bg-white/[0.04] border border-white/[0.1] text-white group-hover:border-white/30 transition-colors">
+              <svg
+                className="w-4 h-4 fill-current"
+                viewBox="0 0 127.14 96.36"
+                aria-hidden="true"
+              >
+                <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.86,53,48.81,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z" />
+              </svg>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[14px] font-bold tracking-tight text-white font-sans">
+                LynnBot
+              </span>
+              <span className="px-1.5 py-0.5 text-[9px] font-mono bg-white/[0.04] border border-white/[0.08] text-neutral-400 tracking-wider">
+                PORTAL
+              </span>
+            </div>
           </Link>
 
-          {/* 2. Finance Dropdown (Slips, Cashflow/Finance, Shop) */}
-          {renderCategoryDropdown(FINANCE_CATEGORY)}
+          {/* Center: Desktop Categorized Navigation (Sharp Bento Links) */}
+          <div className="hidden lg:flex items-center gap-1.5" ref={navRef}>
+            {/* Overview / Dashboard */}
+            <Link
+              href="/"
+              className={`px-3 py-1.5 text-xs font-mono transition-colors flex items-center gap-1.5 ${
+                pathname === "/"
+                  ? "text-white bg-white/[0.08] border border-white/[0.15]"
+                  : "text-neutral-400 hover:text-white hover:bg-white/[0.04] border border-transparent"
+              }`}
+            >
+              <LayoutDashboard className="w-3.5 h-3.5 text-neutral-400" />
+              <span>ภาพรวม</span>
+            </Link>
 
-          {/* 3. Services & Community Dropdown (Tickets, Announcements, Voice) */}
-          {renderCategoryDropdown(SERVICES_CATEGORY)}
+            {/* Dropdown Categories */}
+            {ALL_CATEGORIES.map((category) => {
+              const isOpen = openDropdown === category.id;
+              const active = isCategoryActive(category);
+              const badgeCount = getCategoryBadge(category);
 
-          {/* 4. Team Dropdown (Attendance, Leaves, Admins, Permissions, Rules) */}
-          {renderCategoryDropdown(TEAM_CATEGORY)}
+              return (
+                <div key={category.id} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setOpenDropdown(isOpen ? null : category.id)}
+                    className={`px-3 py-1.5 text-xs font-mono transition-colors flex items-center gap-1.5 cursor-pointer ${
+                      active || isOpen
+                        ? "text-white bg-white/[0.08] border border-white/[0.15]"
+                        : "text-neutral-400 hover:text-white hover:bg-white/[0.04] border border-transparent"
+                    }`}
+                  >
+                    <span>{category.label}</span>
+                    {badgeCount > 0 && (
+                      <span className="px-1.5 py-0.2 text-[9px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                        {badgeCount}
+                      </span>
+                    )}
+                    <ChevronDown
+                      className={`w-3 h-3 text-neutral-400 transition-transform ${
+                        isOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
 
-          {/* 5. System Dropdown (Settings, Backups, Logs, Bot Status) */}
-          {renderCategoryDropdown(SYSTEM_CATEGORY)}
-        </div>
+                  {/* Sharp Technical Dropdown Panel */}
+                  {isOpen && (
+                    <div className="absolute top-full left-0 mt-2 w-72 bg-[#070809] border border-white/[0.12] shadow-2xl p-2 z-50 flex flex-col gap-1 anim-fade-in">
+                      <div className="px-2.5 py-1 text-[9px] font-mono text-neutral-500 border-b border-white/[0.06] mb-1">
+                        MODULE // {category.id.toUpperCase()}
+                      </div>
+                      {category.items.map((item) => {
+                        const Icon = item.icon;
+                        const isSubActive = isItemActive(item.href);
+                        const itemBadge = item.badgeKey ? badges[item.badgeKey] : 0;
 
-        {/* Right: Actions, Search, and Profile */}
-        <div className="apple-navbar-right">
-          {/* Spotlight Search Trigger */}
-          <button
-            type="button"
-            className="apple-nav-search-btn"
-            onClick={handleOpenSearch}
-            title="ค้นหาด่วน (⌘K หรือ Ctrl+K)"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <span className="apple-nav-search-text">ค้นหา...</span>
-            <kbd className="apple-nav-kbd">⌘K</kbd>
-          </button>
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            className={`p-2.5 flex items-start gap-3 border transition-colors ${
+                              isSubActive
+                                ? "bg-white/[0.06] border-white/[0.15] text-white"
+                                : "bg-transparent border-transparent hover:bg-white/[0.03] hover:border-white/[0.06] text-neutral-300 hover:text-white"
+                            }`}
+                          >
+                            <div className="w-7 h-7 flex items-center justify-center bg-white/[0.03] border border-white/[0.06] shrink-0 mt-0.5 text-neutral-400">
+                              <Icon className="w-3.5 h-3.5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-semibold truncate font-sans">
+                                  {item.label}
+                                </span>
+                                {itemBadge > 0 && (
+                                  <span className="px-1.5 py-0.2 text-[9px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">
+                                    {itemBadge}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-neutral-500 truncate mt-0.5 font-sans leading-tight">
+                                {item.desc}
+                              </p>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
-          {/* Notification Center with Dropdown */}
-          <NotificationCenter />
-
-          {/* Bot Online Status Pill with Live ECG & Radar */}
-          <LiveStatusPulse />
-
-          {/* User Profile Pill & Dropdown */}
-          <div className="apple-profile-wrapper" ref={profileDropdownRef}>
+          {/* Right: Actions, Search, Live Pulse, and User Profile */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            {/* Quick Command Palette Trigger (⌘K) */}
             <button
               type="button"
-              className={`apple-profile-btn ${profileOpen ? "active" : ""}`}
-              onClick={() => {
-                setProfileOpen(!profileOpen);
-                setOpenDropdown(null);
-              }}
-              aria-label="เมนูผู้ใช้งาน"
+              onClick={handleOpenSearch}
+              className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1.5 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] hover:border-white/20 text-neutral-400 hover:text-white text-xs font-mono transition-colors"
+              title="ค้นหาด่วน (⌘K หรือ Ctrl+K)"
             >
-              <div className="apple-profile-avatar">
-                <img
-                  src={getDiscordAvatarUrl(user?.discordId || user?.id, user?.avatar)}
-                  alt={user?.displayName || user?.name || "Admin"}
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
-                  }}
-                />
-              </div>
-              <div className="apple-profile-name-group">
-                <span className="apple-profile-name">
-                  {user?.displayName || user?.name || "แอดมิน"}
-                </span>
-                {isRoot ? (
-                  <span className="apple-role-tag root">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14" />
-                    </svg>
-                    Owner
-                  </span>
-                ) : (
-                  <span className="apple-role-tag">{user?.role || "Staff"}</span>
-                )}
-              </div>
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                style={{
-                  color: "rgba(255, 255, 255, 0.4)",
-                  transition: "transform 0.2s ease",
-                  transform: profileOpen ? "rotate(180deg)" : "rotate(0deg)",
-                }}
-              >
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
+              <Search className="w-3.5 h-3.5 text-neutral-400" />
+              <span className="hidden md:inline">ค้นหา...</span>
+              <kbd className="px-1.5 py-0.5 text-[9px] bg-white/[0.06] border border-white/[0.1] text-neutral-400">
+                ⌘K
+              </kbd>
             </button>
 
-            {/* Profile Dropdown Menu */}
-            {profileOpen && (
-              <div className="apple-profile-dropdown">
-                <div className="apple-profile-dropdown-header">
-                  <div className="apple-profile-dropdown-avatar">
-                    <img
-                      src={getDiscordAvatarUrl(user?.discordId || user?.id, user?.avatar)}
-                      alt={user?.displayName || user?.name || "Admin"}
-                    />
-                  </div>
-                  <div>
-                    <div className="apple-profile-dropdown-name">
-                      {user?.displayName || user?.name || "ผู้ดูแลระบบ"}
-                    </div>
-                    <div className="apple-profile-dropdown-handle">
-                      @{user?.username || user?.name || "discord"}
-                    </div>
-                    <div className="apple-profile-dropdown-badge">
-                      {isRoot ? "👑 เจ้าของสูงสุด (Root Owner)" : `สิทธิ์: ${user?.role || "ADMIN"}`}
-                    </div>
-                  </div>
-                </div>
+            {/* Notification Center */}
+            <NotificationCenter />
 
-                <div className="apple-profile-dropdown-divider" />
+            {/* Live Bot Gateway Status */}
+            <LiveStatusPulse />
 
-                <Link
-                  href="/permissions"
-                  onClick={() => setProfileOpen(false)}
-                  className="apple-profile-menu-item"
-                >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
-                  <span>ตรวจสอบสิทธิ์ของฉัน</span>
-                </Link>
-
-                <Link
-                  href="/settings"
-                  onClick={() => setProfileOpen(false)}
-                  className="apple-profile-menu-item"
-                >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="3" />
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                  </svg>
-                  <span>ตั้งค่าระบบ</span>
-                </Link>
-
-                <div className="apple-profile-dropdown-divider" />
-
+            {/* User Profile Pill & Dropdown */}
+            {user && (
+              <div className="relative" ref={profileRef}>
                 <button
                   type="button"
-                  className="apple-profile-menu-item logout"
-                  onClick={() => {
-                    setProfileOpen(false);
-                    signOut({ callbackUrl: "/login" });
-                  }}
+                  onClick={() => setProfileOpen(!profileOpen)}
+                  className="flex items-center gap-2 p-1 sm:px-2 sm:py-1 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] hover:border-white/20 transition-colors cursor-pointer"
+                  aria-label="เมนูผู้ใช้งาน"
                 >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                    <polyline points="16 17 21 12 16 7" />
-                    <line x1="21" y1="12" x2="9" y2="12" />
-                  </svg>
-                  <span>ออกจากระบบ</span>
+                  <img
+                    src={getDiscordAvatarUrl(user?.discordId || user?.id, user?.avatar)}
+                    alt={user?.displayName || user?.name || "Admin"}
+                    className="w-6 h-6 object-cover border border-white/20 shrink-0"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        "https://cdn.discordapp.com/embed/avatars/0.png";
+                    }}
+                  />
+                  <span className="hidden md:inline text-xs font-medium text-white max-w-[90px] truncate">
+                    {user?.displayName || user?.name || "Admin"}
+                  </span>
+                  <ChevronDown className="w-3 h-3 text-neutral-400 hidden sm:inline" />
                 </button>
+
+                {/* Profile Dropdown */}
+                {profileOpen && (
+                  <div className="absolute right-0 mt-2 w-56 bg-[#070809] border border-white/[0.12] shadow-2xl p-2 z-50 flex flex-col gap-1 anim-fade-in">
+                    <div className="px-3 py-2 border-b border-white/[0.08] mb-1">
+                      <div className="text-xs font-semibold text-white truncate">
+                        {user?.displayName || user?.name || "Admin"}
+                      </div>
+                      <div className="text-[10px] font-mono text-neutral-400 truncate mt-0.5 flex items-center justify-between">
+                        <span>{user?.role || "ADMIN"}</span>
+                        {isRootOwner(user?.discordId) && (
+                          <span className="text-amber-400 text-[9px]">ROOT_OWNER</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <Link
+                      href="/settings"
+                      className="px-3 py-2 text-xs text-neutral-300 hover:text-white hover:bg-white/[0.04] transition-colors flex items-center gap-2"
+                    >
+                      <Settings className="w-3.5 h-3.5 text-neutral-400" />
+                      <span>ตั้งค่าระบบ</span>
+                    </Link>
+
+                    <Link
+                      href="/rules"
+                      className="px-3 py-2 text-xs text-neutral-300 hover:text-white hover:bg-white/[0.04] transition-colors flex items-center gap-2"
+                    >
+                      <BookOpen className="w-3.5 h-3.5 text-neutral-400" />
+                      <span>กฎระเบียบปฏิบัติ</span>
+                    </Link>
+
+                    <div className="border-t border-white/[0.08] my-1 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => signOut({ callbackUrl: "/login" })}
+                        className="w-full px-3 py-2 text-xs text-rose-400 hover:bg-rose-500/10 transition-colors flex items-center gap-2 text-left cursor-pointer"
+                      >
+                        <LogOut className="w-3.5 h-3.5 text-rose-400" />
+                        <span>ออกจากระบบ</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        </div>
-      </div>
 
-      {/* Mobile Backdrop & Drawer */}
-      {mobileMenuOpen && (
-        <>
-          <div
-            className="apple-mobile-backdrop"
-            onClick={() => setMobileMenuOpen(false)}
-            aria-hidden="true"
-          />
-          <div className="apple-mobile-drawer">
-            {/* Drawer Top Header with Dismiss Button */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                paddingBottom: "14px",
-                marginBottom: "16px",
-                borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ fontSize: "14px", fontWeight: 600, color: "#ffffff" }}>
-                  เมนูนำทางทั้งหมด
-                </span>
-                <span style={{ fontSize: "10px", padding: "1px 6px", borderRadius: "4px", background: "rgba(10, 132, 255, 0.2)", color: "#2997ff", fontWeight: 600 }}>
-                  LynnBot
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(false)}
-                style={{
-                  background: "rgba(255, 255, 255, 0.08)",
-                  border: "none",
-                  borderRadius: "50%",
-                  width: "28px",
-                  height: "28px",
-                  color: "#ffffff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "12px",
-                  cursor: "pointer",
-                }}
-                aria-label="ปิดเมนู"
-              >
-                ✕
-              </button>
-            </div>
-          <div className="apple-mobile-drawer-content">
-            {/* Section 1: Overview */}
-            <div className="apple-mobile-category-block">
-              <div className="apple-mobile-section-label">ภาพรวมหลัก</div>
-              <div className="apple-mobile-nav-grid">
-                <Link
-                  href={DASHBOARD_NAV.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`apple-mobile-nav-item ${isItemActive(DASHBOARD_NAV.href) ? "active" : ""}`}
-                >
-                  <span className="apple-mobile-icon">{DASHBOARD_NAV.icon}</span>
-                  <span>{DASHBOARD_NAV.label}</span>
-                </Link>
-              </div>
-            </div>
-
-            {/* Section 2: Finance */}
-            <div className="apple-mobile-category-block">
-              <div className="apple-mobile-section-label">การเงิน & ธุรกรรม</div>
-              <div className="apple-mobile-nav-grid">
-                {FINANCE_CATEGORY.items.map((item) => {
-                  const isActive = isItemActive(item.href);
-                  const badgeCount = item.badgeKey ? badges[item.badgeKey] : 0;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`apple-mobile-nav-item ${isActive ? "active" : ""}`}
-                    >
-                      <span className="apple-mobile-icon">{item.icon}</span>
-                      <span>{item.label}</span>
-                      {badgeCount > 0 && (
-                        <span
-                          className="apple-mobile-badge"
-                          style={{
-                            backgroundColor: item.badgeColor || "#ff9f0a",
-                            color: "#000",
-                          }}
-                        >
-                          {badgeCount}
-                        </span>
-                      )}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Section 3: Services & Community */}
-            <div className="apple-mobile-category-block">
-              <div className="apple-mobile-section-label">บริการ & ชุมชน</div>
-              <div className="apple-mobile-nav-grid">
-                {SERVICES_CATEGORY.items.map((item) => {
-                  const isActive = isItemActive(item.href);
-                  const badgeCount = item.badgeKey ? badges[item.badgeKey] : 0;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`apple-mobile-nav-item ${isActive ? "active" : ""}`}
-                    >
-                      <span className="apple-mobile-icon">{item.icon}</span>
-                      <span>{item.label}</span>
-                      {badgeCount > 0 && (
-                        <span
-                          className="apple-mobile-badge"
-                          style={{
-                            backgroundColor: item.badgeColor || "#2997ff",
-                            color: "#fff",
-                          }}
-                        >
-                          {badgeCount}
-                        </span>
-                      )}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Section 4: Team */}
-            <div className="apple-mobile-category-block">
-              <div className="apple-mobile-section-label">ทีมงาน & บุคลากร</div>
-              <div className="apple-mobile-nav-grid">
-                {TEAM_CATEGORY.items.map((item) => {
-                  const isActive = isItemActive(item.href);
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`apple-mobile-nav-item ${isActive ? "active" : ""}`}
-                    >
-                      <span className="apple-mobile-icon">{item.icon}</span>
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Section 5: System */}
-            <div className="apple-mobile-category-block">
-              <div className="apple-mobile-section-label">ระบบ & จัดการ</div>
-              <div className="apple-mobile-nav-grid">
-                {SYSTEM_CATEGORY.items.map((item) => {
-                  const isActive = isItemActive(item.href);
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`apple-mobile-nav-item ${isActive ? "active" : ""}`}
-                    >
-                      <span className="apple-mobile-icon">{item.icon}</span>
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="apple-profile-dropdown-divider" style={{ margin: "20px 0 16px" }} />
-
+            {/* Mobile Menu Hamburger (Phones & Tablets) */}
             <button
               type="button"
-              className="apple-profile-menu-item logout"
-              style={{ width: "100%", justifyContent: "center" }}
-              onClick={() => {
-                setMobileMenuOpen(false);
-                signOut({ callbackUrl: "/login" });
-              }}
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-1.5 text-neutral-400 hover:text-white bg-white/[0.03] border border-white/[0.08] transition-colors"
+              aria-label="เปิดเมนูนำทาง"
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-              <span>ออกจากระบบ</span>
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
-        </>
+      </header>
+
+      {/* Mobile Drawer Navigation (Slide-down overlay) */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 top-16 z-40 bg-[#070809]/95 backdrop-blur-xl border-b border-white/[0.1] overflow-y-auto p-4 sm:p-6 pb-28">
+          <div className="space-y-6 max-w-lg mx-auto">
+            {/* Search row on mobile */}
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                handleOpenSearch();
+              }}
+              className="w-full flex items-center justify-between p-3 bg-white/[0.04] border border-white/[0.1] text-neutral-300 text-xs font-mono"
+            >
+              <div className="flex items-center gap-2">
+                <Search className="w-4 h-4 text-neutral-400" />
+                <span>ค้นหาเมนูหรือคำสั่งด่วน...</span>
+              </div>
+              <kbd className="px-1.5 py-0.5 text-[9px] bg-white/[0.08] border border-white/[0.1]">
+                ⌘K
+              </kbd>
+            </button>
+
+            {/* Direct Link: Dashboard */}
+            <Link
+              href="/"
+              className={`p-3 flex items-center gap-3 border text-xs font-mono ${
+                pathname === "/"
+                  ? "bg-white/[0.08] border-white/20 text-white"
+                  : "bg-white/[0.02] border-white/[0.06] text-neutral-400"
+              }`}
+            >
+              <LayoutDashboard className="w-4 h-4 text-sky-400" />
+              <span className="font-semibold text-white">00 // ภาพรวมแดชบอร์ด</span>
+            </Link>
+
+            {/* Categorized Modules */}
+            {ALL_CATEGORIES.map((cat, idx) => (
+              <div key={cat.id} className="space-y-2">
+                <div className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest px-1">
+                  0{idx + 1} // {cat.label}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {cat.items.map((item) => {
+                    const Icon = item.icon;
+                    const active = isItemActive(item.href);
+                    const itemBadge = item.badgeKey ? badges[item.badgeKey] : 0;
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`p-2.5 flex items-center justify-between border transition-colors ${
+                          active
+                            ? "bg-white/[0.08] border-white/20 text-white"
+                            : "bg-white/[0.02] border-white/[0.06] text-neutral-300 hover:text-white"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <Icon className="w-4 h-4 text-neutral-400 shrink-0" />
+                          <span className="text-xs font-medium truncate font-sans">
+                            {item.label}
+                          </span>
+                        </div>
+                        {itemBadge > 0 && (
+                          <span className="px-1.5 py-0.2 text-[9px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                            {itemBadge}
+                          </span>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
-    </nav>
+    </>
   );
 }

@@ -63,6 +63,8 @@ import { handleMessageReactionRemove } from "./events/messageReactionRemove.js";
 import { checkAutoClockOut } from "./services/attendanceService.js";
 import { checkExpiredGiveaways, checkScheduledMessages } from "./services/cronService.js";
 import { syncAllDynamicVoiceCategories } from "./services/dynamicVoiceService.js";
+import { refreshFandayPanelLive } from "./services/panels/fandayPanelHandler.js";
+import { processFandayJobs, processFandayOutbox } from "./features/fanday/jobs/fandayWorker.js";
 
 export interface BotCommand {
   data: SlashCommandBuilder | any;
@@ -144,6 +146,11 @@ client.once(Events.ClientReady, (readyClient) => {
   // Sync Dynamic Voice categories after 5s and every 5m (prunes leftover empty rooms)
   setTimeout(() => syncAllDynamicVoiceCategories(client), 5000);
   setInterval(() => syncAllDynamicVoiceCategories(client), 5 * 60 * 1000);
+
+  // Sync Fanday live panel & poll persistent job queue
+  setTimeout(() => refreshFandayPanelLive(client), 8000);
+  setInterval(() => processFandayJobs(client), 30 * 1000);
+  setInterval(() => processFandayOutbox(client), 30 * 1000);
 });
 
 client.on(Events.InteractionCreate, (interaction) =>

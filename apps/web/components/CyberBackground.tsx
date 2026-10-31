@@ -58,23 +58,15 @@ export default function CyberBackground() {
         }}
       />
 
-      {/* 2. Floating Cybernetic Perspective Grid (Bottom) */}
+      {/* 2. Clean Blueprint Grid */}
       <div
-        className="cyber-perspective-grid"
         style={{
           position: "absolute",
-          bottom: 0,
-          left: "-50%",
-          width: "200%",
-          height: "450px",
+          inset: 0,
           backgroundImage:
-            "linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px)",
-          backgroundSize: "60px 60px",
-          transform: "perspective(600px) rotateX(65deg)",
-          transformOrigin: "bottom center",
-          maskImage: "linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.7) 60%, black 100%)",
-          WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.7) 60%, black 100%)",
-          opacity: 0.7,
+            "linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
+          opacity: 0.6,
         }}
       />
 
